@@ -1,12 +1,16 @@
-# 푸시·PR 마다 린트, 타입 검사, 단위 시험, Cloudflare 용 빌드가 되는지 확인한다.
+# 푸시·PR 마다 린트, 타입 검사, 단위 시험, Cloudflare 용 빌드, DB 규칙 시험(pgTAP)을 돌린다.
 # 배포는 여기서 하지 않는다(로컬에서 npm run deploy). 비밀값이 필요 없게 유지한다.
 name: CI
 on:
   push:
-    branches: [main, develop]
+    branches: [main, develop, "feature/**", "bugfix/**"]
   pull_request:
 permissions:
   contents: read
+# 같은 브랜치에 새로 올리면 앞 실행은 멈춘다. PR 과 브랜치 push 가 같은 커밋을 두 번 돌리는 것도 하나로 줄인다.
+concurrency:
+  group: ci-${{ github.head_ref || github.ref_name }}
+  cancel-in-progress: true
 jobs:
   check:
     runs-on: ubuntu-latest
@@ -22,3 +26,15 @@ jobs:
       - run: npm run typecheck
       - run: npm test
       - run: npx opennextjs-cloudflare build
+
+  db:
+    # 마이그레이션을 빈 로컬 Supabase 에 처음부터 적용하고 supabase/tests 의 pgTAP 시험을 돌린다.
+    # 시험에 필요 없는 서비스는 띄우지 않는다(auth·storage 스키마는 gotrue·storage-api 가 만든다).
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: supabase/setup-cli@v1
+        with:
+          version: 3.2.0
+      - run: supabase start -x studio,imgproxy,mailpit,edge-runtime,logflare,vector,realtime,supavisor,postgres-meta
+      - run: supabase test db
