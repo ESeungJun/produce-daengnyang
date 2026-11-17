@@ -1,0 +1,24 @@
+# 푸시·PR 마다 린트, 타입 검사, 단위 시험, Cloudflare 용 빌드가 되는지 확인한다.
+# 배포는 여기서 하지 않는다(로컬에서 npm run deploy). 비밀값이 필요 없게 유지한다.
+name: CI
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+permissions:
+  contents: read
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+      - run: npm run cf-typegen   # 워커 바인딩 타입(cloudflare-env.d.ts, 커밋하지 않음)
+      - run: npm run lint
+      - run: npm run typecheck
+      - run: npm test
+      - run: npx opennextjs-cloudflare build

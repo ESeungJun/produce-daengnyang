@@ -1,6 +1,6 @@
 # 프로듀스 댕냥 디자인 시스템 (확정안 V2A)
 
-- 원본 토큰: [`tokens.css`](tokens.css). 이 문서와 값이 1:1로 같아요.
+- 원본 토큰: [`shared/styles/tokens.css`](../../shared/styles/tokens.css). 이 문서와 값이 1:1로 같아요.
 - 견본 페이지(Artifact)와 확정 시안 링크: [FIGMA.md](FIGMA.md)의 "디자인 원본 위치"
 - 확정 시안 파일: `.work/mockups/시안_확정_V2A.html`(휴대폰 메인 라이트·다크, 강아지 게시판, 글 상세, 데스크톱 메인)
 - Figma는 쓰지 않아요. 사용자 Figma 계정이 보기 권한뿐이라 Artifact 견본 페이지로 대신해요(결정기록 2026-11-17).
