@@ -10,7 +10,7 @@ import { createContext, useCallback, useContext, useState } from "react";
 import { Sheet } from "@/shared/ui/Sheet";
 import { useToast } from "@/shared/ui/Toast";
 import { continueWithGoogle } from "./session";
-import { clearPendingPick, inAppBrowser } from "./handoff";
+import { clearPendingPick, inAppBrowser, openExternal } from "./handoff";
 import { trackAuth } from "./track";
 
 export type LoginReason = "pick" | "register" | "comment" | "login" | "ip";
@@ -53,12 +53,9 @@ export function LoginSheetProvider({ children }: { children: React.ReactNode }) 
           close();
           const app = inAppBrowser();
           if (app) trackAuth("google", app === "kakao" ? "inapp_kakao" : "inapp_other");
-          if (app === "kakao") {
-            location.href = `kakaotalk://web/openExternal?url=${encodeURIComponent(location.href)}`;
-            return;
-          }
           if (app) {
-            toast("앱 안 브라우저에서는 구글 로그인이 막혀요. 오른쪽 위 메뉴에서 '다른 브라우저로 열기'를 눌러 주세요");
+            // 카톡·안드로이드는 기본 브라우저를 바로 연다. 아이폰의 다른 앱은 메뉴로 안내한다
+            if (!openExternal()) toast("앱 안 브라우저에서는 구글 로그인이 막혀요. 오른쪽 위 ··· 메뉴에서 'Safari로 열기'를 눌러 주세요");
             return;
           }
           continueWithGoogle(next).catch(() => {

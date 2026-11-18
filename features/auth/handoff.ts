@@ -41,3 +41,24 @@ export function inAppBrowser(ua = navigator.userAgent): "kakao" | "other" | null
   if (/Instagram|FBAN|FBAV|FB_IAB|NAVER\(inapp|Line\/|DaumApps|everytimeApp|; wv\)/i.test(ua)) return "other";
   return null;
 }
+
+/**
+ * 앱 안 브라우저에서 지금 주소를 기본 브라우저로 연다. 열 길이 있으면 true.
+ * - 카카오톡: kakaotalk://web/openExternal 이 기본 브라우저를 연다.
+ * - 안드로이드의 다른 앱(인스타·네이버 등): intent:// 로 크롬을 연다.
+ * - 아이폰의 다른 앱: 웹에서 열 방법이 없어 false(화면이 "··· → Safari로 열기"를 안내한다).
+ */
+export function openExternal(href = location.href, ua = navigator.userAgent): boolean {
+  const app = inAppBrowser(ua);
+  if (!app) return false;
+  if (app === "kakao") {
+    location.href = `kakaotalk://web/openExternal?url=${encodeURIComponent(href)}`;
+    return true;
+  }
+  if (/Android/i.test(ua)) {
+    const u = new URL(href);
+    location.href = `intent://${u.host}${u.pathname}${u.search}#Intent;scheme=${u.protocol.replace(":", "")};package=com.android.chrome;S.browser_fallback_url=${encodeURIComponent(href)};end`;
+    return true;
+  }
+  return false;
+}

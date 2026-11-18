@@ -15,7 +15,7 @@ import { SignInPrompt } from "./SignInPrompt";
 import type { MyEntry } from "./rules";
 import s from "./me.module.css";
 
-export async function MePage() {
+export async function MePage({ resumeLeave = false }: { resumeLeave?: boolean }) {
   const supabase = await createClient();
   const uid = await memberId(supabase);
   const bar = <TopBar nav={<SiteNav />} right={<PicksLeft />} login={<LoginButton />} />;
@@ -48,7 +48,7 @@ export async function MePage() {
             내 정보
           </h1>
           <NicknameForm nickname={profile?.nickname ?? ""} changedAt={profile?.nickname_changed_at ?? null} />
-          <AccountActions />
+          <AccountActions resume={resumeLeave} />
         </section>
         <section className={s.main} aria-labelledby="mine-h">
           <h2 id="mine-h" className={s.h2}>

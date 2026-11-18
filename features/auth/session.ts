@@ -62,7 +62,10 @@ export function ensureAnonSession(): Promise<void> {
   return anonInFlight;
 }
 
-export async function continueWithGoogle(next: string): Promise<void> {
+/**
+ * reauth: 이미 로그인한 회원이 되돌릴 수 없는 일(탈퇴) 전에 다시 확인할 때. 구글 계정 고르기 화면을 꼭 띄운다.
+ */
+export async function continueWithGoogle(next: string, opts: { reauth?: boolean } = {}): Promise<void> {
   const sb = await browserClient();
   const { data } = await sb.auth.getSession();
   const redirectTo = callbackUrl(next);
@@ -73,6 +76,9 @@ export async function continueWithGoogle(next: string): Promise<void> {
     return;
   }
   trackAuth("google", "signin");
-  const { error } = await sb.auth.signInWithOAuth({ provider: "google", options: { redirectTo } });
+  const { error } = await sb.auth.signInWithOAuth({
+    provider: "google",
+    options: { redirectTo, queryParams: opts.reauth ? { prompt: "select_account" } : undefined },
+  });
   if (error) throw error;
 }

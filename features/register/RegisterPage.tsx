@@ -8,6 +8,7 @@ import { createClient } from "@/shared/lib/supabase/server";
 import { deadlineLabel } from "@/shared/lib/format";
 import { TopBar, page } from "@/shared/ui/TopBar";
 import ui from "@/shared/ui/ui.module.css";
+import { InAppNotice } from "@/features/auth/InAppNotice";
 import { LoginButton } from "@/features/auth/LoginButton";
 import { memberId } from "@/features/auth/server";
 import { SiteNav } from "@/features/entries/SiteNav";
@@ -64,7 +65,11 @@ export async function RegisterPage() {
           </div>
         </div>
       ) : (
-        <RegisterForm mode="create" left={left} />
+        <>
+          {/* 로그인 전이면 앱 안 브라우저 안내를 먼저(다 쓰고 나서 로그인에서 막히지 않게) */}
+          {uid ? null : <InAppNotice />}
+          <RegisterForm mode="create" left={left} />
+        </>
       )}
     </div>
   );

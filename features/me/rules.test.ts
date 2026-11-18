@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { entryState, kstDateTime, nicknameNextChange, parseDbTime, type MyEntry } from "./rules";
+import { entryState, jwtPayload, kstDateTime, nicknameNextChange, parseDbTime, signedInWithin, type MyEntry } from "./rules";
 
 describe("nicknameNextChange: 7일 쿨타임", () => {
   const now = new Date("2026-11-18T03:00:00Z");
@@ -31,4 +31,21 @@ describe("entryState: 내 글 상태", () => {
     expect(entryState({ ...base, round: { ...base.round, open: false }, result: { rank: 1, role: "center" } }).label).toBe("1위 · 센터"));
   it("마감 + 순위만", () => expect(entryState({ ...base, round: { ...base.round, open: false }, result: { rank: 7, role: null } }).label).toBe("7위"));
   it("결과 없이 마감", () => expect(entryState({ ...base, round: { ...base.round, open: false } }).editable).toBe(false));
+});
+
+describe("signedInWithin: 탈퇴 전 최근 로그인", () => {
+  it("10분 안이면 통과", () => expect(signedInWithin([{ method: "oauth", timestamp: 1000 }], 1000 + 600)).toBe(true));
+  it("10분 넘으면 다시 로그인", () => expect(signedInWithin([{ method: "oauth", timestamp: 1000 }], 1000 + 601)).toBe(false));
+  it("여러 개면 가장 최근 것", () =>
+    expect(signedInWithin([{ method: "oauth", timestamp: 10 }, { method: "oauth", timestamp: 1000 }], 1100)).toBe(true));
+  it("모양이 이상하면 다시 로그인", () => {
+    expect(signedInWithin(undefined, 1)).toBe(false);
+    expect(signedInWithin([{ method: "x" }], 1)).toBe(false);
+  });
+});
+
+describe("jwtPayload: 토큰 내용 읽기", () => {
+  const enc = (o: object) => btoa(JSON.stringify(o)).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
+  it("amr 를 읽는다", () => expect(jwtPayload(`h.${enc({ amr: [{ timestamp: 5 }] })}.s`)?.amr).toEqual([{ timestamp: 5 }]));
+  it("깨진 토큰은 null", () => expect(jwtPayload("abc")).toBeNull());
 });
