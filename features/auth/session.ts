@@ -20,8 +20,25 @@ export function callbackUrl(next: string, merge = false): string {
   return u.toString();
 }
 
-/** 익명 로그인 실패(봇 확인 포함). 화면이 네트워크 오류와 다른 문구를 쓴다. */
-export class AnonSignInError extends Error {}
+/**
+ * 익명 로그인 실패. 화면이 원인별로 다른 문구를 쓴다(#3, 11-18 원격 시험에서 익명 로그인이 꺼져 422 가 났는데 봇 문구가 떠서 헷갈렸다).
+ * - bot: 봇 확인(Turnstile 위젯 또는 Auth 의 captcha_failed)에서 막혔다
+ * - limit: Auth 요청 한도(over_request_rate_limit)
+ * - unavailable: 그 밖(익명 로그인 꺼짐 anonymous_provider_disabled, 서버 오류 등). 로그인하면 픽할 수 있다
+ */
+export type AnonFailReason = "bot" | "limit" | "unavailable";
+export class AnonSignInError extends Error {
+  constructor(message: string, readonly reason: AnonFailReason) {
+    super(message);
+  }
+}
+
+/** Auth 오류 코드 → 실패 원인. 순수 함수라 시험한다(session.test.ts). */
+export function anonFailReason(code: string | undefined): AnonFailReason {
+  if (code === "captcha_failed") return "bot";
+  if (code === "over_request_rate_limit") return "limit";
+  return "unavailable";
+}
 
 let anonInFlight: Promise<void> | null = null;
 
@@ -35,10 +52,10 @@ export function ensureAnonSession(): Promise<void> {
     try {
       captchaToken = (await turnstileToken()) ?? undefined;
     } catch (e) {
-      throw new AnonSignInError(String((e as Error)?.message ?? e));
+      throw new AnonSignInError(String((e as Error)?.message ?? e), "bot");
     }
     const { error } = await sb.auth.signInAnonymously({ options: { captchaToken } });
-    if (error) throw new AnonSignInError(error.message);
+    if (error) throw new AnonSignInError(error.message, anonFailReason(error.code));
   })().finally(() => {
     anonInFlight = null;
   });

@@ -4,6 +4,7 @@
  */
 import { BOARD_NAME, untilLabel, type Board } from "@/shared/lib/format";
 import { nextKstMidnight } from "@/shared/lib/kst";
+import type { AnonFailReason } from "@/features/auth/session";
 
 export type PickOutcome = { kind: "sheet"; reason: "pick" | "ip" } | { kind: "toast"; text: string };
 
@@ -37,3 +38,10 @@ export function pickedText(board: Board, remaining: number, member: boolean): st
   if (!member) return "픽! 로그인하면 게시판마다 하루 3픽까지 할 수 있어요";
   return remaining > 0 ? `픽! 오늘 ${BOARD_NAME[board]} 픽이 ${remaining}장 남았어요` : `오늘 ${BOARD_NAME[board]} 픽을 다 썼어요`;
 }
+
+/** 첫 픽의 익명 로그인이 실패했을 때 문구(원인은 features/auth/session.ts anonFailReason). */
+export const ANON_FAIL_TEXT: Record<AnonFailReason, string> = {
+  bot: "사람인지 확인하지 못했어요. 다시 눌러 주세요. 계속 안 되면 오른쪽 위에서 로그인해 주세요",
+  limit: "잠깐 사이에 요청이 많았어요. 조금 뒤에 다시 눌러 주세요",
+  unavailable: "지금은 로그인 없이 픽할 수 없어요. 오른쪽 위에서 로그인하면 픽할 수 있어요",
+};
