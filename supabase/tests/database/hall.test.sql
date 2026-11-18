@@ -1,7 +1,7 @@
--- 명예의 전당(#8): 확정된 라운드의 센터·데뷔만, 숨긴 1위 대신 다음 순위, 기간 제한, 손님도 읽기. 모두 되돌린다.
+-- 명예의 전당(#8): 확정된 라운드의 센터·데뷔만, 숨긴 1위는 빈 자리(2위를 올리지 않음), 기간 제한, 손님도 읽기. 모두 되돌린다.
 begin;
 create extension if not exists pgtap with schema extensions;
-select plan(7);
+select plan(9);
 
 -- 준비: 석 달 전 달의 1주차(강아지)와 결선(고양이). 그 라운드 기존 결과는 지우고 시험 글만 둔다.
 select set_config('t.m', (date_trunc('month', now() at time zone 'Asia/Seoul')::date - interval '3 months')::date::text, true);
@@ -30,9 +30,17 @@ select is(pg_temp.hall_role('전당일등'), 'center', '주간 1위는 센터로
 select is(pg_temp.hall_role('전당이등'), null, '2위는 싣지 않는다');
 select is(pg_temp.hall_role('전당데뷔'), 'debut', '결선 1위는 데뷔로 실린다');
 
+-- 시험 라운드의 강아지 1위 자리
+create function pg_temp.hall_slot() returns jsonb language sql as $$
+  select x from jsonb_array_elements(public.hall_of_fame()) x
+   where x ->> 'round_month' = current_setting('t.m') and x ->> 'round_kind' = 'weekly' and (x ->> 'round_seq')::int = 1 and x ->> 'board' = 'dog'
+$$;
+
 update public.entries set hidden_at = now() where id = '00000000-0000-0000-0000-00000000e801';
-select is(pg_temp.hall_role('전당이등') || '/' || coalesce(pg_temp.hall_role('전당일등'), '없음'), 'center/없음',
-          '1위를 숨기면 빠지고 2위가 센터 자리에 실린다');
+select is(pg_temp.hall_role('전당이등'), null, '1위를 숨겨도 2위를 센터로 올리지 않는다');
+select is(pg_temp.hall_slot() ->> 'hidden', 'true', '숨긴 1위 자리는 빈 자리(hidden)로 남는다');
+select ok(pg_temp.hall_slot() ->> 'pet_name' is null and pg_temp.hall_slot() ->> 'entry_id' is null and pg_temp.hall_slot() ->> 'votes' is null,
+          '빈 자리는 이름·글 번호·표 수를 알려 주지 않는다');
 
 update public.rounds set finalized_at = null where id = current_setting('t.f')::bigint;
 select is(pg_temp.hall_role('전당데뷔'), null, '확정 전 라운드는 싣지 않는다');

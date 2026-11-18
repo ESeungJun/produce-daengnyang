@@ -13,11 +13,13 @@ export type HallCard = {
   round_seq: number;
   round_month: string;
   ends_at: string;
-  entry_id: string;
-  pet_name: string;
+  /** 1위 글이 숨겨지거나 지워졌으면 true. 이때 아래 글 정보는 모두 null(2위를 올리지 않고 빈 카드로 둔다, #8 후속) */
+  hidden: boolean;
+  entry_id: string | null;
+  pet_name: string | null;
   path: string | null;
   thumb_path: string | null;
-  votes: number;
+  votes: number | null;
 };
 
 export type HallMonth = { month: string; debut: HallCard[]; center: HallCard[] };

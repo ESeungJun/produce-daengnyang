@@ -3,7 +3,7 @@ import { groupByMonth, type HallCard } from "./api";
 
 const card = (o: Partial<HallCard>): HallCard => ({
   role: "center", board: "dog", round_kind: "weekly", round_seq: 1, round_month: "2026-11-01", ends_at: "2026-11-08T15:00:00Z",
-  entry_id: "e", pet_name: "보리", path: null, thumb_path: null, votes: 1, ...o,
+  hidden: false, entry_id: "e", pet_name: "보리", path: null, thumb_path: null, votes: 1, ...o,
 });
 
 describe("groupByMonth", () => {

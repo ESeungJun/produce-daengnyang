@@ -1,7 +1,7 @@
 /**
  * 공유 미리보기 이미지(#8, 1200×630). 카톡·인스타·X 가 링크를 펼칠 때 가져가는 그림이다.
  * - 글: 왼쪽 대표 사진, 오른쪽 게시판·이름·"우리 애 픽해 주세요"(기획서 공유 문구).
- * - 사이트·명예의 전당: 사진 없이 제호만.
+ * - 사이트·명예의 전당: 사진 없이 흰 바탕에 분홍 제호.
  * 동작 순서
  * 1. 그림에 쓰는 글자만 담은 한글 글꼴을 Google Fonts 에서 받는다(text= 로 그 글자만, TTF). 매번 글자가 달라 요청마다 받는다.
  * 2. 사진은 서버가 직접 JPEG 로 받아 data 주소로 넣는다(photoData. next/og 가 WebP 를 못 그리고, 로컬 127.0.0.1 주소도 막아서).
@@ -12,7 +12,7 @@ import { ImageResponse } from "next/og";
 import { PHOTO_BUCKET, supabaseEnv } from "@/shared/lib/supabase/env";
 
 export const OG_SIZE = { width: 1200, height: 630 };
-const C = { paper: "#FFFFFF", paper2: "#F0F0F0", ink: "#141414", ink2: "#5F5F5F", pink: "#D62A66", onPink: "#FFFFFF", pinkText: "#C2255F" };
+const C = { paper: "#FFFFFF", paper2: "#F0F0F0", ink: "#141414", ink2: "#5F5F5F", pinkText: "#C2255F" };
 const UA = "produce-daengnyang-og"; // 브라우저가 아닌 이름이면 Google Fonts 가 next/og 가 읽는 TTF 를 준다
 
 async function googleFont(family: string, text: string): Promise<ArrayBuffer | null> {
@@ -127,16 +127,17 @@ export async function siteOgImage(title: string, sub: string): Promise<ImageResp
   ];
   return new ImageResponse(
     (
-      <div style={{ width: "100%", height: "100%", display: "flex", flexDirection: "column", justifyContent: "center", padding: "0 88px", background: C.pink, color: C.onPink }}>
+      // 흰 종이 바탕 + 분홍 제호("분홍은 누르는 곳·맨 아래 제호에만" 규칙, #8 후속). 사이트 맨 아래 큰 제호와 같은 모양
+      <div style={{ width: "100%", height: "100%", display: "flex", flexDirection: "column", justifyContent: "center", padding: "0 88px", background: C.paper, color: C.ink }}>
         {display ? (
           // next/og 는 묶음(<>)을 부모 방향과 다르게 놓을 수 있어 세로 상자로 감싼다
           <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-start" }}>
-            <div style={{ display: "flex", fontFamily: "display", fontSize: 48, opacity: 0.9 }}>프로듀스</div>
-            <div style={{ display: "flex", fontFamily: "display", fontSize: 200, lineHeight: 1.05, marginTop: 4 }}>댕냥</div>
+            <div style={{ display: "flex", fontFamily: "display", fontSize: 48, color: C.pinkText }}>프로듀스</div>
+            <div style={{ display: "flex", fontFamily: "display", fontSize: 200, lineHeight: 1.05, marginTop: 4, color: C.pinkText }}>댕냥</div>
             {title ? <div style={{ display: "flex", fontFamily: "display", fontSize: 64, marginTop: 20 }}>{title}</div> : null}
           </div>
         ) : null}
-        {body ? <div style={{ display: "flex", fontFamily: "body", fontSize: 32, marginTop: 18 }}>{sub}</div> : null}
+        {body ? <div style={{ display: "flex", fontFamily: "body", fontSize: 32, marginTop: 18, color: C.ink2 }}>{sub}</div> : null}
       </div>
     ),
     { ...OG_SIZE, fonts, headers: HEADERS },
