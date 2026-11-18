@@ -12,7 +12,7 @@
  */
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from "react";
 import { AnonSignInError, ensureAnonSession } from "@/features/auth/session";
-import { clearPendingPick, savePendingPick, takeFlash, takePendingPick } from "@/features/auth/handoff";
+import { savePendingPick, takeFlash, takePendingPick } from "@/features/auth/handoff";
 import { browserClient } from "@/shared/lib/supabase/client";
 import type { Board } from "@/shared/lib/format";
 import { kstDate } from "@/shared/lib/kst";
@@ -48,12 +48,11 @@ export function PicksProvider({ init, children }: { init: PicksInit; children: R
   const openLogin = useLoginSheet();
   const [viewer, setViewer] = useState(init.viewer);
   const guestBusy = useRef(false);
-  // 픽 때문에 시트를 열 때는 하려던 픽을 적어 두고, 다른 이유로 열면 지운다
+  // 픽 때문에 시트를 열 때는 하려던 픽을 적어 둔다(다른 이유로 열면 LoginSheet 가 지운다)
   const askLogin = useCallback(
-    (p?: { entryId: string; board: Board }) => {
-      if (p) savePendingPick(p);
-      else clearPendingPick();
-      openLogin(p ? "pick" : "login");
+    (p: { entryId: string; board: Board }, reason: "pick" | "ip" = "pick") => {
+      savePendingPick(p);
+      openLogin(reason);
     },
     [openLogin],
   );
@@ -73,7 +72,7 @@ export function PicksProvider({ init, children }: { init: PicksInit; children: R
       }
       if (left0 <= 0) {
         const o = pickErrorOutcome(viewer === "member" ? "daily_limit" : "anon_limit", board);
-        return o.kind === "sheet" ? askLogin({ entryId, board }) : toast(o.text);
+        return o.kind === "sheet" ? askLogin({ entryId, board }, o.reason) : toast(o.text);
       }
       // 첫 픽(익명 로그인) 처리 중이면 받지 않는다. 상태(pending)는 다음 렌더에야 보이므로 ref 로 바로 막는다.
       if (viewer === "guest") {
@@ -108,7 +107,7 @@ export function PicksProvider({ init, children }: { init: PicksInit; children: R
       if (error) {
         const o = pickErrorOutcome(error.message, board);
         if (error.message === "already_picked") setPicked((s) => new Set(s).add(entryId));
-        return o.kind === "sheet" ? askLogin({ entryId, board }) : toast(o.text);
+        return o.kind === "sheet" ? askLogin({ entryId, board }, o.reason) : toast(o.text);
       }
       const left = Number((data as { remaining?: number } | null)?.remaining ?? 0);
       // 익명은 두 게시판 합쳐 하루 1픽이라 한 번 쓰면 둘 다 0

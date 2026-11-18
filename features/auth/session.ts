@@ -9,6 +9,7 @@
 import { browserClient } from "@/shared/lib/supabase/client";
 import { safeNext } from "@/shared/lib/next-path";
 import { turnstileToken } from "@/shared/lib/turnstile";
+import { trackAuth } from "./track";
 
 export const MERGE_KEY = "pd_merge_anon";
 
@@ -49,10 +50,12 @@ export async function continueWithGoogle(next: string): Promise<void> {
   const { data } = await sb.auth.getSession();
   const redirectTo = callbackUrl(next);
   if (data.session?.user.is_anonymous) {
+    trackAuth("google", "link");
     const { error } = await sb.auth.linkIdentity({ provider: "google", options: { redirectTo } });
     if (error) throw error;
     return;
   }
+  trackAuth("google", "signin");
   const { error } = await sb.auth.signInWithOAuth({ provider: "google", options: { redirectTo } });
   if (error) throw error;
 }

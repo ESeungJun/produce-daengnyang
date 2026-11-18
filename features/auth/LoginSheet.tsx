@@ -11,12 +11,15 @@ import { Sheet } from "@/shared/ui/Sheet";
 import { useToast } from "@/shared/ui/Toast";
 import { continueWithGoogle } from "./session";
 import { clearPendingPick, inAppBrowser } from "./handoff";
+import { trackAuth } from "./track";
 
-export type LoginReason = "pick" | "register" | "comment" | "login";
+export type LoginReason = "pick" | "register" | "comment" | "login" | "ip";
 
 const TEXT: Record<LoginReason, [string, string]> = {
   // 로그인 없이 하는 첫 1픽을 쓴 뒤(두 번째 픽)에 뜬다
   pick: ["픽을 더 하려면 로그인해 주세요", "구글 계정으로 로그인하면 댕댕이·냥이 게시판마다 하루 3픽이에요. 방금 한 픽도 그대로 이어져요."],
+  // 같은 인터넷 연결(와이파이·통신사)에서 오늘 로그인 전 픽이 너무 많을 때(접속 정보별 하루 한도). 이 사람은 픽을 못 했으니 "이어져요"라고 하지 않는다
+  ip: ["이 인터넷에서는 오늘 로그인 전 픽이 마감됐어요", "같은 와이파이·통신사 연결에서 여러 사람이 픽했어요. 구글 계정으로 로그인하면 댕댕이·냥이 게시판마다 하루 3픽이에요."],
   register: ["연습생 등록은 로그인 후에 할 수 있어요", "구글 계정으로 3초면 끝나요. 등록한 아이가 1위를 하면 알림과 메일로 알려 드려요."],
   login: ["구글 계정으로 로그인해요", "로그인하면 댕댕이·냥이 게시판마다 하루 3픽, 연습생 등록과 응원 댓글을 할 수 있어요."],
   comment: ["댓글은 로그인 후에 남길 수 있어요", "쓰던 댓글은 그대로 남아 있어요. 로그인하면 바로 올라가요. 픽을 안 해도 댓글은 달 수 있어요."],
@@ -30,7 +33,8 @@ export function LoginSheetProvider({ children }: { children: React.ReactNode }) 
   const close = useCallback(() => setReason(null), []);
   // 픽이 아닌 이유로 열면 예전에 적어 둔 "하려던 픽"을 지운다(엉뚱한 픽이 나중에 나가지 않게)
   const open = useCallback((r: LoginReason) => {
-    if (r !== "pick") clearPendingPick();
+    if (r !== "pick" && r !== "ip") clearPendingPick();
+    trackAuth("sheet", r);
     setReason(r);
   }, []);
   const [title, body] = TEXT[reason ?? "pick"];
@@ -46,6 +50,7 @@ export function LoginSheetProvider({ children }: { children: React.ReactNode }) 
         onMain={() => {
           close();
           const app = inAppBrowser();
+          if (app) trackAuth("google", app === "kakao" ? "inapp_kakao" : "inapp_other");
           if (app === "kakao") {
             location.href = `kakaotalk://web/openExternal?url=${encodeURIComponent(location.href)}`;
             return;
@@ -54,7 +59,10 @@ export function LoginSheetProvider({ children }: { children: React.ReactNode }) 
             toast("앱 안 브라우저에서는 구글 로그인이 막혀요. 오른쪽 위 메뉴에서 '다른 브라우저로 열기'를 눌러 주세요");
             return;
           }
-          continueWithGoogle(location.pathname + location.search).catch(() => toast("구글 로그인 화면을 열지 못했어요. 잠시 뒤 다시 눌러 주세요"));
+          continueWithGoogle(location.pathname + location.search).catch(() => {
+            trackAuth("google", "open_failed");
+            toast("구글 로그인 화면을 열지 못했어요. 잠시 뒤 다시 눌러 주세요");
+          });
         }}
         onClose={close}
       />

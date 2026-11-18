@@ -3,8 +3,9 @@ import { pickErrorOutcome, pickedText } from "./messages";
 
 describe("pickErrorOutcome", () => {
   it("로그인 전·익명 한도는 로그인 시트", () => {
-    expect(pickErrorOutcome("not_signed_in", "dog")).toEqual({ kind: "sheet" });
-    expect(pickErrorOutcome("anon_limit", "cat")).toEqual({ kind: "sheet" });
+    expect(pickErrorOutcome("not_signed_in", "dog")).toEqual({ kind: "sheet", reason: "pick" });
+    expect(pickErrorOutcome("anon_limit", "cat")).toEqual({ kind: "sheet", reason: "pick" });
+    expect(pickErrorOutcome("ip_limit", "cat")).toEqual({ kind: "sheet", reason: "ip" });
   });
   it("회원 한도는 게시판 이름을 넣은 토스트", () => {
     // 2026-11-18 18:48 KST → 자정까지 5시간 12분
