@@ -68,7 +68,17 @@ export async function DetailPage({ board, id }: { board: Board; id: string }) {
             <PickButton entryId={e.id} board={board} size="lg" pickedToday={e.picked_today} closed={closed} />
           </div>
           {e.bio ? <p className={s.bio}>{e.bio}</p> : null}
-          {closed === "mine" ? <p className={s.notice}>내 아이 글이에요. 내 글에는 픽할 수 없어요. 공유해서 응원을 받아 보세요.</p> : null}
+          {closed === "mine" ? (
+            <p className={s.notice}>
+              내 아이 글이에요. 내 글에는 픽할 수 없어요. 공유해서 응원을 받아 보세요.
+              {e.round.open && !e.hidden ? (
+                <>
+                  {" "}
+                  <Link href={`/${board}/${e.id}/edit`}>글 고치기</Link>
+                </>
+              ) : null}
+            </p>
+          ) : null}
           {closed === "ended" ? <p className={s.notice}>마감된 라운드라 픽할 수 없어요. 지금 라운드는 {BOARD_NAME[board]} 게시판에서 볼 수 있어요.</p> : null}
           {e.hidden ? <p className={s.notice}>관리자가 숨긴 글이에요. 나에게만 보여요.</p> : null}
           {e.round.blind ? <p className={s.notice}>마감 전 24시간부터 결과가 나올 때까지 표 수를 가려요.</p> : null}

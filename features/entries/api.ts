@@ -41,6 +41,8 @@ export type EntryDetail = {
   hidden: boolean;
   deleted: false;
   is_mine: boolean;
+  /** 주인에게만 온다: 픽을 받았거나 결선 복사본이면 사진을 못 바꾼다 */
+  photos_locked?: boolean | null;
   picked_today: boolean;
   round: { id: number; kind: "weekly" | "final"; seq: number; month: string; starts_at: string; ends_at: string; open: boolean; blind: boolean };
   photos: { path: string; thumb_path: string }[];

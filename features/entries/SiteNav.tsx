@@ -3,7 +3,7 @@ import Link from "next/link";
 import type { Board } from "@/shared/lib/format";
 import { RegisterButton } from "./RegisterButton";
 
-export function SiteNav({ current }: { current?: Board }) {
+export function SiteNav({ current }: { current?: Board | "register" }) {
   return (
     <>
       <Link href="/dog" aria-current={current === "dog" ? "page" : undefined}>
@@ -12,7 +12,7 @@ export function SiteNav({ current }: { current?: Board }) {
       <Link href="/cat" aria-current={current === "cat" ? "page" : undefined}>
         냥이
       </Link>
-      <RegisterButton />
+      <RegisterButton current={current === "register"} />
     </>
   );
 }

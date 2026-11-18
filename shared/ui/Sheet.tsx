@@ -4,6 +4,7 @@
  * 1. open 이 바뀌면 먼저 보이게(hidden 해제) 한 뒤 다음 프레임에 올린다(전환 효과가 보이게).
  * 2. 닫을 때는 내려가는 전환이 끝난 뒤 숨긴다. Esc 로도 닫힌다.
  * 3. 열리면 주 버튼에 초점을 두고, 닫히면 시트를 열기 전 초점(누른 버튼)으로 돌려준다.
+ * 4. danger(되돌릴 수 없는 동작: 탈퇴·글 지우기): 첫 초점은 보조 버튼, 뒤를 막(scrim)으로 덮고 aria-modal, 주 버튼은 테두리 모양.
  */
 import { useEffect, useRef, useState } from "react";
 import s from "./ui.module.css";
@@ -19,22 +20,36 @@ type Props = {
   subLabel: string;
   onMain: () => void;
   onClose: () => void;
+  danger?: boolean;
 };
 
-export function Sheet({ open, title, body, mainLabel, subLabel, onMain, onClose }: Props) {
+export function Sheet({
+  open,
+  title,
+  body,
+  mainLabel,
+  subLabel,
+  onMain,
+  onClose,
+  danger = false,
+}: Props) {
   const [mounted, setMounted] = useState(open);
   const [up, setUp] = useState(false);
   const main = useRef<HTMLButtonElement>(null);
+  const sub = useRef<HTMLButtonElement>(null);
   const opener = useRef<HTMLElement | null>(null);
 
   useEffect(() => {
     if (open) {
-      opener.current = document.activeElement instanceof HTMLElement ? document.activeElement : null;
+      opener.current =
+        document.activeElement instanceof HTMLElement
+          ? document.activeElement
+          : null;
       const raf = requestAnimationFrame(() => {
         setMounted(true);
         requestAnimationFrame(() => {
           setUp(true);
-          main.current?.focus();
+          (danger ? sub : main).current?.focus();
         });
       });
       return () => cancelAnimationFrame(raf);
@@ -47,7 +62,7 @@ export function Sheet({ open, title, body, mainLabel, subLabel, onMain, onClose 
       cancelAnimationFrame(raf);
       clearTimeout(t);
     };
-  }, [open]);
+  }, [open, danger]);
 
   useEffect(() => {
     if (!open) return;
@@ -57,16 +72,44 @@ export function Sheet({ open, title, body, mainLabel, subLabel, onMain, onClose 
   }, [open, onClose]);
 
   return (
-    <div className={s.sheet} role="dialog" aria-modal="false" aria-label={title} data-on={up} hidden={!mounted}>
-      <div className={s.grip} />
-      <p className={s.sheetTitle}>{title}</p>
-      <p className={s.sheetBody}>{body}</p>
-      <button ref={main} className={s.sheetMain} type="button" onClick={onMain}>
-        {mainLabel}
-      </button>
-      <button className={s.sheetSub} type="button" onClick={onClose}>
-        {subLabel}
-      </button>
-    </div>
+    <>
+      {danger ? (
+        <div
+          className={s.scrim}
+          data-on={up}
+          hidden={!mounted}
+          onClick={onClose}
+          aria-hidden="true"
+        />
+      ) : null}
+      <div
+        className={s.sheet}
+        role="dialog"
+        aria-modal={danger}
+        aria-label={title}
+        data-on={up}
+        hidden={!mounted}
+      >
+        <div className={s.grip} />
+        <p className={s.sheetTitle}>{title}</p>
+        <p className={s.sheetBody}>{body}</p>
+        <button
+          ref={main}
+          className={danger ? s.sheetDanger : s.sheetMain}
+          type="button"
+          onClick={onMain}
+        >
+          {mainLabel}
+        </button>
+        <button
+          ref={sub}
+          className={s.sheetSub}
+          type="button"
+          onClick={onClose}
+        >
+          {subLabel}
+        </button>
+      </div>
+    </>
   );
 }
