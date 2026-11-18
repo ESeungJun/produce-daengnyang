@@ -6,7 +6,7 @@
 -- ─────────────────────────────────────────────────────────────
 begin;
 create extension if not exists pgtap with schema extensions;
-select plan(108);
+select plan(111);
 
 -- ── 준비(관리자 권한) ───────────────────────────────────────
 -- 사용자: A·B·D 구글 연결(회원), C 익명, E 이메일 가입(구글 연결 없음 → 회원 아님)
@@ -30,7 +30,7 @@ select is((select count(*) from pg_tables where schemaname = 'public' and not ro
 select is(
   (select array_agg(p.proname::text order by p.proname) from pg_proc p join pg_namespace n on n.oid = p.pronamespace
      where n.nspname = 'public' and has_function_privilege('anon', p.oid, 'execute')),
-  array['board_entries', 'cast_pick', 'entry_comments', 'get_entry', 'get_featured', 'has_hidden_chars', 'my_picks_today', 'record_auth', 'record_sns'],
+  array['board_entries', 'cast_pick', 'count_view', 'entry_comments', 'get_entry', 'get_featured', 'has_hidden_chars', 'my_picks_today', 'record_auth', 'record_sns'],
   '손님(anon)이 부를 수 있는 함수는 허용 목록뿐');
 
 -- 라운드: 지금 열린 주간(t1), 끝난 주간(t0)
@@ -249,6 +249,15 @@ select throws_ok($$select public.snapshot_ranks()$$, '42501', null, '순위 기�
 -- ── 조회수·가림 기간·결선 기간(관리자 권한) ──────────────────
 set local role postgres;
 select ok(public.record_view('00000000-0000-0000-0000-00000000e001', 'viewer-key-1') and not public.record_view('00000000-0000-0000-0000-00000000e001', 'viewer-key-1'), '같은 사람은 하루 한 번만 센다');
+-- count_view(#5): Vault 토큰을 아는 서버만 센다. 손님 역할로 불러도 토큰이 틀리면 0.
+delete from vault.secrets where name = 'view_token';
+select vault.create_secret('test-view-token', 'view_token');
+set local role anon;
+select is(public.count_view('00000000-0000-0000-0000-00000000e001', 'viewer-hash-0001', 'wrong-token'), false, '조회수 토큰이 틀리면 세지 않는다');
+select ok(public.count_view('00000000-0000-0000-0000-00000000e001', 'viewer-hash-0002', 'test-view-token')
+          and not public.count_view('00000000-0000-0000-0000-00000000e001', 'viewer-hash-0002', 'test-view-token'), '토큰이 맞으면 하루 한 번 센다');
+select is(public.count_view('00000000-0000-0000-0000-00000000e001', 'short', 'test-view-token'), false, '보는 사람 키가 짧으면 세지 않는다');
+set local role postgres;
 
 delete from public.picks where voter_id = '00000000-0000-0000-0000-0000000000b1' and entry_id = '00000000-0000-0000-0000-00000000e001';
 select is((select pick_count from public.entries where id = '00000000-0000-0000-0000-00000000e001'), 0, '픽이 지워지면 표 수도 줄어든다');

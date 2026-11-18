@@ -367,6 +367,9 @@ isOneToOne: false
 "client_ip_hash":
 { Args: Record<PropertyKey, never>; Returns: string
                            },
+"count_view":
+{ Args: { "p_entry_id": string,"p_token": string,"p_viewer": string }; Returns: boolean
+                           },
 "create_entry":
 { Args: { "p_bio": string,"p_board": Database["public"]['Enums']["board_kind"],"p_instagram": string,"p_pet_name": string,"p_photos": Json,"p_threads": string,"p_youtube": string }; Returns: string
                            },
