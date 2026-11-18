@@ -23,7 +23,7 @@ const ROUND_LIMIT = 2;
 /** 한국 날짜의 "일" */
 const kstDay = (iso: string) => new Date(new Date(iso).getTime() + 9 * 3600 * 1000).getUTCDate();
 
-export async function RegisterPage() {
+export async function RegisterPage({ resumeSubmit = false }: { resumeSubmit?: boolean }) {
   const supabase = await createClient();
   const [round, uid] = await Promise.all([loadOpenRound(supabase), memberId(supabase)]);
   let left = ROUND_LIMIT;
@@ -64,7 +64,7 @@ export async function RegisterPage() {
           </div>
         </div>
       ) : (
-        <RegisterForm mode="create" left={left} />
+        <RegisterForm mode="create" left={left} resumeSubmit={resumeSubmit && !!uid} />
       )}
     </div>
   );

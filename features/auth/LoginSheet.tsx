@@ -13,7 +13,8 @@ import { continueWithGoogle } from "./session";
 import { clearPendingPick, inAppBrowser, openExternal } from "./handoff";
 import { trackAuth } from "./track";
 
-export type LoginReason = "pick" | "register" | "comment" | "login" | "ip";
+/** submit: 등록 폼을 다 쓰고 "등록하기"를 눌렀을 때. 로그인하고 돌아오면 쓴 내용으로 바로 등록한다(/register?submit=1) */
+export type LoginReason = "pick" | "register" | "submit" | "comment" | "login" | "ip";
 
 const TEXT: Record<LoginReason, [string, string]> = {
   // 로그인 없이 하는 첫 1픽을 쓴 뒤(두 번째 픽)에 뜬다
@@ -21,6 +22,7 @@ const TEXT: Record<LoginReason, [string, string]> = {
   // 같은 인터넷 연결(와이파이·통신사)에서 오늘 로그인 전 픽이 너무 많을 때(접속 정보별 하루 한도). 이 사람은 픽을 못 했으니 "이어져요"라고 하지 않는다
   ip: ["이 인터넷에서는 오늘 로그인 전 픽이 마감됐어요", "같은 와이파이·통신사 연결에서 여러 사람이 픽했어요. 구글 계정으로 로그인하면 댕댕이·냥이 게시판마다 하루 3픽이에요."],
   register: ["연습생 등록은 로그인 후에 할 수 있어요", "구글 계정으로 3초면 끝나요. 등록한 아이가 1위를 하면 알림과 메일로 알려 드려요."],
+  submit: ["로그인하면 바로 등록돼요", "쓴 내용과 사진은 이 기기에 그대로 있어요. 구글 계정으로 로그인하고 돌아오면 다시 누르지 않아도 등록돼요."],
   login: ["구글 계정으로 로그인해요", "로그인하면 댕댕이·냥이 게시판마다 하루 3픽, 연습생 등록과 응원 댓글을 할 수 있어요."],
   comment: ["댓글은 로그인 후에 남길 수 있어요", "쓰던 댓글은 그대로 남아 있어요. 로그인하면 바로 올라가요. 픽을 안 해도 댓글은 달 수 있어요."],
 };
@@ -34,7 +36,7 @@ export function LoginSheetProvider({ children }: { children: React.ReactNode }) 
   // 픽이 아닌 이유로 열면 예전에 적어 둔 "하려던 픽"을 지운다(엉뚱한 픽이 나중에 나가지 않게)
   const open = useCallback((r: LoginReason) => {
     if (r !== "pick" && r !== "ip") clearPendingPick();
-    trackAuth("sheet", r);
+    trackAuth("sheet", r === "submit" ? "register" : r); // DB 허용 목록은 그대로(등록으로 센다)
     setReason(r);
   }, []);
   const [title, body] = TEXT[reason ?? "pick"];
@@ -48,8 +50,8 @@ export function LoginSheetProvider({ children }: { children: React.ReactNode }) 
         mainLabel="구글로 계속하기"
         subLabel="그냥 구경할게요"
         onMain={() => {
-          // 등록하려다 연 시트면 로그인 뒤 등록 화면으로, 그 밖에는 보던 곳으로 돌아온다
-          const next = reason === "register" ? "/register" : location.pathname + location.search;
+          // 등록하려다 연 시트면 로그인 뒤 등록 화면으로(폼을 다 쓰고 눌렀으면 바로 등록), 그 밖에는 보던 곳으로 돌아온다
+          const next = reason === "submit" ? "/register?submit=1" : reason === "register" ? "/register" : location.pathname + location.search;
           close();
           const app = inAppBrowser();
           if (app) trackAuth("google", app === "kakao" ? "inapp_kakao" : "inapp_other");
