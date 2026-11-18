@@ -64,8 +64,10 @@ export function ensureAnonSession(): Promise<void> {
 
 /**
  * reauth: 이미 로그인한 회원이 되돌릴 수 없는 일(탈퇴) 전에 다시 확인할 때. 구글 계정 고르기 화면을 꼭 띄운다.
+ * fresh: 관리자 계정 정리처럼 더 무거운 일. 구글에 max_age=0 을 보내 계정 고르기만이 아니라 다시 로그인을 요구한다.
+ *   구글이 늘 지키지는 않으므로(이미 로그인된 기기면 그냥 넘길 수 있다) 관리자 구글 계정의 2단계 인증과 함께 쓴다(#6 보안 리뷰).
  */
-export async function continueWithGoogle(next: string, opts: { reauth?: boolean } = {}): Promise<void> {
+export async function continueWithGoogle(next: string, opts: { reauth?: boolean; fresh?: boolean } = {}): Promise<void> {
   const sb = await browserClient();
   const { data } = await sb.auth.getSession();
   const redirectTo = callbackUrl(next);
@@ -78,7 +80,10 @@ export async function continueWithGoogle(next: string, opts: { reauth?: boolean 
   trackAuth("google", "signin");
   const { error } = await sb.auth.signInWithOAuth({
     provider: "google",
-    options: { redirectTo, queryParams: opts.reauth ? { prompt: "select_account" } : undefined },
+    options: {
+      redirectTo,
+      queryParams: opts.reauth || opts.fresh ? { prompt: "select_account", ...(opts.fresh ? { max_age: "0" } : {}) } : undefined,
+    },
   });
   if (error) throw error;
 }
