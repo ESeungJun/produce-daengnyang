@@ -1,7 +1,7 @@
 /**
  * 명예의 전당(/hall, #8): 지난 12개월 동안 데뷔(결선 1위)와 센터(주간 1위)를 달마다 모은다.
  * - 달 제목 아래 데뷔를 크게(사진 3:4, 이름을 사진 위에), 그 아래 그 달 라운드 센터를 작은 카드로.
- * - 숨김·삭제된 글은 DB 가 빼고 다음 순위를 그 자리에 둔다(hall_of_fame).
+ * - 1위 글이 숨겨지거나 지워지면 2위를 올리지 않고 그 자리를 빈 카드로 둔다(hall_of_fame 의 hidden, 2026-11-19 사용자 결정).
  * - 아직 결과가 없으면 안내 판과 게시판 가기 버튼.
  */
 import Link from "next/link";
@@ -56,14 +56,14 @@ export async function HallPage() {
             {m.debut.length ? (
               <ul className={s.debuts} aria-label={`${monthTitle(m.month)} 데뷔`}>
                 {m.debut.map((c) => (
-                  <DebutCard key={c.entry_id} c={c} eager={m.month === latest} />
+                  <DebutCard key={`${c.board}-${c.round_month}`} c={c} eager={m.month === latest} />
                 ))}
               </ul>
             ) : null}
             {m.center.length ? (
               <ul className={s.centers} aria-label={`${monthTitle(m.month)} 센터`}>
                 {m.center.map((c) => (
-                  <CenterCard key={`${c.entry_id}-${c.round_seq}`} c={c} />
+                  <CenterCard key={`${c.board}-${c.round_seq}`} c={c} />
                 ))}
               </ul>
             ) : null}
@@ -76,8 +76,24 @@ export async function HallPage() {
   );
 }
 
+/** 숨기거나 지운 1위 자리에 쓰는 문구. 이유(관리자 숨김·주인 삭제)는 알리지 않는다 */
+const HIDDEN_NAME = "공개되지 않은 1위";
+
 function DebutCard({ c, eager }: { c: HallCard; eager: boolean }) {
   const month = Number(c.round_month.slice(5, 7));
+  if (c.hidden || !c.entry_id)
+    return (
+      <li className={s.debut}>
+        <div className={s.placeholder}>
+          <span className={s.debutText}>
+            <small>
+              {month}월 데뷔 · {BOARD_NAME[c.board]}
+            </small>
+            <b>{HIDDEN_NAME}</b>
+          </span>
+        </div>
+      </li>
+    );
   return (
     <li className={s.debut}>
       <Link href={`/${c.board}/${c.entry_id}`}>
@@ -88,7 +104,7 @@ function DebutCard({ c, eager }: { c: HallCard; eager: boolean }) {
             {month}월 데뷔 · {BOARD_NAME[c.board]}
           </small>
           <b>{c.pet_name}</b>
-          <span className={s.debutVotes}>{count(c.votes)}표로 데뷔</span>
+          <span className={s.debutVotes}>{count(c.votes ?? 0)}표로 데뷔</span>
         </span>
       </Link>
     </li>
@@ -96,6 +112,18 @@ function DebutCard({ c, eager }: { c: HallCard; eager: boolean }) {
 }
 
 function CenterCard({ c }: { c: HallCard }) {
+  if (c.hidden || !c.entry_id)
+    return (
+      <li className={s.center}>
+        <div className={s.centerHidden}>
+          <span className={s.centerBlank} aria-hidden="true" />
+          <small>
+            {roundName(c.round_kind, c.round_seq)} 센터 · {BOARD_NAME[c.board]}
+          </small>
+          <b>{HIDDEN_NAME}</b>
+        </div>
+      </li>
+    );
   return (
     <li className={s.center}>
       <Link href={`/${c.board}/${c.entry_id}`}>
@@ -104,7 +132,7 @@ function CenterCard({ c }: { c: HallCard }) {
           {roundName(c.round_kind, c.round_seq)} 센터 · {BOARD_NAME[c.board]}
         </small>
         <b>{c.pet_name}</b>
-        <span>{count(c.votes)}표</span>
+        <span>{count(c.votes ?? 0)}표</span>
       </Link>
     </li>
   );

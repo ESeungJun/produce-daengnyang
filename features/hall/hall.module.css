@@ -31,6 +31,14 @@
 }
 .debutVotes { font-size: var(--pd-fs-tiny); text-shadow: 0 1px 3px rgb(var(--pd-shade) / 0.6); }
 
+/* 빈 카드(숨기거나 지운 1위). 사진 자리는 paper-2 판, 글자는 보조 색 */
+.placeholder { position: relative; aspect-ratio: 3 / 4; border-radius: var(--pd-r-md); background: var(--pd-paper-2); border: 1px dashed var(--pd-jelly); }
+.placeholder .debutText b { color: var(--pd-ink-2); text-shadow: none; font-size: var(--pd-fs-name); }
+.centerHidden { display: flex; flex-direction: column; gap: 3px; color: var(--pd-ink-2); }
+.centerBlank { display: block; aspect-ratio: 4 / 5; border-radius: var(--pd-r-md); background: var(--pd-paper-2); border: 1px dashed var(--pd-jelly); margin-bottom: 4px; }
+.centerHidden small { font-size: var(--pd-fs-tiny); }
+.centerHidden b { font-family: var(--pd-f-display); font-weight: 400; font-size: var(--pd-fs-name); }
+
 /* 센터: 4:5 사진 + 아래 라벨·이름·표 수 */
 .centers { display: grid; grid-template-columns: 1fr 1fr; gap: 16px 10px; list-style: none; margin: 0; padding: 0; }
 .center { min-width: 0; }
@@ -58,14 +66,14 @@
 @media (min-width: 720px) {
   .centers { grid-template-columns: repeat(4, 1fr); }
   /* 두 칸이 넓어지면 3:4 는 화면보다 길어진다 */
-  .debut img { aspect-ratio: 1 / 1; }
+  .debut img, .placeholder { aspect-ratio: 1 / 1; }
 }
 @media (min-width: 1024px) {
   .head h1 { font-size: var(--pd-fs-d-section); }
   .head p { font-size: var(--pd-fs-body); }
   .month { padding-top: 40px; }
   /* 데뷔 두 장이 한 화면 높이를 넘지 않게 가로로 눕힌다 */
-  .debut img { aspect-ratio: 4 / 3; }
+  .debut img, .placeholder { aspect-ratio: 4 / 3; }
   .debutText small { font-size: var(--pd-fs-ui); padding: 4px 12px; }
   .debutVotes { font-size: var(--pd-fs-ui); }
   .month h2 { font-size: var(--pd-fs-d-board); margin-bottom: 18px; }
