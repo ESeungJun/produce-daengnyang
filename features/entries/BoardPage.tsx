@@ -5,7 +5,11 @@
 import Link from "next/link";
 import { BOARD_NAME, deadlineLabel, issueLabel, type Board } from "@/shared/lib/format";
 import { kstDate } from "@/shared/lib/kst";
+import { cookies } from "next/headers";
 import { createClient } from "@/shared/lib/supabase/server";
+import { VISITOR_COOKIE, cleanVisitorKey } from "@/shared/lib/visitor";
+import { CenterBanner } from "@/features/featured/CenterBanner";
+import { getFeatured } from "@/features/featured/server";
 import { Colophon, SortLinks } from "@/shared/ui/parts";
 import { TopBar, page } from "@/shared/ui/TopBar";
 import { LoginButton } from "@/features/auth/LoginButton";
@@ -22,8 +26,12 @@ import ui from "@/shared/ui/ui.module.css";
 import s from "./entries.module.css";
 
 export async function BoardPage({ board, sort }: { board: Board; sort: BoardSort }) {
+  // 위 센터 띠 데이터를 페이지 데이터와 같이 읽기 시작한다(cache 가 같은 Promise 를 띠에 넘긴다)
+  void getFeatured().catch(() => null);
   const supabase = await createClient();
-  const [round, items] = await Promise.all([loadOpenRound(supabase), loadBoard(supabase, board, { sort })]);
+  // 가림 기간 섞기 seed. 첫 방문이라 쿠키가 없으면 null(모든 첫 방문 손님이 같은 순서), 다음부터 사람마다 다르다.
+  const seed = cleanVisitorKey((await cookies()).get(VISITOR_COOKIE)?.value);
+  const [round, items] = await Promise.all([loadOpenRound(supabase), loadBoard(supabase, board, { sort, seed })]);
   const blind = round ? isBlind(round) : false;
   // 결선 기간(22일~말일)에는 새 등록을 받지 않는다(기획서 4절).
   const final = round?.kind === "final";
@@ -32,6 +40,7 @@ export async function BoardPage({ board, sort }: { board: Board; sort: BoardSort
   return (
     <div className={page.page}>
       <TopBar nav={<SiteNav current={board} />} right={<PicksLeft board={board} />} login={<LoginButton />} />
+      <CenterBanner board={board} />
       <div className={s.bhead}>
         <h1>{BOARD_NAME[board]} 연습생</h1>
         <p>{round ? `${roundTitle(round)} · ${deadlineLabel(round.ends_at)}` : "다음 라운드를 준비하고 있어요"}</p>
@@ -56,7 +65,7 @@ export async function BoardPage({ board, sort }: { board: Board; sort: BoardSort
         />
       </div>
       {items.length ? (
-        <BoardGallery key={sort} board={board} sort={sort} initial={items} showRank={sort === "popular" && !blind} />
+        <BoardGallery key={sort} board={board} sort={sort} seed={seed} initial={items} showRank={sort === "popular" && !blind} />
       ) : (
         <div className={s.empty}>
           <p>

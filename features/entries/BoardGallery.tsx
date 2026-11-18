@@ -12,7 +12,8 @@ import { PAGE_SIZE, type BoardEntry, type BoardSort } from "./api";
 import { EntryCard } from "./EntryCard";
 import s from "./entries.module.css";
 
-export function BoardGallery({ board, sort, initial, showRank }: { board: Board; sort: BoardSort; initial: BoardEntry[]; showRank: boolean }) {
+/** seed: 서버가 첫 목록을 만들 때 쓴 섞기 seed. 이어 불러올 때도 같은 값을 넘겨야 순서가 이어진다. */
+export function BoardGallery({ board, sort, seed, initial, showRank }: { board: Board; sort: BoardSort; seed: string | null; initial: BoardEntry[]; showRank: boolean }) {
   const [items, setItems] = useState(initial);
   const [done, setDone] = useState(initial.length < PAGE_SIZE);
   const [loading, setLoading] = useState(false);
@@ -21,9 +22,20 @@ export function BoardGallery({ board, sort, initial, showRank }: { board: Board;
   async function more() {
     setLoading(true);
     setFailed(false);
-    const { data, error } = await browserClient().rpc("board_entries", { p_board: board, p_sort: sort, p_limit: PAGE_SIZE, p_offset: items.length });
+    const res = await browserClient()
+      .then((supabase) =>
+        supabase.rpc("board_entries", {
+          p_board: board,
+          p_sort: sort,
+          p_limit: PAGE_SIZE,
+          p_offset: items.length,
+          ...(seed ? { p_seed: seed } : {}),
+        }),
+      )
+      .catch(() => null);
     setLoading(false);
-    if (error) return setFailed(true);
+    if (!res || res.error) return setFailed(true);
+    const { data } = res;
     const next = data ?? [];
     // 그사이 순위가 바뀌어 같은 글이 다시 올 수 있어 한 번만 둔다.
     setItems((cur) => {

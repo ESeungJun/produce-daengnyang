@@ -19,7 +19,7 @@ export type FeaturedCard = {
   round_seq: number;
   round_month: string;
   instagram: string | null;
-  tiktok: string | null;
+  threads: string | null;
   youtube: string | null;
 };
 

@@ -9,6 +9,8 @@ import { useRef, useState } from "react";
 import { BOARD_NAME, count, firstSns } from "@/shared/lib/format";
 import { photoUrl } from "@/shared/lib/supabase/env";
 import ui from "@/shared/ui/ui.module.css";
+import { Impression } from "@/features/sns/Impression";
+import { SnsLink } from "@/features/sns/SnsLink";
 import type { FeaturedCard } from "./api";
 import s from "./featured.module.css";
 
@@ -87,13 +89,10 @@ export function Cover({ issue, debutMonth, debut, toc }: Props) {
           </div>
         ) : null}
       </div>
-      <div className={s.act}>
-        {sns ? (
-          <a className={ui.pill} href={sns.url} target="_blank" rel="noopener noreferrer">
-            {sns.label}
-          </a>
-        ) : null}
-      </div>
+      {/* 노출은 SNS 버튼이 실제로 보일 때(휴대폰, 지금 넘겨 둔 장)만 센다. 데스크톱은 .act 가 숨어 0 크기라 세지 않는다. */}
+      <Impression key={debut[at]?.entry_id ?? "none"} className={s.act} ids={sns ? [debut[at].entry_id] : []} place="cover">
+        {sns ? <SnsLink className={ui.pill} entryId={debut[at].entry_id} sns={sns} place="cover" /> : null}
+      </Impression>
       {toc}
     </div>
   );
