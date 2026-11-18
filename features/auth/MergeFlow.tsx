@@ -14,6 +14,7 @@ import { Notice } from "@/shared/ui/Notice";
 import ui from "@/shared/ui/ui.module.css";
 import { MERGE_KEY, callbackUrl } from "./session";
 import { saveFlash } from "./handoff";
+import { trackAuth } from "./track";
 
 type View = { title: string; body: string; failed?: boolean } | null;
 const WORKING: View = { title: "로그인을 이어 가는 중이에요", body: "잠시만 기다려 주세요. 방금 한 픽도 같이 옮겨요." };
@@ -75,6 +76,7 @@ export function MergeFlow() {
           if (r && !r.error) moved = Number((r.data as { moved?: number } | null)?.moved ?? 0);
         }
         // 하려던 픽(handoff)은 그대로 둔다. 돌아간 화면이 이어서 보낸다.
+        trackAuth("merge", moved > 0 ? "moved" : moved === 0 ? "dropped" : "failed");
         saveFlash(
           moved > 0
             ? "로그인했어요. 로그인 전에 한 픽도 이 계정으로 옮겼어요"

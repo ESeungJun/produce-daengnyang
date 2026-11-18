@@ -15,16 +15,35 @@ export async function GET(req: NextRequest) {
   const to = (path: string) => NextResponse.redirect(new URL(path, req.nextUrl.origin));
   const mergeUrl = (step: string) => `/auth/merge?step=${step}&next=${encodeURIComponent(next)}`;
 
+  const supabase = await createClient();
+  // 로그인 전환 기록(숫자만). 기다리지 않아도 되지만 Workers 가 응답 뒤 요청을 끊을 수 있어 짧게 기다린다.
+  const track = (detail: "ok" | "cancel" | "error" | "already") =>
+    supabase.rpc("record_auth", { p_kind: "callback", p_detail: detail }).then(
+      () => {},
+      () => {},
+    );
   const errCode = q.get("error_code");
   const err = q.get("error");
-  if (errCode === "identity_already_exists") return to(mergeUrl("start"));
-  if (err === "access_denied") return to(next);
-  if (err || errCode) return to(`${mergeUrl("check")}&error=${encodeURIComponent(errCode ?? err ?? "")}`);
+  if (errCode === "identity_already_exists") {
+    await track("already");
+    return to(mergeUrl("start"));
+  }
+  if (err === "access_denied") {
+    await track("cancel");
+    return to(next);
+  }
+  if (err || errCode) {
+    await track("error");
+    return to(`${mergeUrl("check")}&error=${encodeURIComponent(errCode ?? err ?? "")}`);
+  }
   const code = q.get("code");
   if (code) {
-    const supabase = await createClient();
     const { error } = await supabase.auth.exchangeCodeForSession(code);
-    if (!error) return to(q.get("merge") === "1" ? mergeUrl("finish") : next);
+    if (!error) {
+      await track("ok");
+      return to(q.get("merge") === "1" ? mergeUrl("finish") : next);
+    }
   }
+  await track("error");
   return to(mergeUrl("check"));
 }

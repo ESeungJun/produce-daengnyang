@@ -626,6 +626,10 @@ export type Database = {
         }
         Returns: undefined
       }
+      record_auth: {
+        Args: { p_detail: string; p_kind: string }
+        Returns: undefined
+      }
       record_sns: {
         Args: {
           p_entry_ids: string[]

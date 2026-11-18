@@ -5,13 +5,15 @@
 import { BOARD_NAME, untilLabel, type Board } from "@/shared/lib/format";
 import { nextKstMidnight } from "@/shared/lib/kst";
 
-export type PickOutcome = { kind: "sheet" } | { kind: "toast"; text: string };
+export type PickOutcome = { kind: "sheet"; reason: "pick" | "ip" } | { kind: "toast"; text: string };
 
 export function pickErrorOutcome(code: string | undefined, board: Board, now: Date = new Date()): PickOutcome {
   switch (code) {
     case "not_signed_in":
     case "anon_limit":
-      return { kind: "sheet" };
+      return { kind: "sheet", reason: "pick" };
+    case "ip_limit": // 같은 인터넷 연결에서 오늘 로그인 전 픽이 너무 많다(접속 정보별 하루 한도)
+      return { kind: "sheet", reason: "ip" };
     case "daily_limit":
       return {
         kind: "toast",

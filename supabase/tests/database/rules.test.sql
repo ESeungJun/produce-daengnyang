@@ -30,7 +30,7 @@ select is((select count(*) from pg_tables where schemaname = 'public' and not ro
 select is(
   (select array_agg(p.proname::text order by p.proname) from pg_proc p join pg_namespace n on n.oid = p.pronamespace
      where n.nspname = 'public' and has_function_privilege('anon', p.oid, 'execute')),
-  array['board_entries', 'cast_pick', 'entry_comments', 'get_entry', 'get_featured', 'has_hidden_chars', 'my_picks_today', 'record_sns'],
+  array['board_entries', 'cast_pick', 'entry_comments', 'get_entry', 'get_featured', 'has_hidden_chars', 'my_picks_today', 'record_auth', 'record_sns'],
   '손님(anon)이 부를 수 있는 함수는 허용 목록뿐');
 
 -- 라운드: 지금 열린 주간(t1), 끝난 주간(t0)
