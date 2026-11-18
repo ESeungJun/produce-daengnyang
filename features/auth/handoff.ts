@@ -3,12 +3,14 @@
  * 구글 화면을 다녀오는 동안 이 탭에 잠깐 들고 갈 값(sessionStorage). 서버에는 보내지 않는다.
  * - 하려던 픽: 로그인 시트가 픽 때문에 떴으면 돌아온 뒤 그 픽을 이어서 보낸다(기획서 4·5절 "하려던 픽을 이어서").
  * - 알림 한 줄: 픽 옮기기 결과처럼 돌아온 화면에서 토스트로 보여 줄 말.
+ * - 쓰던 댓글(#6): 손님이 댓글을 쓰고 남기기를 누르면 적어 두고, 회원으로 돌아오면 그 글에 바로 올린다.
  * 저장이 막힌 브라우저면 조용히 넘어간다(이어 하기만 빠질 뿐 로그인은 된다).
  */
 import type { Board } from "@/shared/lib/format";
 
 const PICK = "pd_pending_pick";
 const FLASH = "pd_flash";
+const COMMENT = "pd_pending_comment";
 const TTL = 15 * 60_000; // 구글 2단계 인증까지 넉넉히
 
 function put(key: string, v: unknown) {
@@ -33,6 +35,9 @@ export const savePendingPick = (p: PendingPick) => put(PICK, p);
 export const takePendingPick = () => take<PendingPick>(PICK);
 export const clearPendingPick = () => take(PICK);
 export const saveFlash = (text: string) => put(FLASH, text);
+export type PendingComment = { entryId: string; body: string };
+export const savePendingComment = (c: PendingComment) => put(COMMENT, c);
+export const takePendingComment = () => take<PendingComment>(COMMENT);
 export const takeFlash = () => take<string>(FLASH);
 
 /** 카카오톡·인스타 같은 앱 안 브라우저. 구글은 이런 곳(웹뷰)의 로그인을 403 으로 막는다. */

@@ -98,3 +98,17 @@ export function snsLinks(e: Partial<Record<SnsKind, string | null>>): SnsLinkInf
 export function firstSns(e: Partial<Record<SnsKind, string | null>>): SnsLinkInfo | null {
   return snsLinks(e)[0] ?? null;
 }
+
+/** 댓글·알림 시각: 방금 · n분 전 · n시간 전 · 어제 · n일 전 · M월 D일(30일 넘으면). 기준은 KST 날짜. */
+export function timeAgo(iso: string, now: Date = new Date()): string {
+  const at = new Date(iso);
+  const sec = Math.max(0, Math.floor((now.getTime() - at.getTime()) / 1000));
+  if (sec < 60) return "방금";
+  if (sec < 3600) return `${Math.floor(sec / 60)}분 전`;
+  const kst = (d: Date) => new Date(d.getTime() + 9 * 3600_000);
+  const days = Math.round((Date.UTC(kst(now).getUTCFullYear(), kst(now).getUTCMonth(), kst(now).getUTCDate()) - Date.UTC(kst(at).getUTCFullYear(), kst(at).getUTCMonth(), kst(at).getUTCDate())) / 86_400_000);
+  if (days === 0) return `${Math.floor(sec / 3600)}시간 전`;
+  if (days === 1) return "어제";
+  if (days < 30) return `${days}일 전`;
+  return `${kst(at).getUTCMonth() + 1}월 ${kst(at).getUTCDate()}일`;
+}

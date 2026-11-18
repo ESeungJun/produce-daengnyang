@@ -1,6 +1,6 @@
 /**
  * 글 상세: 사진(1~3장) · 이름 · 큰 픽 버튼 · 소개 · SNS 구경 가기 · 공유.
- * 응원 댓글은 #6, 공유 미리보기 이미지는 #8 에서 더한다.
+ * 응원 댓글·신고는 #6(features/comments), 공유 미리보기 이미지는 #8 에서 더한다.
  * getEntry 는 요청 하나 안에서 한 번만 부른다(제목 metadata 와 화면이 같이 쓴다).
  * 조회수는 여기서 센다(views.ts, 응답 뒤). 내 글·숨김 글은 세지 않는다. 가림 기간에는 DB 가 view_count 를 null 로 줘서 숨는다.
  */
@@ -22,6 +22,9 @@ import { PicksLeft } from "@/features/picks/PicksLeft";
 import { VoteCount } from "@/features/picks/VoteCount";
 import { roundTitle } from "@/features/rounds/schedule";
 import { loadEntry } from "./api";
+import { Comments } from "@/features/comments/Comments";
+import { loadComments } from "@/features/comments/api";
+import { ReportButton } from "@/features/comments/ReportButton";
 import { CopyLink } from "./CopyLink";
 import { NewEntryBanner } from "./NewEntryBanner";
 import { PhotoPager } from "./PhotoPager";
@@ -49,10 +52,13 @@ export async function DetailPage({ board, id, fresh = false }: { board: Board; i
     );
   }
   if (!e || e.board !== board) notFound();
+  const supabase = await createClient();
   if (!e.is_mine && !e.hidden) {
-    const { data } = await (await createClient()).auth.getClaims();
+    const { data } = await supabase.auth.getClaims();
     await countView(e.id, data?.claims?.sub ?? null);
   }
+  // 숨긴 글은 주인에게만 보이고 댓글도 받지 않는다(add_comment 가 막는다)
+  const comments = e.hidden ? null : await loadComments(supabase, e.id);
 
   const closed = e.is_mine ? "mine" : !e.round.open ? "ended" : undefined;
   const sns = snsLinks(e);
@@ -98,7 +104,9 @@ export async function DetailPage({ board, id, fresh = false }: { board: Board; i
               <SnsLink key={x.kind} className={ui.pill} entryId={e.id} sns={x} place="detail" />
             ))}
             <CopyLink name={e.pet_name} />
+            {e.is_mine ? null : <ReportButton target="entry" targetId={e.id} className={ui.ghost} />}
           </Impression>
+          {comments ? <Comments entryId={e.id} petName={e.pet_name} initial={comments.items} total={comments.total} /> : null}
         </div>
       </div>
     </div>

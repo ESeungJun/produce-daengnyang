@@ -78,3 +78,6 @@
   .row { grid-template-columns: 96px minmax(0, 1fr); gap: 18px; }
   .thumb { width: 96px; }
 }
+/* 알림함(#6)과 관리자 링크 */
+.inbox { margin-bottom: 32px; }
+.adminLink { font-size: var(--pd-fs-small); color: var(--pd-ink-2); text-underline-offset: 3px; min-height: 44px; display: inline-flex; align-items: center; }
