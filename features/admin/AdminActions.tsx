@@ -3,12 +3,15 @@
  * 신고 한 줄의 관리 동작(#6).
  * - 숨기기/되살리기: admin_set_hidden. 신고도 처리됨으로 닫는다.
  * - 문제없음: admin_dismiss(신고만 닫음).
- * - 계정 정리: 봇·악성 계정. 확인 시트(되돌릴 수 없음) → Edge Function admin-purge-user
- *   (확정 전 라운드의 그 계정 픽을 지우고 계정·글·사진·댓글 삭제). 자기 자신·관리자는 함수가 거절한다.
+ * - 계정 정리: 봇·악성 계정. 최근 10분 안에 로그인했는지 먼저 보고(아니면 구글로 다시 확인받고 /admin 으로 돌아옴),
+ *   확인 시트(되돌릴 수 없음) → Edge Function admin-purge-user(계정 막기 → 확정 전 라운드의 픽 삭제 → 계정·글·사진·댓글 삭제).
+ *   자기 자신·관리자는 함수가 거절하고, 최근 로그인도 함수가 다시 본다.
  * 끝나면 router.refresh 로 목록을 다시 받는다.
  */
 import { useRouter } from "next/navigation";
 import { useState } from "react";
+import { functionErrorCode, recentSignIn } from "@/features/auth/reauth";
+import { continueWithGoogle } from "@/features/auth/session";
 import { browserClient } from "@/shared/lib/supabase/client";
 import { Sheet } from "@/shared/ui/Sheet";
 import { useToast } from "@/shared/ui/Toast";
@@ -32,6 +35,7 @@ export function AdminActions({ target, targetId, hidden, deleted, authorId, auth
   const toast = useToast();
   const [busy, setBusy] = useState<null | "hide" | "dismiss" | "purge">(null);
   const [askPurge, setAskPurge] = useState(false);
+  const [askReauth, setAskReauth] = useState(false);
 
   async function run(kind: "hide" | "dismiss", fn: () => PromiseLike<{ error: unknown }>, done: string) {
     if (busy) return;
@@ -52,6 +56,13 @@ export function AdminActions({ target, targetId, hidden, deleted, authorId, auth
     setAskPurge(false);
     const status = (error as { context?: Response } | null)?.context?.status;
     if (status === 409) return toast("관리자 계정은 정리할 수 없어요");
+    // 응답을 못 받고 다시 눌렀는데 이미 지워진 계정이면 404 가 온다: 정리는 끝난 것이다
+    if (status === 404) {
+      toast("이미 정리된 계정이에요");
+      return router.refresh();
+    }
+    // 화면 검사와 함수 검사 사이에 10분이 지났으면 다시 확인받는다
+    if (status === 403 && (await functionErrorCode(error)) === "reauth_required") return setAskReauth(true);
     if (error) return toast("계정을 정리하지 못했어요. 잠시 뒤 다시 눌러 주세요");
     toast(`계정을 정리했어요. 확정 전 픽 ${(data as { picks?: number } | null)?.picks ?? 0}개를 지웠어요`);
     router.refresh();
@@ -86,7 +97,7 @@ export function AdminActions({ target, targetId, hidden, deleted, authorId, auth
         </button>
       )}
       {authorId && !self && !restoreOnly ? (
-        <button type="button" className={s.danger} disabled={!!busy} onClick={() => setAskPurge(true)}>
+        <button type="button" className={s.danger} disabled={!!busy} onClick={async () => ((await recentSignIn()) ? setAskPurge(true) : setAskReauth(true))}>
           계정 정리
         </button>
       ) : null}
@@ -99,6 +110,18 @@ export function AdminActions({ target, targetId, hidden, deleted, authorId, auth
         subLabel="취소"
         onMain={purge}
         onClose={() => setAskPurge(false)}
+      />
+      <Sheet
+        open={askReauth}
+        title="한 번 더 로그인해 주세요"
+        body="계정 정리는 되돌릴 수 없어서, 최근 10분 안에 로그인한 관리자만 할 수 있어요. 구글로 다시 확인하고 이 화면으로 돌아오면 계정 정리를 한 번 더 눌러 주세요."
+        mainLabel="구글로 다시 확인"
+        subLabel="취소"
+        onMain={async () => {
+          setAskReauth(false);
+          await continueWithGoogle("/admin", { reauth: true }).catch(() => toast("구글 화면을 열지 못했어요. 잠시 뒤 다시 눌러 주세요"));
+        }}
+        onClose={() => setAskReauth(false)}
       />
     </div>
   );

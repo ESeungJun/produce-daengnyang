@@ -6,7 +6,7 @@
 -- ─────────────────────────────────────────────────────────────
 begin;
 create extension if not exists pgtap with schema extensions;
-select plan(128);
+select plan(132);
 
 -- ── 준비(관리자 권한) ───────────────────────────────────────
 -- 사용자: A·B·D 구글 연결(회원), C 익명, E 이메일 가입(구글 연결 없음 → 회원 아님)
@@ -121,6 +121,14 @@ select throws_ok(format('select public.cast_pick(%L)', current_setting('t.e1')),
 select is(public.cast_pick('00000000-0000-0000-0000-00000000e001') ->> 'remaining', '1', '두 번째 픽 → 1');
 select is(public.cast_pick('00000000-0000-0000-0000-00000000e002') ->> 'remaining', '0', '세 번째 픽 → 0');
 select throws_ok($$select public.cast_pick('00000000-0000-0000-0000-00000000e003')$$, 'P0001', 'daily_limit', '게시판마다 하루 3픽');
+-- #6 리뷰: 정리 중인 봇(관리자가 막은 계정)은 이미 받은 토큰으로도 픽하지 못한다
+reset role;
+update auth.users set banned_until = now() + interval '1 day' where id = '00000000-0000-0000-0000-0000000000b1';
+set local role authenticated;
+select throws_ok(format('select public.cast_pick(%L)', current_setting('t.e2')), 'P0001', 'signin_required', '막힌 계정은 픽 못 한다');
+reset role;
+update auth.users set banned_until = null where id = '00000000-0000-0000-0000-0000000000b1';
+set local role authenticated;
 select is(public.cast_pick(current_setting('t.e2')::uuid) ->> 'remaining', '2', '고양이 게시판 한도는 따로');
 select throws_ok($$select public.cast_pick('00000000-0000-0000-0000-00000000e009')$$, 'P0001', 'round_closed', '끝난 라운드 글은 픽 못 한다');
 select throws_ok($$select public.cast_pick('00000000-0000-0000-0000-000000000000')$$, 'P0001', 'not_found', '없는 글');
@@ -244,8 +252,13 @@ select is((select reports from public.admin_reports() where target = 'comment' a
 select public.admin_set_hidden('comment', current_setting('t.c1')::uuid, true);
 select is((select count(*)::int from public.entry_comments(current_setting('t.e1')::uuid)), 0, '숨긴 댓글은 목록에서 빠진다');
 select is((select count(*)::int from public.admin_recent_hidden() where target_id = current_setting('t.c1')::uuid), 1, '숨긴 댓글은 최근 숨긴 것에서 되살릴 수 있다');
+select throws_ok($$select count(*) from public.admin_actions$$, '42501', null, '관리자라도 화면 역할로는 처리 기록을 직접 읽지 못한다');
+reset role;
+select is((select action from public.admin_actions where target_id = current_setting('t.c1')::uuid order by id desc limit 1), 'hide', '숨기면 처리 기록이 남는다');
+select is(has_table_privilege('service_role', 'public.admin_actions', 'DELETE') or has_table_privilege('service_role', 'public.admin_actions', 'UPDATE'), false, '처리 기록은 service_role 도 고치거나 지우지 못한다');
+set local role authenticated;
 select public.admin_dismiss('entry', current_setting('t.e1')::uuid);
-select is((select count(*)::int from public.admin_reports()), 0, '숨기기·문제없음 처리한 신고는 목록에서 닫힌다');
+select is((select count(*)::int from public.admin_reports() where target_id in (current_setting('t.e1')::uuid, current_setting('t.c1')::uuid)), 0, '숨기기·문제없음 처리한 신고는 목록에서 닫힌다');
 select public.admin_set_hidden('comment', current_setting('t.c1')::uuid, false);
 select is((select count(*)::int from public.entry_comments(current_setting('t.e1')::uuid)), 1, '되살리면 다시 보인다');
 reset role;

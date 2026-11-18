@@ -26,7 +26,21 @@ export type Database = {
           }
         },"public": {
           Tables: {
-            "anon_ip_daily": {
+            "admin_actions": {
+                  Row: {
+                    "action": string,"actor_id": string,"created_at": string,"detail": Json | null,"id": number,"target": string,"target_id": string
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "action": string,"actor_id": string,"created_at"?: string,"detail"?: Json | null,"id"?: never,"target": string,"target_id": string
+                  }
+                  Update: {
+                    "action"?: string,"actor_id"?: string,"created_at"?: string,"detail"?: Json | null,"id"?: never,"target"?: string,"target_id"?: string
+                  }
+                  Relationships: [
+                    
+                  ]
+                },"anon_ip_daily": {
                   Row: {
                     "ip_hash": string,"kst_date": string,"n": number
                   }

@@ -57,13 +57,16 @@ export function entryState(e: MyEntry): EntryState {
 export const REAUTH_SEC = 600;
 
 /**
- * 세션 토큰의 amr(로그인한 방법·시각 목록) 중 가장 최근 로그인이 maxSec 안인지.
+ * 세션 토큰의 amr(로그인한 방법·시각 목록) 중 가장 최근 "구글(oauth) 로그인"이 maxSec 안인지.
  * 토큰을 새로 고쳐도(refresh) amr 시각은 그대로라 "실제로 로그인한 때"를 뜻한다.
- * 휴대폰을 남이 잠깐 쓰는 사이 탈퇴되지 않게 탈퇴 전에 쓴다(리뷰 후속 #5).
+ * 휴대폰을 남이 잠깐 쓰는 사이 탈퇴·계정 정리되지 않게 쓴다(리뷰 후속 #5, #6).
+ * oauth 만 세는 까닭: 토큰만 훔친 사람이 비밀번호를 새로 정하고 비밀번호로 다시 로그인하면
+ * password 항목이 지금 시각으로 생긴다. 이 서비스의 로그인은 구글뿐이라 그 항목은 믿지 않는다(#6 보안 리뷰).
+ * Edge Function(delete-account·admin-purge-user)의 lastSignIn 도 같은 규칙이다.
  */
 export function signedInWithin(amr: unknown, nowSec: number, maxSec = REAUTH_SEC): boolean {
   if (!Array.isArray(amr)) return false;
-  const last = Math.max(0, ...amr.map((a) => (typeof a?.timestamp === "number" ? a.timestamp : 0)));
+  const last = Math.max(0, ...amr.map((a) => (a?.method === "oauth" && typeof a?.timestamp === "number" ? a.timestamp : 0)));
   return last > 0 && nowSec - last <= maxSec;
 }
 

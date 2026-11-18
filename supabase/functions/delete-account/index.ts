@@ -22,12 +22,13 @@ const BUCKET = "entry-photos";
 /** 탈퇴 전 다시 로그인해야 하는 간격(초). features/me/rules.ts REAUTH_SEC 와 같은 값 */
 const REAUTH_SEC = 600;
 
-/** 검증이 끝난 토큰의 amr 에서 가장 최근 로그인 시각(초). 없으면 0 */
+/** 검증이 끝난 토큰의 amr 에서 가장 최근 구글(oauth) 로그인 시각(초). 없으면 0.
+ *  비밀번호 항목은 세지 않는다: 토큰만 훔친 사람이 비밀번호를 정해 다시 로그인하는 길을 막는다(features/me/rules.ts signedInWithin 과 같은 규칙) */
 function lastSignIn(token: string): number {
   try {
     const b = token.split(".")[1].replace(/-/g, "+").replace(/_/g, "/");
     const amr = JSON.parse(atob(b + "===".slice((b.length + 3) % 4))).amr;
-    return Array.isArray(amr) ? Math.max(0, ...amr.map((a) => (typeof a?.timestamp === "number" ? a.timestamp : 0))) : 0;
+    return Array.isArray(amr) ? Math.max(0, ...amr.map((a) => (a?.method === "oauth" && typeof a?.timestamp === "number" ? a.timestamp : 0))) : 0;
   } catch {
     return 0;
   }

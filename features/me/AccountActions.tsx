@@ -14,18 +14,10 @@ import { useToast } from "@/shared/ui/Toast";
 import { continueWithGoogle } from "@/features/auth/session";
 import { clearDraft } from "@/features/register/draft";
 import { type FlashCode, withFlash } from "@/shared/ui/flash";
-import { jwtPayload, signedInWithin } from "./rules";
+import { recentSignIn } from "@/features/auth/reauth";
 import s from "./me.module.css";
 
 type Ask = "confirm" | "reauth" | null;
-
-/** 지금 세션이 최근 로그인인지(화면 안내용). 못 읽으면 다시 확인받는다. */
-async function recentSignIn(): Promise<boolean> {
-  const sb = await browserClient();
-  const { data } = await sb.auth.getSession();
-  const token = data.session?.access_token;
-  return !!token && signedInWithin(jwtPayload(token)?.amr, Date.now() / 1000);
-}
 
 export function AccountActions({ resume = false }: { resume?: boolean }) {
   const toast = useToast();
