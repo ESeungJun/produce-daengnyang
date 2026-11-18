@@ -11,14 +11,14 @@
  * 4. 로그인 시트가 픽 때문에 떴으면 하려던 픽을 이 탭에 적어 두고(handoff.ts), 구글에서 회원으로 돌아오면 이어서 보낸다.
  */
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from "react";
-import { AnonSignInError, ensureAnonSession } from "@/features/auth/session";
+import { AnonSignInError, ensureAnonSession, type AnonFailReason } from "@/features/auth/session";
 import { savePendingPick, takeFlash, takePendingPick } from "@/features/auth/handoff";
 import { browserClient } from "@/shared/lib/supabase/client";
 import type { Board } from "@/shared/lib/format";
 import { kstDate } from "@/shared/lib/kst";
 import { useToast } from "@/shared/ui/Toast";
 import { useLoginSheet } from "@/features/auth/LoginSheet";
-import { pickErrorOutcome, pickedText } from "./messages";
+import { ANON_FAIL_TEXT, pickErrorOutcome, pickedText } from "./messages";
 
 export type Viewer = "guest" | "anon" | "member";
 export type PicksInit = { viewer: Viewer; remaining: Record<Board, number>; picked: string[] };
@@ -81,7 +81,7 @@ export function PicksProvider({ init, children }: { init: PicksInit; children: R
       }
       setPending((p) => new Set(p).add(entryId));
       let res;
-      let botFail = false;
+      let anonFail: AnonFailReason | null = null;
       try {
         // 첫 픽: 세션이 없으면 익명 로그인부터(봇 확인 포함). 실패하면 아래 catch 로 간다.
         if (viewer === "guest") {
@@ -91,7 +91,7 @@ export function PicksProvider({ init, children }: { init: PicksInit; children: R
         res = await (await browserClient()).rpc("cast_pick", { p_entry_id: entryId });
       } catch (e) {
         // supabase-js 를 못 불러왔거나(네트워크) 익명 로그인·봇 확인이 실패했다. 버튼이 처리 중에 멈추지 않게 풀고 알린다.
-        botFail = e instanceof AnonSignInError;
+        anonFail = e instanceof AnonSignInError ? e.reason : null;
         res = null;
       } finally {
         guestBusy.current = false;
@@ -101,7 +101,7 @@ export function PicksProvider({ init, children }: { init: PicksInit; children: R
           return n;
         });
       }
-      if (botFail) return toast("사람인지 확인하지 못했어요. 다시 눌러 주세요. 계속 안 되면 오른쪽 위에서 로그인해 주세요");
+      if (anonFail) return toast(ANON_FAIL_TEXT[anonFail]);
       if (!res) return toast("픽을 보내지 못했어요. 인터넷 연결을 확인하고 다시 눌러 주세요");
       const { data, error } = res;
       if (error) {
