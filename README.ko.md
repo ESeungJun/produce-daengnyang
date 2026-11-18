@@ -30,6 +30,11 @@ npm install
 cp .env.example .env.local      # Supabase URL·publishable 키 넣기
 npm run dev                     # http://localhost:3000
 npm test                        # 단위 시험(Vitest)
+
+# 로컬 Supabase(도커 필요): 예시 데이터와 사진까지 넣고 DB 규칙 시험
+npx supabase@3.2.0 start        # .env.local 을 로컬 주소·키로 바꾸면 화면이 예시 데이터로 떠요
+bash supabase/seed-photos.sh    # 예시 사진(CC0)을 로컬 Storage 에 올리기
+npx supabase@3.2.0 test db      # pgTAP 규칙 시험
 npm run preview                 # Cloudflare 런타임으로 미리보기(.dev.vars 필요)
 npm run deploy                  # Cloudflare Workers 배포
 ```

@@ -30,6 +30,11 @@ npm install
 cp .env.example .env.local      # add the Supabase URL and publishable key
 npm run dev                     # http://localhost:3000
 npm test                        # unit tests (Vitest)
+
+# Local Supabase (needs Docker): sample data, photos and the database rule tests
+npx supabase@3.2.0 start        # point .env.local at the local URL and key to see the sample data
+bash supabase/seed-photos.sh    # upload the sample photos (CC0) to local Storage
+npx supabase@3.2.0 test db      # pgTAP rule tests
 npm run preview                 # preview on the Cloudflare runtime (needs .dev.vars)
 npm run deploy                  # deploy to Cloudflare Workers
 ```

@@ -304,6 +304,45 @@ export type Database = {
         }
         Relationships: []
       }
+      rank_snapshots: {
+        Row: {
+          board: Database["public"]["Enums"]["board_kind"]
+          entry_id: string
+          kst_date: string
+          rank: number
+          round_id: number
+        }
+        Insert: {
+          board: Database["public"]["Enums"]["board_kind"]
+          entry_id: string
+          kst_date: string
+          rank: number
+          round_id: number
+        }
+        Update: {
+          board?: Database["public"]["Enums"]["board_kind"]
+          entry_id?: string
+          kst_date?: string
+          rank?: number
+          round_id?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "rank_snapshots_entry_id_fkey"
+            columns: ["entry_id"]
+            isOneToOne: false
+            referencedRelation: "entries"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "rank_snapshots_round_id_fkey"
+            columns: ["round_id"]
+            isOneToOne: false
+            referencedRelation: "rounds"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       reports: {
         Row: {
           created_at: string
@@ -432,6 +471,7 @@ export type Database = {
           photo_count: number
           pick_count: number
           picked_today: boolean
+          prev_rank: number
           rank: number
           thumb_path: string
           view_count: number
@@ -501,6 +541,8 @@ export type Database = {
         }[]
       }
       get_entry: { Args: { p_entry_id: string }; Returns: Json }
+      get_featured: { Args: never; Returns: Json }
+      get_featured_at: { Args: { p_at: string }; Returns: Json }
       has_hidden_chars: { Args: { t: string }; Returns: boolean }
       is_blind: {
         Args: { r: Database["public"]["Tables"]["rounds"]["Row"] }
@@ -530,6 +572,7 @@ export type Database = {
         Returns: undefined
       }
       require_member: { Args: never; Returns: string }
+      snapshot_ranks: { Args: never; Returns: number }
       update_entry: {
         Args: {
           p_bio: string

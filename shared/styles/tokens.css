@@ -26,6 +26,7 @@
   --pd-band-ink: #FFFFFF;
   --pd-band-accent: #FFFFFF; /* 마감 띠 숫자 */
   --pd-up: #2E7D32;          /* ▲ 순위 오름. 종이 4.7:1 */
+  --pd-on-photo: #FFFFFF;    /* 사진·그늘 위 글자(제호·이름). 라이트·다크 같음 */
   --pd-shade: 0 0 0;         /* 사진 위 글자 그림자·그늘, 시트 그림자의 RGB. rgb(var(--pd-shade) / .3) 처럼 쓴다 */
 
   /* ── 글자 ── */
