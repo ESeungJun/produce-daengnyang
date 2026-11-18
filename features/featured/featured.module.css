@@ -78,9 +78,9 @@
 .blank .lines p { margin: 10px 0 0; color: var(--pd-on-photo); opacity: 0.8; font-size: var(--pd-fs-ui); max-width: 30ch; }
 
 /* ── 센터 화보: 3:4 두 장 엇갈림 ── */
-/* 댕댕이·냥이 칸은 같은 높이·크기로 나란히 둔다(#13: 엇갈려 두면 냥이가 뒤처져 보임) */
 .spread { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; align-items: start; }
 .spread figure { margin: 0; position: relative; }
+.spread figure:nth-child(2) { margin-top: 28px; }
 .spread figure:nth-child(n + 3) { display: none; }
 .spread figure > a { display: block; color: inherit; }
 /* 이름이 흰 사진 위에서도 읽히게 아래쪽에 그늘(DESIGN_SYSTEM 4절) */
@@ -143,6 +143,7 @@
   .spread { grid-template-columns: repeat(4, 1fr); gap: 18px; }
   .spread img { border-radius: 20px; }
   .spread figure:nth-child(n + 3) { display: block; }
+  .spread figure:nth-child(even) { margin-top: 40px; }
   .spread figcaption b { font-size: var(--pd-fs-d-card); }
 
   .polas { flex-wrap: wrap; overflow: visible; margin: 0; padding: 10px 0 14px; }
