@@ -63,6 +63,7 @@
 .bio { margin: 12px 0 0; font-size: var(--pd-fs-body); }
 .dtAct { display: flex; gap: 8px; padding-top: 12px; flex-wrap: wrap; }
 .notice { margin: 12px 0 0; padding: 10px 14px; border-radius: var(--pd-r-sm); background: var(--pd-paper-2); font-size: var(--pd-fs-small); color: var(--pd-ink-2); }
+.notice a { color: var(--pd-ink); font-weight: 700; text-underline-offset: 3px; }
 
 @media (min-width: 720px) {
   .gal { grid-template-columns: repeat(3, 1fr); }

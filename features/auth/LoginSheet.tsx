@@ -48,6 +48,8 @@ export function LoginSheetProvider({ children }: { children: React.ReactNode }) 
         mainLabel="구글로 계속하기"
         subLabel="그냥 구경할게요"
         onMain={() => {
+          // 등록하려다 연 시트면 로그인 뒤 등록 화면으로, 그 밖에는 보던 곳으로 돌아온다
+          const next = reason === "register" ? "/register" : location.pathname + location.search;
           close();
           const app = inAppBrowser();
           if (app) trackAuth("google", app === "kakao" ? "inapp_kakao" : "inapp_other");
@@ -59,7 +61,7 @@ export function LoginSheetProvider({ children }: { children: React.ReactNode }) 
             toast("앱 안 브라우저에서는 구글 로그인이 막혀요. 오른쪽 위 메뉴에서 '다른 브라우저로 열기'를 눌러 주세요");
             return;
           }
-          continueWithGoogle(location.pathname + location.search).catch(() => {
+          continueWithGoogle(next).catch(() => {
             trackAuth("google", "open_failed");
             toast("구글 로그인 화면을 열지 못했어요. 잠시 뒤 다시 눌러 주세요");
           });
