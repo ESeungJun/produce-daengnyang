@@ -7,7 +7,7 @@ import { useEffect } from "react";
 import { CopyLink } from "./CopyLink";
 import s from "./entries.module.css";
 
-export function NewEntryBanner({ name }: { name: string }) {
+export function NewEntryBanner({ entryId, name }: { entryId: string; name: string }) {
   useEffect(() => {
     const u = new URL(location.href);
     if (!u.searchParams.has("new")) return;
@@ -22,7 +22,7 @@ export function NewEntryBanner({ name }: { name: string }) {
           첫 픽은 가까운 사람에게서 와요. 단톡방이나 SNS 에 링크를 나눠 주세요.
         </span>
       </p>
-      <CopyLink name={name} primary label="링크 나누기" />
+      <CopyLink entryId={entryId} name={name} place="register" primary label="링크 나누기" />
     </div>
   );
 }

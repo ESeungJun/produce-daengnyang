@@ -72,3 +72,14 @@ P0 실패 없음.
 | 13 | 실제 아이폰에서 홈 화면 추가 → 앱 로그인 → 알림 켜기 | 실기기 필요 | ⏭ #9 |
 | 14 | 운영 워커 크기 | `wrangler deploy --dry-run`: gzip 2,378KiB(한도 3,072) | ✅ |
 | 15 | 단위·DB 시험 | Vitest 106개, pgTAP 229개 | ✅ |
+
+## #15 공유 기록 (2026-11-19)
+
+| # | 항목 | 확인 방법 | 결과 |
+|---|---|---|---|
+| 1 | 공유 문구 주소에 `?ref=share`(등록 직후 표시·해시는 뺌) | Vitest `link.test.ts` | ✅ |
+| 2 | `?ref=share` 로 상세를 열면 방문 한 번 기록, 주소창에서 `ref` 가 빠짐 | agent-browser 로 열고 주소·`sns_events` 확인 | ✅ |
+| 3 | 데스크톱 공유하기(복사) → `share_copy`·`detail` 기록 | agent-browser 클릭 후 `sns_events` | ✅ |
+| 4 | 등록 직후 띠·공유 창·직접 고르는 칸 기록, 같은 사람 하루 한 번, 모르는 자리 버림 | pgTAP `rules.test.sql` 5개 | ✅ |
+| 5 | 휴대폰 실제 공유 창에서 보내기 → `share_sheet` | 실기기 필요 | ⏭ #9 |
+| 6 | 단위·DB 시험 | Vitest 110개, pgTAP 234개 | ✅ |
