@@ -20,7 +20,7 @@
 | UI | Next.js 16 (App Router) + TypeScript, CSS Modules + design tokens ([`shared/styles/tokens.css`](shared/styles/tokens.css)) |
 | Hosting | Cloudflare Workers via [OpenNext](https://opennext.js.org/cloudflare) |
 | Data & auth | Supabase (Postgres rule functions with RLS, anonymous sign-in linked to Google, Storage, pg_cron) |
-| Mail & push | Resend, Web Push |
+| Mail & push | Gmail SMTP, Web Push |
 
 Design notes are in [docs/](docs/) (Korean).
 
