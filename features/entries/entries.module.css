@@ -30,7 +30,7 @@
 .empty { padding: 32px 0; text-align: center; color: var(--pd-ink-2); }
 .empty p { margin: 0 0 14px; }
 
-.ad { margin-top: 34px; background: var(--pd-butter); color: var(--pd-on-butter); border-radius: var(--pd-r-xl); padding: 22px 20px; }
+.ad { margin-top: 34px; background: var(--pd-ad); color: var(--pd-on-butter); border-radius: var(--pd-r-xl); padding: 22px 20px; }
 .ad h2 { margin: 0; font-family: var(--pd-f-display); font-weight: 400; font-size: var(--pd-fs-ad); line-height: 1.02; }
 .ad ul { margin: 12px 0 0; padding: 0 0 0 18px; font-size: var(--pd-fs-ui); }
 .adBtn {

@@ -9,19 +9,21 @@
 
 :root {
   /* ── 색: 라이트 ── */
-  --pd-paper: #F6F4F1;       /* 바탕(종이). 노란 크림 #FFF9F5 는 쓰지 않는다 */
-  --pd-paper-2: #ECE9E5;     /* 목차·탭·보조 버튼·댓글 입력칸 */
-  --pd-card: #FFFFFF;        /* 폴라로이드·사진 위 이름표·모집 공고 */
+  --pd-paper: #FFFFFF;       /* 바탕(종이). 흰색(#13: #F6F4F1 이 탁해 보여서). 노란 크림 #FFF9F5 는 쓰지 않는다 */
+  --pd-paper-2: #F0F0F0;     /* 목차·탭·보조 버튼·댓글 입력칸. 흰 바탕에 맞춰 누런 기 없는 회색 */
+  --pd-card: #FFFFFF;        /* 폴라로이드·사진 위 이름표 */
   --pd-card-ink: #141414;
+  --pd-card-edge: 0 1px 4px rgba(20, 20, 20, 0.14); /* 흰 바탕 위 흰 카드(폴라로이드)가 묻히지 않게. 다크는 none */
   --pd-ink: #141414;         /* 본문·제목·주 버튼·마감 띠. 종이 위 16.8:1 */
-  --pd-ink-2: #5F5F5F;       /* 보조 글. 종이 5.8:1, paper-2 5.3:1 */
+  --pd-ink-2: #5F5F5F;       /* 보조 글. 흰 종이 6.4:1, paper-2 5.6:1 */
   --pd-pink: #D62A66;        /* 하나뿐인 강조색. 위 흰 글자 4.8:1 */
   --pd-on-pink: #FFFFFF;
   --pd-pink-text: #C2255F;   /* 분홍 글자(윗줄 '댕냥', ▼). 종이 5.1:1 */
   --pd-jelly: #CFCCC8;       /* 점선·넘김 점·시트 손잡이 */
   --pd-jelly-2: #E4E2DF;     /* 오늘 픽 완료 버튼 */
-  --pd-butter: #FFFFFF;      /* v2 버터 자리(데뷔 알약·순위 알약·모집 공고). V2A 에서는 흰색 */
+  --pd-butter: #FFFFFF;      /* v2 버터 자리(데뷔 알약·순위 알약). V2A 에서는 흰색. 모집 공고는 --pd-ad */
   --pd-on-butter: #141414;
+  --pd-ad: #F0F0F0;          /* 모집 공고 판. 흰 바탕에서 흰 카드가 묻혀서(#13) 목차와 같은 회색. 다크는 버터와 같은 #222 */
   --pd-band: #141414;        /* 마감 띠 */
   --pd-band-ink: #FFFFFF;
   --pd-band-accent: #FFFFFF; /* 마감 띠 숫자 */
@@ -85,22 +87,22 @@
 /* ── 색: 다크(검정 바탕). 분홍 위 글자는 검정 ── */
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme="light"]) {
-    --pd-paper: #000000; --pd-paper-2: #161616; --pd-card: #161616; --pd-card-ink: #FFFFFF;
+    --pd-paper: #000000; --pd-paper-2: #161616; --pd-card: #161616; --pd-card-ink: #FFFFFF; --pd-card-edge: none;
     --pd-ink: #FFFFFF; --pd-ink-2: #B4B4B4;
     --pd-pink: #FF6FA0; --pd-on-pink: #000000; --pd-pink-text: #FF6FA0;
     --pd-jelly: #444444; --pd-jelly-2: #2A2A2A;
-    --pd-butter: #222222; --pd-on-butter: #FFFFFF;
+    --pd-butter: #222222; --pd-on-butter: #FFFFFF; --pd-ad: #222222;
     --pd-band: #161616; --pd-band-ink: #FFFFFF; --pd-band-accent: #FFFFFF;
     --pd-up: #3FC07A;
     color-scheme: dark;
   }
 }
 :root[data-theme="dark"] {
-  --pd-paper: #000000; --pd-paper-2: #161616; --pd-card: #161616; --pd-card-ink: #FFFFFF;
+  --pd-paper: #000000; --pd-paper-2: #161616; --pd-card: #161616; --pd-card-ink: #FFFFFF; --pd-card-edge: none;
   --pd-ink: #FFFFFF; --pd-ink-2: #B4B4B4;
   --pd-pink: #FF6FA0; --pd-on-pink: #000000; --pd-pink-text: #FF6FA0;
   --pd-jelly: #444444; --pd-jelly-2: #2A2A2A;
-  --pd-butter: #222222; --pd-on-butter: #FFFFFF;
+  --pd-butter: #222222; --pd-on-butter: #FFFFFF; --pd-ad: #222222;
   --pd-band: #161616; --pd-band-ink: #FFFFFF; --pd-band-accent: #FFFFFF;
   --pd-up: #3FC07A;
   color-scheme: dark;
