@@ -76,3 +76,7 @@ begin
     end loop;
   end loop;
 end $$;
+
+-- 조회수 토큰(#5, count_view). 로컬 개발용 값이라 공개돼도 된다. 원격 값은 따로 만들어 Vault·Worker 비밀값에만 둔다.
+-- .env.local 의 VIEW_TOKEN 과 같아야 로컬에서 조회수가 올라간다.
+select vault.create_secret('local-dev-view-token', 'view_token');

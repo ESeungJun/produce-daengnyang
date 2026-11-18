@@ -1,7 +1,7 @@
 "use client";
 /**
  * 게시판 목록. 서버가 첫 24개를 넣어 주고, "더 보기"를 누르면 브라우저에서 board_entries 를 이어 부른다.
- * 정렬이 바뀌면 주소(?sort=)가 바뀌어 서버가 처음부터 다시 그린다(key 로 상태 초기화).
+ * 정렬·검색어가 바뀌면 주소(?sort=·?q=)가 바뀌어 서버가 처음부터 다시 그린다(key 로 상태 초기화).
  * 순위 알약은 인기순(가림 기간 아님)일 때만.
  */
 import { useState } from "react";
@@ -13,7 +13,7 @@ import { EntryCard } from "./EntryCard";
 import s from "./entries.module.css";
 
 /** seed: 서버가 첫 목록을 만들 때 쓴 섞기 seed. 이어 불러올 때도 같은 값을 넘겨야 순서가 이어진다. */
-export function BoardGallery({ board, sort, seed, initial, showRank }: { board: Board; sort: BoardSort; seed: string | null; initial: BoardEntry[]; showRank: boolean }) {
+export function BoardGallery({ board, sort, seed, q, initial, showRank }: { board: Board; sort: BoardSort; seed: string | null; q: string; initial: BoardEntry[]; showRank: boolean }) {
   const [items, setItems] = useState(initial);
   const [done, setDone] = useState(initial.length < PAGE_SIZE);
   const [loading, setLoading] = useState(false);
@@ -30,6 +30,7 @@ export function BoardGallery({ board, sort, seed, initial, showRank }: { board: 
           p_limit: PAGE_SIZE,
           p_offset: items.length,
           ...(seed ? { p_seed: seed } : {}),
+          ...(q ? { p_q: q } : {}),
         }),
       )
       .catch(() => null);

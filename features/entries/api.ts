@@ -13,7 +13,7 @@ export const PAGE_SIZE = 24;
 export async function loadBoard(
   supabase: SupabaseClient<Database>,
   board: Board,
-  opts: { sort?: BoardSort; limit?: number; offset?: number; seed?: string | null } = {},
+  opts: { sort?: BoardSort; limit?: number; offset?: number; seed?: string | null; q?: string } = {},
 ): Promise<BoardEntry[]> {
   const { data, error } = await supabase.rpc("board_entries", {
     p_board: board,
@@ -22,6 +22,8 @@ export async function loadBoard(
     p_offset: opts.offset ?? 0,
     // 가림 기간 섞기 순서의 seed(방문자 키). 없으면 DB 가 로그인 사용자 번호나 'guest' 를 쓴다.
     ...(opts.seed ? { p_seed: opts.seed } : {}),
+    // 이름 검색(두 글자부터, DB 가 한 번 더 거른다)
+    ...(opts.q ? { p_q: opts.q } : {}),
   });
   if (error) throw error;
   return data ?? [];

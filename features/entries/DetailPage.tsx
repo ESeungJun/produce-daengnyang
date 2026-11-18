@@ -2,6 +2,7 @@
  * 글 상세: 사진(1~3장) · 이름 · 큰 픽 버튼 · 소개 · SNS 구경 가기 · 공유.
  * 응원 댓글은 #6, 공유 미리보기 이미지는 #8 에서 더한다.
  * getEntry 는 요청 하나 안에서 한 번만 부른다(제목 metadata 와 화면이 같이 쓴다).
+ * 조회수는 여기서 센다(views.ts, 응답 뒤). 내 글·숨김 글은 세지 않는다. 가림 기간에는 DB 가 view_count 를 null 로 줘서 숨는다.
  */
 import Link from "next/link";
 import { notFound } from "next/navigation";
@@ -25,6 +26,7 @@ import { CopyLink } from "./CopyLink";
 import { NewEntryBanner } from "./NewEntryBanner";
 import { PhotoPager } from "./PhotoPager";
 import { SiteNav } from "./SiteNav";
+import { countView } from "./views";
 import s from "./entries.module.css";
 
 export const getEntry = cache(async (id: string) => loadEntry(await createClient(), id));
@@ -47,6 +49,10 @@ export async function DetailPage({ board, id, fresh = false }: { board: Board; i
     );
   }
   if (!e || e.board !== board) notFound();
+  if (!e.is_mine && !e.hidden) {
+    const { data } = await (await createClient()).auth.getClaims();
+    await countView(e.id, data?.claims?.sub ?? null);
+  }
 
   const closed = e.is_mine ? "mine" : !e.round.open ? "ended" : undefined;
   const sns = snsLinks(e);
@@ -64,8 +70,8 @@ export async function DetailPage({ board, id, fresh = false }: { board: Board; i
             <div>
               <h1>{e.pet_name}</h1>
               <p>
-                {/* 조회수는 record_view(서버 키)를 연결한 뒤에 보여 준다. 지금은 늘 0이라 숨긴다. */}
                 {roundTitle(e.round)} · <VoteCount entryId={e.id} base={e.pick_count} pickedToday={e.picked_today} />표
+                {e.view_count !== null ? ` · 조회 ${e.view_count.toLocaleString("ko-KR")}` : ""}
                 {e.round.open ? ` · ${deadlineLabel(e.round.ends_at)}` : ""}
               </p>
             </div>
