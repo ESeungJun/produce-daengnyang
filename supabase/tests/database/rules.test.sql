@@ -6,7 +6,7 @@
 -- ─────────────────────────────────────────────────────────────
 begin;
 create extension if not exists pgtap with schema extensions;
-select plan(139);
+select plan(144);
 
 -- ── 준비(관리자 권한) ───────────────────────────────────────
 -- 사용자: A·B·D 구글 연결(회원), C 익명, E 이메일 가입(구글 연결 없음 → 회원 아님)
@@ -151,6 +151,8 @@ select is((select count(*) from public.board_entries('dog', 'popular', '초코')
 select is((select count(*) from public.board_entries('dog', 'popular', '%%')), 0::bigint, '% 는 글자로 검색(전부 나오지 않음)');
 select is((select count(*) from public.board_entries('dog')), 4::bigint, '끝난 라운드 글은 목록에 없다');
 select is(public.get_entry(current_setting('t.e1')::uuid) -> 'photos_locked', 'null'::jsonb, '사진 잠금 여부는 주인에게만');
+select is(public.get_entry(current_setting('t.e1')::uuid) ->> 'instagram', null, '데뷔 후보가 아니면 남에게 SNS 를 주지 않는다(#21)');
+select is(public.get_entry(current_setting('t.e1')::uuid) ->> 'sns_open', 'false', '데뷔 후보 전에는 sns_open 거짓');
 select is((select count(*) from public.board_entries('dog', 'popular', repeat('초', 5000))), 0::bigint, '아주 긴 검색어도 잘라서 처리');
 
 -- ── 익명 (C) ────────────────────────────────────────────────
@@ -369,6 +371,10 @@ select ok(not (public.get_featured_at('2000-06-10 12:00+09') -> 'center' -> 0 ? 
 select is(public.get_featured_at('2000-06-10 12:00+09') -> 'center' -> 0 ->> 'pet_name', '두부', '센터는 가장 최근 확정된 주간 1위');
 select is((select array_agg(x ->> 'pet_name' order by x ->> 'pet_name') from jsonb_array_elements(public.get_featured_at('2000-06-10 12:00+09') -> 'finalists') x),
           array['두부', '짱구'], '데뷔조 후보는 이번 달 주간 1·2위');
+-- #21 SNS 공개: 확정 주간 2위 안·결선 글만. 3위는 닫힘
+select ok(public.sns_open('00000000-0000-0000-0000-00000000f004'), '주간 2위는 SNS 공개');
+select ok(not public.sns_open('00000000-0000-0000-0000-00000000f005'), '주간 3위는 SNS 비공개');
+select ok(public.sns_open('00000000-0000-0000-0000-00000000f002'), '결선 글은 SNS 공개');
 select is(public.get_featured_at('2000-07-10 12:00+09') - 'month' - 'center', '{"debut": [], "finalists": []}'::jsonb, '지난달 결선·이번 달 후보가 없으면 빈 목록');
 update public.entries set hidden_at = now() where id = '00000000-0000-0000-0000-00000000f003';
 select is((select array_agg(x ->> 'pet_name' order by x ->> 'pet_name') from jsonb_array_elements(public.get_featured_at('2000-06-10 12:00+09') -> 'finalists') x),

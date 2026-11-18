@@ -30,10 +30,7 @@ export function CenterSpread({ center, past }: { center: FeaturedCard[]; past: F
             {now && snsLinks(c).length ? (
               <span className={s.sns}>
                 {snsLinks(c).map((x) => (
-                  <SnsLink key={x.kind} className={s.snsChip} entryId={c.entry_id} sns={x} place="center" iconSize="sm">
-                    <span className="sr-only">{c.pet_name} </span>
-                    {SNS_NAME[x.kind]}
-                  </SnsLink>
+                  <SnsLink key={x.kind} className={s.snsChip} entryId={c.entry_id} sns={x} place="center" iconSize="sm" label={`${c.pet_name} ${SNS_NAME[x.kind]} ${x.handle}, 새 창`} />
                 ))}
               </span>
             ) : null}

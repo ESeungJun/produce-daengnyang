@@ -43,6 +43,8 @@ export type EntryDetail = {
   hidden: boolean;
   deleted: false;
   is_mine: boolean;
+  /** 데뷔 후보(주간 1·2위)·마지막 주차 글만 SNS 를 보여 준다(#21). 주인에게는 값이 오지만 화면은 이 값을 따른다 */
+  sns_open: boolean;
   /** 주인에게만 온다: 픽을 받았거나 결선 복사본이면 사진을 못 바꾼다 */
   photos_locked?: boolean | null;
   picked_today: boolean;
