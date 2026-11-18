@@ -6,7 +6,7 @@
 -- ─────────────────────────────────────────────────────────────
 begin;
 create extension if not exists pgtap with schema extensions;
-select plan(84);
+select plan(96);
 
 -- ── 준비(관리자 권한) ───────────────────────────────────────
 -- 사용자: A·B·D 구글 연결(회원), C 익명, E 이메일 가입(구글 연결 없음 → 회원 아님)
@@ -30,7 +30,7 @@ select is((select count(*) from pg_tables where schemaname = 'public' and not ro
 select is(
   (select array_agg(p.proname::text order by p.proname) from pg_proc p join pg_namespace n on n.oid = p.pronamespace
      where n.nspname = 'public' and has_function_privilege('anon', p.oid, 'execute')),
-  array['board_entries', 'cast_pick', 'entry_comments', 'get_entry', 'has_hidden_chars', 'my_picks_today'],
+  array['board_entries', 'cast_pick', 'entry_comments', 'get_entry', 'get_featured', 'has_hidden_chars', 'my_picks_today'],
   '손님(anon)이 부를 수 있는 함수는 허용 목록뿐');
 
 -- 라운드: 지금 열린 주간(t1), 끝난 주간(t0)
@@ -234,6 +234,14 @@ select throws_ok($$select public.cast_pick('00000000-0000-0000-0000-00000000e001
 select throws_ok($$select public.my_entries()$$, '42501', null, '손님은 내 글 목록 함수를 못 부른다');
 select throws_ok($$select public.record_view('00000000-0000-0000-0000-00000000e001', 'viewer-key-1')$$, '42501', null, '조회수는 서버 키로만');
 
+-- ── 순위 기록·변동(#4) ───────────────────────────────────────
+set local role postgres;
+select ok(public.snapshot_ranks() > 0, '열린 라운드의 순위를 오늘 날짜로 기록한다');
+set local role authenticated;
+set local request.jwt.claims = '{"sub":"00000000-0000-0000-0000-0000000000b1","role":"authenticated","is_anonymous":false}';
+select ok((select bool_and(prev_rank = rank) from public.board_entries('dog')), '목록이 오늘 0시 순위(prev_rank)를 같이 준다');
+select throws_ok($$select public.snapshot_ranks()$$, '42501', null, '순위 기록은 예약 작업만 부른다');
+
 -- ── 조회수·가림 기간·결선 기간(관리자 권한) ──────────────────
 set local role postgres;
 select ok(public.record_view('00000000-0000-0000-0000-00000000e001', 'viewer-key-1') and not public.record_view('00000000-0000-0000-0000-00000000e001', 'viewer-key-1'), '같은 사람은 하루 한 번만 센다');
@@ -246,7 +254,7 @@ select is(public.get_entry('00000000-0000-0000-0000-00000000e009') ->> 'pick_cou
 update public.rounds set ends_at = now() + interval '1 hour' where month = '2000-01-01';
 set local role authenticated;
 set local request.jwt.claims = '{"sub":"00000000-0000-0000-0000-0000000000b1","role":"authenticated","is_anonymous":false}';
-select ok((select bool_and(pick_count is null and view_count is null and rank is null) from public.board_entries('dog')), '마감 24시간 전부터 표 수·조회수·순위를 가린다');
+select ok((select bool_and(pick_count is null and view_count is null and rank is null and prev_rank is null) from public.board_entries('dog')), '마감 24시간 전부터 표 수·조회수·순위·순위 변동을 가린다');
 
 set local role postgres;
 insert into public.rounds (month, kind, seq, starts_at, ends_at) values ('2000-03-01', 'final', 0, now() - interval '30 seconds', now() + interval '1 day');
@@ -264,6 +272,40 @@ select results_eq(
            ('weekly', 3, '2001-05-15 00:00+09'::timestamptz, '2001-05-22 00:00+09'::timestamptz),
            ('final',  0, '2001-05-22 00:00+09'::timestamptz, '2001-06-01 00:00+09'::timestamptz)$$,
   '한 달 라운드 4개를 한국 자정 기준으로 만들고, 두 번 불러도 그대로');
+
+-- ── 메인 표지·센터·후보 get_featured(#4) ─────────────────────
+-- 2000-05 결선(데뷔 1위는 숨김), 2000-06 주간 1라운드 확정·2라운드 진행 중.
+insert into public.rounds (month, kind, seq, starts_at, ends_at, finalized_at) values
+  ('2000-05-01', 'final', 0, '2000-05-22 00:00+09', '2000-06-01 00:00+09', '2000-06-01 00:01+09'),
+  ('2000-06-01', 'weekly', 1, '2000-06-01 00:00+09', '2000-06-08 00:00+09', '2000-06-08 00:01+09'),
+  ('2000-06-01', 'weekly', 2, '2000-06-08 00:00+09', '2000-06-15 00:00+09', null);
+insert into public.entries (id, round_id, board, owner_id, pet_name, hidden_at) values
+  ('00000000-0000-0000-0000-00000000f001', (select id from public.rounds where month = '2000-05-01' and kind = 'final'), 'dog', '00000000-0000-0000-0000-0000000000d1', '숨은별', now()),
+  ('00000000-0000-0000-0000-00000000f002', (select id from public.rounds where month = '2000-05-01' and kind = 'final'), 'dog', '00000000-0000-0000-0000-0000000000d1', '보리', null),
+  ('00000000-0000-0000-0000-00000000f003', (select id from public.rounds where month = '2000-06-01' and seq = 1), 'dog', '00000000-0000-0000-0000-0000000000d1', '두부', null),
+  ('00000000-0000-0000-0000-00000000f004', (select id from public.rounds where month = '2000-06-01' and seq = 1), 'dog', '00000000-0000-0000-0000-0000000000d1', '짱구', null),
+  ('00000000-0000-0000-0000-00000000f005', (select id from public.rounds where month = '2000-06-01' and seq = 1), 'dog', '00000000-0000-0000-0000-0000000000d1', '콩이', null);
+insert into public.round_results (round_id, board, rank, entry_id, votes, role) values
+  ((select id from public.rounds where month = '2000-05-01' and kind = 'final'), 'dog', 1, '00000000-0000-0000-0000-00000000f001', 500, 'debut'),
+  ((select id from public.rounds where month = '2000-05-01' and kind = 'final'), 'dog', 2, '00000000-0000-0000-0000-00000000f002', 400, null),
+  ((select id from public.rounds where month = '2000-06-01' and seq = 1), 'dog', 1, '00000000-0000-0000-0000-00000000f003', 300, 'center'),
+  ((select id from public.rounds where month = '2000-06-01' and seq = 1), 'dog', 2, '00000000-0000-0000-0000-00000000f004', 200, 'finalist'),
+  ((select id from public.rounds where month = '2000-06-01' and seq = 1), 'dog', 3, '00000000-0000-0000-0000-00000000f005', 100, null);
+set local role postgres;
+select is(public.get_featured_at('2000-06-10 12:00+09') -> 'debut' -> 0 ->> 'pet_name', '보리', '데뷔 1위가 숨겨지면 다음 순위를 표지에 올린다');
+select is(public.get_featured_at('2000-06-10 12:00+09') -> 'center' -> 0 ->> 'pet_name', '두부', '센터는 가장 최근 확정된 주간 1위');
+select is((select array_agg(x ->> 'pet_name' order by x ->> 'pet_name') from jsonb_array_elements(public.get_featured_at('2000-06-10 12:00+09') -> 'finalists') x),
+          array['두부', '짱구'], '데뷔조 후보는 이번 달 주간 1·2위');
+select is(public.get_featured_at('2000-07-10 12:00+09') - 'month' - 'center', '{"debut": [], "finalists": []}'::jsonb, '지난달 결선·이번 달 후보가 없으면 빈 목록');
+update public.entries set hidden_at = now() where id = '00000000-0000-0000-0000-00000000f003';
+select is((select array_agg(x ->> 'pet_name' order by x ->> 'pet_name') from jsonb_array_elements(public.get_featured_at('2000-06-10 12:00+09') -> 'finalists') x),
+          array['짱구', '콩이'], '주간 1위가 숨겨지면 3위가 데뷔조 후보를 이어받는다');
+select is((public.get_featured_at('2000-06-10 12:00+09') -> 'center' -> 0 ->> 'pos')::int, 1, '이어받은 센터는 그 라운드에서 보여 줄 수 있는 첫 글(pos 1)');
+set local role anon;
+set local request.jwt.claims = '{"role":"anon"}';
+select lives_ok($$select public.get_featured()$$, '손님은 인자 없는 get_featured()를 부를 수 있다');
+select throws_ok($$select public.get_featured_at(now())$$, '42501', null, '손님은 기준 시각을 바꿔 부를 수 없다');
+select throws_ok($$select count(*) from public.rank_snapshots$$, '42501', null, '손님은 순위 기록 표를 직접 읽지 못한다');
 
 select * from finish();
 rollback;

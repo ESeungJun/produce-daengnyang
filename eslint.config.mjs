@@ -5,6 +5,11 @@ import nextTs from "eslint-config-next/typescript";
 const eslintConfig = defineConfig([
   ...nextVitals,
   ...nextTs,
+  {
+    // 사진은 Supabase Storage 공개 주소를 <img> 로 바로 쓴다. Workers(OpenNext)에서 Next 이미지 최적화를 켜지 않았고,
+    // 목록은 올릴 때 만든 480px 썸네일을 쓰므로 next/image 가 줄 이득이 없다(설계서 6절).
+    rules: { "@next/next/no-img-element": "off" },
+  },
   // Override default ignores of eslint-config-next.
   globalIgnores([
     // Default ignores of eslint-config-next:

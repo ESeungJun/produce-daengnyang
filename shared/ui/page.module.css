@@ -1,0 +1,34 @@
+/* 화면 틀: 좌우 여백, 윗줄. 휴대폰 여백 16, 데스크톱은 1280 안에서 48. */
+.page {
+  max-width: 1280px;
+  margin: 0 auto;
+  padding-left: max(var(--pd-gutter), env(safe-area-inset-left, 0px));
+  padding-right: max(var(--pd-gutter), env(safe-area-inset-right, 0px));
+  padding-bottom: calc(24px + env(safe-area-inset-bottom, 0px));
+}
+.bleed { margin-left: calc(-1 * max(var(--pd-gutter), env(safe-area-inset-left, 0px))); margin-right: calc(-1 * max(var(--pd-gutter), env(safe-area-inset-right, 0px))); }
+
+.bar { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 14px 0; }
+.logo { font-family: var(--pd-f-display); font-size: var(--pd-fs-logo); letter-spacing: -0.01em; color: inherit; text-decoration: none; white-space: nowrap; }
+.logo em { font-style: normal; color: var(--pd-pink-text); }
+.back { display: flex; align-items: center; gap: 6px; font-size: 14px; font-weight: 700; color: inherit; text-decoration: none; min-height: 44px; }
+.nav { display: none; }
+.right { display: flex; align-items: center; gap: 18px; }
+.login { display: none; }
+
+@media (min-width: 1024px) {
+  .page { padding-left: 48px; padding-right: 48px; }
+  .bleed { margin-left: 0; margin-right: 0; }
+  .bar { padding: 22px 0; }
+  .logo { font-size: 26px; }
+  .nav { display: flex; gap: 28px; font-size: var(--pd-fs-body); font-weight: 700; }
+  .nav a, .nav button { color: inherit; text-decoration: none; background: none; border: 0; padding: 0; font: inherit; font-weight: 700; cursor: pointer; }
+  .nav a[aria-current="page"] { box-shadow: inset 0 -3px 0 var(--pd-pink); }
+  .login { display: inline-block; }
+}
+
+/* 없는 주소·오류 안내 */
+.notice { padding-top: 22px; min-height: 70dvh; }
+.notice h1 { font-family: var(--pd-f-display); font-weight: 400; font-size: var(--pd-fs-page); line-height: 1.05; margin: 48px 0 8px; text-wrap: balance; }
+.notice p { margin: 0; color: var(--pd-ink-2); max-width: 40ch; }
+.noticeAct { display: flex; gap: 8px; margin-top: 20px; flex-wrap: wrap; }
