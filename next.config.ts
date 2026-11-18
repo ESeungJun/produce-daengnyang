@@ -14,17 +14,18 @@ const supabaseWs = supabase.replace(/^http/, "ws");
  * 보안 헤더(#11). XSS 가 나도 다른 곳으로 데이터를 보내거나 남의 스크립트를 불러오지 못하게 출처를 좁힌다.
  * - script 'unsafe-inline': Next 가 페이지마다 넣는 인라인 스크립트 때문. nonce 방식은 모든 페이지를 동적으로 그려야 해서 지금은 쓰지 않는다.
  * - 'unsafe-eval' 은 개발 서버(빠른 새로 고침)에서만.
- * - #3 에서 Turnstile 을 붙이면 script-src·frame-src 에 https://challenges.cloudflare.com 을 더한다.
+ * - Turnstile(#3 익명 로그인 봇 확인)은 script-src·frame-src 에 https://challenges.cloudflare.com 이 필요하다.
  * - #3 구글 로그인은 브라우저 signInWithOAuth(주소 이동)로 한다. 폼 제출 뒤 리다이렉트로 하면 form-action 'self' 에 막힌다.
  */
+const turnstile = "https://challenges.cloudflare.com";
 const csp = [
   "default-src 'self'",
-  `script-src 'self' 'unsafe-inline'${dev ? " 'unsafe-eval'" : ""}`,
+  `script-src 'self' 'unsafe-inline'${dev ? " 'unsafe-eval'" : ""} ${turnstile}`,
   "style-src 'self' 'unsafe-inline'",
   `img-src 'self' data: blob: ${supabase}`,
   "font-src 'self'",
-  `connect-src 'self' ${supabase} ${supabaseWs}`,
-  "frame-src 'none'",
+  `connect-src 'self' ${supabase} ${supabaseWs} ${turnstile}`,
+  `frame-src ${turnstile}`,
   "object-src 'none'",
   "base-uri 'self'",
   "form-action 'self'",

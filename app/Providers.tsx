@@ -18,7 +18,7 @@ export function Providers({ picks, children }: { picks: PicksInit; children: Rea
   return (
     <ToastProvider>
       <LoginSheetProvider>
-        {/* 로그인 상태가 바뀌면(#3 의 router.refresh) 남은 픽 상태를 새 값으로 다시 만든다 */}
+        {/* 서버가 다른 로그인 상태로 그리면(구글에서 돌아온 새 페이지 등) 남은 픽 상태를 새 값으로 다시 만든다. 손님 첫 픽은 PicksProvider 안에서만 바꾼다 */}
         <PicksProvider key={picks.viewer} init={picks}>
           {children}
         </PicksProvider>
