@@ -13,6 +13,11 @@ import { debutPhotos, type FeaturedCard } from "./api";
 import { PhotoFade } from "./PhotoFade";
 import s from "./featured.module.css";
 
+/** 가운데 표지와 같은 사진이 나란히 보이지 않게, 사진이 여러 장이면 두 번째 장부터 돌린다 */
+export function railPhotos(paths: string[]): string[] {
+  return paths.length > 1 ? [...paths.slice(1), paths[0]] : paths;
+}
+
 export function DebutRail({ board, card, debutMonth }: { board: Board; card?: FeaturedCard; debutMonth: string }) {
   const title = `${debutMonth}월 데뷔 · ${BOARD_NAME[board]}`;
   if (!card) {
@@ -30,7 +35,7 @@ export function DebutRail({ board, card, debutMonth }: { board: Board; card?: Fe
   return (
     <aside className={s.rail} aria-label={title}>
       <Link className={s.railCard} href={`/${card.board}/${card.entry_id}`}>
-        <PhotoFade paths={debutPhotos(card)} alt={`${title} ${card.pet_name}`} eager />
+        <PhotoFade paths={railPhotos(debutPhotos(card))} alt={`${title} ${card.pet_name}`} eager />
         <span className={s.scrim} />
         <span className={s.railLines}>
           <span className={s.kick}>{title}</span>

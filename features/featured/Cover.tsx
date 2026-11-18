@@ -1,7 +1,8 @@
 "use client";
 /**
- * 표지: 이달의 데뷔(댕댕이·냥이). 휴대폰은 옆으로 넘기고(점으로 위치), 1024~1279px 은 두 장을 반반 펼친다.
- * 1024~1279px 은 장마다 아래에 SNS 아이콘 줄(.deskSns). 1280px 이상은 양옆 세로 배너(DebutRail)가 데뷔를 맡으므로 사진 표지는 숨기고 바로가기만 남긴다(#16, 같은 사진이 두 번 나오지 않게).
+ * 표지: 이달의 데뷔(댕댕이·냥이). 휴대폰은 옆으로 넘기고(점으로 위치), 1024px 이상은 두 장을 반반 펼친다.
+ * 1024~1279px 은 장마다 아래에 SNS 아이콘 줄(.deskSns). 1280px 이상은 표지를 그대로 두고 양옆 세로 배너(DebutRail)를
+ * 함께 띄운다(#16 사용자 의견: 가운데 배너 유지 + 양옆 활용). 그때 SNS 아이콘은 배너가 맡는다.
  * 사진·이름·표 수 어디를 눌러도 글 상세로 간다(#16). 사진이 여러 장이면 제자리에서 자동으로 넘긴다(PhotoFade).
  * 큰 제호("프로듀스 댕냥")는 #16 에서 뺐다. 사이트 이름은 윗줄 로고와 읽기 도구용 h1(MainPage)이 맡는다.
  * 데뷔가 아직 없으면(서비스 첫 달) 사진 없는 글자 표지 한 장.
@@ -29,7 +30,7 @@ export function Cover({ debutMonth, debut, toc }: Props) {
     });
 
   return (
-    <div className={`${s.coverWrap} ${debut.length ? s.hasDebut : ""}`}>
+    <div className={s.coverWrap}>
       <div className={s.cover}>
         <div
           className={s.slides}

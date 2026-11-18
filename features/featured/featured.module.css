@@ -134,8 +134,8 @@
   .deskSns { display: flex; justify-content: center; gap: 10px; min-height: 44px; margin-top: -6px; }
 }
 @media (min-width: 1280px) {
-  /* 데뷔가 있으면 사진 표지는 세로 배너가 맡는다. 바로가기(목차)만 남는다 */
-  .hasDebut .slide, .hasDebut .dots, .hasDebut .act { display: none; }
+  /* 가운데 표지(두 장 반반)는 그대로 두고 양옆 세로 배너를 함께 띄운다(#16 사용자 의견). 장 아래 SNS 줄은 배너가 맡아 숨김 */
+  .deskSns { display: none; }
   .rail {
     display: flex;
     flex-direction: column;
