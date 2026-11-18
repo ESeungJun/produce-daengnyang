@@ -4,7 +4,7 @@
  * - 진짜 권한은 DB 함수(require_admin)와 Edge Function(admin-purge-user)이 다시 확인한다. 여기는 화면을 고르는 데만.
  * - 처리 안 된 신고를 대상별로 묶어 신고 많은 순으로 보여 준다. 동작은 AdminActions(숨기기·되살리기·문제없음·계정 정리).
  * - 숨기면 신고가 닫혀 목록에서 빠지므로, 아래 "최근 숨긴 것"(14일)에서 잘못 숨긴 것을 되살린다.
- * - 라운드 결과 다시 계산은 결과 확정(#7)과 함께 붙인다.
+ * - 맨 아래 "라운드 결과": 최근 끝난 라운드와 확정 여부. 신고로 글을 숨긴 뒤 RecalcButton 으로 다시 센다(#7).
  */
 import Link from "next/link";
 import { notFound } from "next/navigation";
@@ -12,11 +12,12 @@ import { memberId } from "@/features/auth/server";
 import { LoginButton } from "@/features/auth/LoginButton";
 import { SiteNav } from "@/features/entries/SiteNav";
 import { PicksLeft } from "@/features/picks/PicksLeft";
-import { BOARD_NAME, timeAgo } from "@/shared/lib/format";
+import { BOARD_NAME, roundName, timeAgo } from "@/shared/lib/format";
 import { createClient } from "@/shared/lib/supabase/server";
 import { photoUrl } from "@/shared/lib/supabase/env";
 import { TopBar, page } from "@/shared/ui/TopBar";
 import { AdminActions } from "./AdminActions";
+import { RecalcButton } from "./RecalcButton";
 import s from "./admin.module.css";
 
 export async function AdminPage() {
@@ -25,9 +26,10 @@ export async function AdminPage() {
   if (!uid) notFound();
   const { data: me } = await supabase.from("profiles").select("is_admin").eq("id", uid).maybeSingle();
   if (!me?.is_admin) notFound();
-  const [{ data: rows, error }, { data: hiddenRows }] = await Promise.all([
+  const [{ data: rows, error }, { data: hiddenRows }, { data: rounds }] = await Promise.all([
     supabase.rpc("admin_reports", { p_limit: 100 }),
     supabase.rpc("admin_recent_hidden", { p_days: 14 }),
+    supabase.rpc("admin_rounds", { p_limit: 8 }),
   ]);
 
   return (
@@ -87,6 +89,27 @@ export async function AdminPage() {
                 </p>
                 <p className={s.meta}>작성자 {h.author_name ?? "(탈퇴 또는 프로필 없음)"}</p>
                 <AdminActions target={h.target} targetId={h.target_id} hidden deleted={false} authorId={null} authorName={null} self={false} restoreOnly />
+              </div>
+            </li>
+          );
+        })}
+      </ul>
+      <h2 className={s.h2}>라운드 결과</h2>
+      <p className={s.lead}>결과는 매일 0시에 자동으로 확정돼요. 신고로 글을 숨긴 뒤에는 여기서 다시 계산해 주세요.</p>
+      {!rounds?.length ? <p className={s.empty}>끝난 라운드가 아직 없어요.</p> : null}
+      <ul className={s.list}>
+        {(rounds ?? []).map((r) => {
+          const title = `${Number(r.month.slice(5, 7))}월 ${roundName(r.kind, r.seq)}`;
+          return (
+            <li key={`r-${r.id}`} className={s.row}>
+              <div className={s.body}>
+                <p className={s.what}>{title}</p>
+                <p className={s.meta}>
+                  {r.finalized_at ? `${timeAgo(r.finalized_at)} 확정 · 결과 ${r.results}줄` : "아직 확정 전(다음 0시에 확정)"}
+                </p>
+                <div className={s.actions}>
+                  <RecalcButton roundId={r.id} title={title} finalized={!!r.finalized_at} />
+                </div>
               </div>
             </li>
           );
