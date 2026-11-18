@@ -43,6 +43,9 @@ npm run deploy                  # deploy to Cloudflare Workers
 |---|---|
 | `NEXT_PUBLIC_SUPABASE_URL` | Supabase project URL |
 | `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` | Publishable key, safe for the browser |
+| `NEXT_PUBLIC_TURNSTILE_SITE_KEY` | Cloudflare Turnstile site key (public). Locally use the test key `1x00000000000000000000BB` |
+
+For the local Supabase stack, put `SUPABASE_AUTH_CAPTCHA_SECRET=1x0000000000000000000000000000000AA` (Turnstile's public test secret) in `supabase/.env` so anonymous sign-in works.
 
 ## Branches
 git flow: `main` for releases, `develop` for work. Features live on `feature/<issue>-<name>`, and commits end with `(#issue)`.

@@ -601,6 +601,10 @@ export type Database = {
       }
       kst_today: { Args: never; Returns: string }
       my_entries: { Args: never; Returns: Json }
+      merge_anon_picks: {
+        Args: { p_anon: string; p_target: string }
+        Returns: number
+      }
       my_picks_today: {
         Args: never
         Returns: {

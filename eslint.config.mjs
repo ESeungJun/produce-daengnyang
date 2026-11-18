@@ -21,6 +21,8 @@ const eslintConfig = defineConfig([
     ".work/**",
     "docs/**",
     ".open-next/**",
+    // Supabase Edge Function 은 Deno 코드라 deno 로 따로 검사한다(supabase functions serve)
+    "supabase/functions/**",
   ]),
 ]);
 

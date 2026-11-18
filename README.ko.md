@@ -43,6 +43,9 @@ npm run deploy                  # Cloudflare Workers 배포
 |---|---|
 | `NEXT_PUBLIC_SUPABASE_URL` | Supabase 프로젝트 주소 |
 | `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` | 브라우저에 나가도 되는 publishable 키 |
+| `NEXT_PUBLIC_TURNSTILE_SITE_KEY` | Cloudflare Turnstile 사이트 키(공개 값). 로컬은 시험 키 `1x00000000000000000000BB` |
+
+로컬 Supabase 는 `supabase/.env` 에 `SUPABASE_AUTH_CAPTCHA_SECRET=1x0000000000000000000000000000000AA`(Turnstile 공개 시험 비밀 키)를 넣어야 익명 로그인이 돼요.
 
 ## 문서
 [기획서](docs/기획서.md) · [디자인 시스템](docs/design/DESIGN_SYSTEM.md) · [설계서](docs/설계서.md) · [구현도](docs/구현도.md) · [결정기록](docs/결정기록.md)
