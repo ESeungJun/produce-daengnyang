@@ -110,7 +110,7 @@
 /* ── 데뷔조 후보 폴라로이드 ── */
 .polas { display: flex; gap: 14px; overflow-x: auto; padding: 10px var(--pd-gutter) 14px; margin: 0 calc(-1 * var(--pd-gutter)); scrollbar-width: none; list-style: none; }
 .polas::-webkit-scrollbar { display: none; }
-.pola { flex: 0 0 112px; background: var(--pd-card); padding: 6px 6px 8px; border-radius: var(--pd-r-polaroid); }
+.pola { flex: 0 0 112px; background: var(--pd-card); padding: 6px 6px 8px; border-radius: var(--pd-r-polaroid); box-shadow: var(--pd-card-edge); }
 .pola:nth-child(odd) { transform: rotate(-2.5deg); }
 .pola:nth-child(even) { transform: rotate(2deg); }
 .pola a { color: var(--pd-card-ink); text-decoration: none; display: block; }
