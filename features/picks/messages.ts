@@ -25,7 +25,7 @@ export function pickErrorOutcome(code: string | undefined, board: Board, now: Da
     case "own_entry":
       return { kind: "toast", text: "내 아이에게는 픽할 수 없어요" };
     case "round_closed":
-      return { kind: "toast", text: "마감된 라운드예요. 새 라운드에서 픽해 주세요" };
+      return { kind: "toast", text: "마감된 주차예요. 이번 주차에서 픽해 주세요" };
     case "not_found":
       return { kind: "toast", text: "글을 찾을 수 없어요. 지워졌을 수 있어요" };
     default:

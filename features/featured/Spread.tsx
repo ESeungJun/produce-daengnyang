@@ -14,7 +14,7 @@ import s from "./featured.module.css";
  * 사진을 누르면 글 상세로, 이름 아래 SNS 칸을 누르면 그 아이 SNS 로 간다(클릭·노출을 기록해 이동률을 잰다).
  */
 export function CenterSpread({ center, past }: { center: FeaturedCard[]; past: FeaturedCard[] }) {
-  const items = [...center.map((c) => ({ c, label: `${BOARD_NAME[c.board]} 센터`, now: true })), ...past.slice(0, 2).map((c) => ({ c, label: `${c.round_seq}라운드 센터`, now: false }))];
+  const items = [...center.map((c) => ({ c, label: `${BOARD_NAME[c.board]} 센터`, now: true })), ...past.slice(0, 2).map((c) => ({ c, label: `${c.round_seq}주차 센터`, now: false }))];
   // 이동률 분모: SNS 칸이 실제로 보이는 이번 주 센터만(지난 센터는 칸을 두지 않는다)
   const seen = center.filter((c) => snsLinks(c).length > 0).map((c) => c.entry_id);
   return (
@@ -53,7 +53,7 @@ export function Polaroids({ items }: { items: FeaturedCard[] }) {
             <img src={photoUrl(c.thumb_path) ?? undefined} alt="" loading="lazy" decoding="async" />
             <span>
               <b>{c.pet_name}</b>
-              {c.round_seq}R {c.rank}위 · {BOARD_NAME[c.board]}
+              {c.round_seq}주차 {c.rank}위 · {BOARD_NAME[c.board]}
             </span>
           </Link>
         </li>

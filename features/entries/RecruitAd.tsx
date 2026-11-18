@@ -16,9 +16,9 @@ export function RecruitAd({ id, title = "우리 애도 연습생으로!", closed
         <h2 id={id ? `${id}-t` : undefined}>{title}</h2>
         <ul>
           <li>사진 1~3장 + 이름 + SNS(선택)</li>
-          <li>라운드마다 댕댕이·냥이 합쳐 2번까지</li>
-          <li>1위는 다음 주 내내 사이트에 걸려요</li>
-          {wide ? <li>월말 결선 1위는 데뷔! 다음 달 내내 메인에 걸려요</li> : null}
+          <li>1~3주차마다 댕댕이·냥이 합쳐 2번까지</li>
+          <li>주간 1위는 다음 결과가 나올 때까지 사이트에 걸려요</li>
+          {wide ? <li>마지막 주차 1위는 데뷔! 다음 달 내내 메인에 걸려요</li> : null}
         </ul>
         {closed ? <p className={s.adNote}>지금은 데뷔 평가 기간이라 등록을 쉬어요. 다음 달 1일부터 다시 받아요.</p> : <RegisterButton className={s.adBtn} />}
       </div>
@@ -35,7 +35,7 @@ export function RecruitAd({ id, title = "우리 애도 연습생으로!", closed
             <span className={s.posterEmpty}>첫 번째 연습생 자리</span>
           )}
           <span className={s.posterBig}>다음 센터는 너야</span>
-          <span className={s.posterFoot}>매달 1·8·15일 0시 새 라운드 · 픽은 언제나 무료</span>
+          <span className={s.posterFoot}>매달 1·8·15일 0시 등록 시작 · 픽은 언제나 무료</span>
         </div>
       ) : null}
     </section>

@@ -68,6 +68,9 @@
   /* 내 영역 캡슐: 남은 픽 | 내 정보(또는 로그인). 사이트 메뉴와 내 것을 나눠 보이게 */
   .right { gap: 0; background: var(--pd-paper-2); box-shadow: inset 0 0 0 1px var(--pd-jelly-2); border-radius: var(--pd-r-pill); padding: 4px 6px 4px 16px; }
   .login { margin-left: 12px; padding-left: 12px; border-left: 2px dotted var(--pd-jelly); }
+  /* 남은 픽 없이 로그인만 있을 때(#20): 캡슐 안 점선 칸막이 없이 */
+  .solo { padding-left: 6px; }
+  .solo .login { margin-left: 0; padding-left: 0; border-left: 0; }
   .deskOnly { display: inline-block; }
   .me { font-size: var(--pd-fs-body); }
 }

@@ -5,7 +5,6 @@
 import { TopBar, page } from "@/shared/ui/TopBar";
 import { LoginButton } from "@/features/auth/LoginButton";
 import { SiteNav } from "@/features/entries/SiteNav";
-import { PicksLeft } from "@/features/picks/PicksLeft";
 import s from "./legal.module.css";
 
 export const CONTACT = process.env.NEXT_PUBLIC_CONTACT_EMAIL ?? "";
@@ -13,7 +12,7 @@ export const CONTACT = process.env.NEXT_PUBLIC_CONTACT_EMAIL ?? "";
 export function LegalPage({ title, effective, children }: { title: string; effective: string; children: React.ReactNode }) {
   return (
     <div className={page.page}>
-      <TopBar nav={<SiteNav />} right={<PicksLeft />} login={<LoginButton />} />
+      <TopBar nav={<SiteNav />} login={<LoginButton />} />
       <article className={s.doc}>
         <h1>{title}</h1>
         <p className={s.meta}>시행일 {effective} · 초안(법률 검토 전)</p>

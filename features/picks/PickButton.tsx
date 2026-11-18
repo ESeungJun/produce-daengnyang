@@ -19,7 +19,7 @@ type Props = {
 
 const CLOSED = {
   mine: { text: "내 글", label: "내 아이에게는 픽할 수 없어요" },
-  ended: { text: "마감", label: "마감된 라운드예요" },
+  ended: { text: "마감", label: "마감된 주차예요" },
 } as const;
 
 export function PickButton({ entryId, board, pickedToday = false, size = "md", closed }: Props) {

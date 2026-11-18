@@ -11,7 +11,6 @@ import { notFound } from "next/navigation";
 import { memberId } from "@/features/auth/server";
 import { LoginButton } from "@/features/auth/LoginButton";
 import { SiteNav } from "@/features/entries/SiteNav";
-import { PicksLeft } from "@/features/picks/PicksLeft";
 import { BOARD_NAME, roundName, timeAgo, type Board } from "@/shared/lib/format";
 import { createClient } from "@/shared/lib/supabase/server";
 import { photoUrl } from "@/shared/lib/supabase/env";
@@ -34,7 +33,7 @@ export async function AdminPage() {
 
   return (
     <div className={page.page}>
-      <TopBar nav={<SiteNav />} right={<PicksLeft />} login={<LoginButton />} />
+      <TopBar nav={<SiteNav />} login={<LoginButton />} />
       <h1 className={s.title}>신고 처리</h1>
       <p className={s.lead}>처리 안 된 신고를 대상별로 모았어요. 숨기면 게시판·상세·센터·결과 계산에서 빠지고, 신고는 처리됨으로 닫혀요.</p>
       {error ? <p className={s.lead}>신고 목록을 읽지 못했어요. 새로고침해 주세요.</p> : null}

@@ -452,7 +452,7 @@ export function RegisterForm(props: Props) {
         </button>
         {!edit ? (
           <p className={s.note}>
-            쓰는 내용은 이 기기에만 임시 저장돼요.{props.mode === "create" && props.left < 2 ? ` 이번 라운드에 ${props.left}번 더 올릴 수 있어요.` : ""}
+            쓰는 내용은 이 기기에만 임시 저장돼요.{props.mode === "create" && props.left < 2 ? ` 이번 주차에 ${props.left}번 더 올릴 수 있어요.` : ""}
           </p>
         ) : null}
       </aside>

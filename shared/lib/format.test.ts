@@ -8,9 +8,9 @@ describe("countdown", () => {
 });
 
 describe("roundName·deadlineLabel", () => {
-  it("라운드 이름", () => {
-    expect(roundName("weekly", 3)).toBe("3라운드");
-    expect(roundName("final", 0)).toBe("결선");
+  it("주차 이름(#20)", () => {
+    expect(roundName("weekly", 3)).toBe("3주차");
+    expect(roundName("final", 0)).toBe("마지막 주차");
   });
   it("22일 0시(KST) 마감은 21일 밤 12시", () => expect(deadlineLabel("2026-11-21T15:00:00Z")).toBe("21일 밤 12시 마감"));
 });

@@ -6,6 +6,7 @@
 import Link from "next/link";
 import { BOARD_NAME, deadlineLabel, type Board } from "@/shared/lib/format";
 import { cookies } from "next/headers";
+import { kstDate } from "@/shared/lib/kst";
 import { createClient } from "@/shared/lib/supabase/server";
 import { VISITOR_COOKIE, cleanVisitorKey } from "@/shared/lib/visitor";
 import { CenterBanner } from "@/features/featured/CenterBanner";
@@ -16,7 +17,8 @@ import { LoginButton } from "@/features/auth/LoginButton";
 import { PicksLeft } from "@/features/picks/PicksLeft";
 import { Band } from "@/features/rounds/Band";
 import { loadOpenRound } from "@/features/rounds/api";
-import { isBlind, roundTitle } from "@/features/rounds/schedule";
+import { MonthPlan } from "@/features/rounds/MonthPlan";
+import { bandLabel, isBlind, roundTitle } from "@/features/rounds/schedule";
 import { loadBoard, type BoardSort } from "./api";
 import { BoardGallery } from "./BoardGallery";
 import { RecruitAd } from "./RecruitAd";
@@ -45,9 +47,14 @@ export async function BoardPage({ board, sort, q }: { board: Board; sort: BoardS
       <CenterBanner board={board} />
       <div className={s.bhead}>
         <h1>{BOARD_NAME[board]} 연습생</h1>
-        <p>{round ? `${roundTitle(round)} · ${deadlineLabel(round.ends_at)}` : "다음 라운드를 준비하고 있어요"}</p>
+        <p>{round ? `${roundTitle(round)} · ${deadlineLabel(round.ends_at)}` : "다음 주차를 준비하고 있어요"}</p>
       </div>
-      {round ? <Band className={s.bandGap} endsAt={round.ends_at} /> : null}
+      {round ? <Band className={s.bandGap} endsAt={round.ends_at} label={bandLabel(round, blind)} /> : null}
+      {/* 투표하러 온 사람이 규칙을 바로 볼 수 있게 접어 둔 일정 달력(#20) */}
+      <details className={s.howTo}>
+        <summary>어떻게 뽑나요?</summary>
+        <MonthPlan month={round?.month ?? `${kstDate().slice(0, 7)}-01`} />
+      </details>
       {round ? <SearchBox board={board} sort={sort} q={q} /> : null}
       <div className={s.sortGap}>
         <SortLinks
@@ -63,7 +70,7 @@ export async function BoardPage({ board, sort, q }: { board: Board; sort: BoardS
         <BoardGallery key={`${sort}|${q}`} board={board} sort={sort} seed={seed} q={searching ? q : ""} initial={items} showRank={sort === "popular" && !blind} />
       ) : searching ? (
         <div className={s.empty}>
-          <p>이번 라운드에 ‘{q}’ 연습생이 없어요. 이름을 다시 확인하거나 최신순으로 둘러보세요.</p>
+          <p>이번 주차에 ‘{q}’ 연습생이 없어요. 이름을 다시 확인하거나 최신순으로 둘러보세요.</p>
           <Link className={ui.ghost} href={boardHref(board, "latest", "")}>
             최신순 보기
           </Link>
@@ -72,9 +79,9 @@ export async function BoardPage({ board, sort, q }: { board: Board; sort: BoardS
         <div className={s.empty}>
           <p>
             {!round
-              ? "라운드가 열리면 연습생이 여기 올라와요."
+              ? "새 주차가 열리면 연습생이 여기 올라와요."
               : final
-                ? "지금은 데뷔 평가 중이에요. 다음 달 1일에 새 라운드가 열려요."
+                ? "지금은 데뷔 평가 중이에요. 다음 달 1일에 1주차가 열려요."
                 : `아직 ${BOARD_NAME[board]} 연습생이 없어요. 첫 연습생이 되어 주세요.`}
           </p>
           {round && !final ? <RegisterButton className={ui.pill} /> : null}

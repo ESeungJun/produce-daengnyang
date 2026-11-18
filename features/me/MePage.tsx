@@ -7,7 +7,6 @@ import { TopBar, page } from "@/shared/ui/TopBar";
 import { LoginButton } from "@/features/auth/LoginButton";
 import { memberId } from "@/features/auth/server";
 import { SiteNav } from "@/features/entries/SiteNav";
-import { PicksLeft } from "@/features/picks/PicksLeft";
 import Link from "next/link";
 import { Inbox } from "@/features/notifications/Inbox";
 import { PushToggle } from "@/features/notifications/PushToggle";
@@ -22,7 +21,7 @@ import s from "./me.module.css";
 export async function MePage({ resumeLeave = false }: { resumeLeave?: boolean }) {
   const supabase = await createClient();
   const uid = await memberId(supabase);
-  const bar = <TopBar nav={<SiteNav />} right={<PicksLeft />} login={<LoginButton />} />;
+  const bar = <TopBar nav={<SiteNav />} login={<LoginButton />} />;
   if (!uid) {
     return (
       <div className={page.page}>

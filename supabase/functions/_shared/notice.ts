@@ -20,9 +20,9 @@ export function noticeView(kind: string, payload: unknown): { text: string; href
     case "comment":
       return { text: `${name} 글에 새 응원 댓글이 달렸어요`, href };
     case "center":
-      return { text: `${name} 이번 주 센터 선정! 다음 라운드 동안 메인과 게시판 맨 위에 걸리고, 월말 데뷔 평가에도 올라가요`, href };
+      return { text: `${name} 이번 주 센터 선정! 다음 주간 결과가 나올 때까지 메인과 게시판 맨 위에 걸리고, 월말 데뷔 평가에도 올라가요`, href };
     case "finalist":
-      return { text: `${name} 결선 진출! 월말 데뷔 평가에 올라가요`, href };
+      return { text: `${name} 데뷔 후보 선정! 마지막 주차 데뷔 평가에 올라가요`, href };
     case "debut":
       return { text: `${name} 데뷔 확정! 이번 달 내내 사이트 모든 화면 맨 위에 걸려요`, href };
     case "result_changed":
