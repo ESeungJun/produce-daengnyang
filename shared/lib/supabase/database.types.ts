@@ -342,6 +342,11 @@ isOneToOne: false
 "admin_dismiss":
 { Args: { "p_target": Database["public"]['Enums']["report_target"],"p_target_id": string }; Returns: undefined
                            },
+"admin_recent_hidden":
+{ Args: { "p_days"?: number }; Returns: {
+              "author_name": string,"board": Database["public"]['Enums']["board_kind"],"body": string,"entry_id": string,"hidden_at": string,"pet_name": string,"target": Database["public"]['Enums']["report_target"],"target_id": string,"thumb_path": string
+            }[]
+                           },
 "admin_reports":
 { Args: { "p_limit"?: number }; Returns: {
               "author_id": string,"author_name": string,"board": Database["public"]['Enums']["board_kind"],"body": string,"deleted": boolean,"entry_id": string,"hidden": boolean,"last_at": string,"pet_name": string,"reasons": (string)[],"reports": number,"target": Database["public"]['Enums']["report_target"],"target_id": string,"thumb_path": string

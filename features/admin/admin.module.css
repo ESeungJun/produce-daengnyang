@@ -16,3 +16,4 @@
 .actions button { padding: 0 16px; }
 .danger { min-height: 44px; border: 1px solid var(--pd-ink); border-radius: var(--pd-r-pill); background: none; color: var(--pd-ink); font: inherit; font-size: var(--pd-fs-small); font-weight: 700; cursor: pointer; }
 .danger:disabled { opacity: 0.5; }
+.h2 { font-family: var(--pd-f-display); font-weight: 400; font-size: var(--pd-fs-number); margin: 32px 0 6px; }

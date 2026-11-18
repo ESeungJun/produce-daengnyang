@@ -5,7 +5,7 @@
  * 2. 자기 자신·다른 관리자는 정리하지 않는다(실수로 운영 계정을 지우지 않게).
  * 3. 계정을 지우기 전에 purge_bot_picks 로 결과가 확정되지 않은 라운드의 픽을 지운다(지우면 누구 표인지 찾을 수 없다).
  * 4. 그 뒤는 delete-account 와 같다: 사진 목록 읽기(못 읽으면 멈춤) → 계정 삭제(글·댓글·신고·알림 cascade) → 사진 파일 삭제.
- * 이 함수와 delete-account 만 service_role 키를 쓴다.
+ * service_role 키는 merge-anon·delete-account·이 함수만 쓴다.
  */
 import { createClient } from "npm:@supabase/supabase-js@2.119.0";
 

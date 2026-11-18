@@ -5,15 +5,17 @@
 .cm li { padding: 10px 0; }
 .cm li + li { border-top: 2px dotted var(--pd-jelly-2); }
 .cm p { margin: 3px 0 0; font-size: var(--pd-fs-body); overflow-wrap: anywhere; }
-.who { font-size: var(--pd-fs-tiny); color: var(--pd-ink-2); display: flex; gap: 8px; align-items: center; }
+.who { font-size: var(--pd-fs-tiny); color: var(--pd-ink-2); display: flex; flex-wrap: wrap; gap: 0 8px; align-items: center; }
 .who b { color: var(--pd-ink); font-size: var(--pd-fs-small); }
 .tag { background: var(--pd-butter); color: var(--pd-on-butter); font-size: var(--pd-fs-micro); font-weight: 700; padding: 1px 6px; border-radius: var(--pd-r-pill); box-shadow: inset 0 0 0 1px var(--pd-jelly-2); }
-/* 지우기·신고: 글자 버튼이지만 손가락 크기(44px)를 확보한다 */
-.who button, .whoBtn {
+/* 지우기·신고: 글자 버튼이지만 손가락 크기(44px)를 확보한다. 글자 끝은 본문 오른쪽 끝에 맞춘다 */
+.whoBtn {
   margin-left: auto;
   min-height: 44px;
   min-width: 44px;
   margin-block: -12px;
+  padding: 0;
+  text-align: right;
   border: 0;
   background: none;
   color: var(--pd-ink-2);
@@ -28,13 +30,14 @@
   position: sticky;
   bottom: 0;
   z-index: 3;
-  display: flex;
-  gap: 8px;
   margin: 12px calc(-1 * var(--pd-gutter)) 0;
   padding: 10px var(--pd-gutter) calc(14px + env(safe-area-inset-bottom, 0px));
   background: var(--pd-paper);
+  /* 떠 있다는 표시: 라이트는 그림자, 다크는 그림자가 안 보여 윗변 선으로 나눈다 */
+  border-top: 1px solid var(--pd-jelly-2);
   box-shadow: 0 -6px 14px rgb(var(--pd-shade) / 0.06);
 }
+.row { display: flex; gap: 8px; }
 .form input {
   flex: 1;
   min-width: 0;
@@ -45,8 +48,9 @@
   background: var(--pd-paper-2);
   color: var(--pd-ink);
   font: inherit;
-  font-size: 16px;
+  font-size: var(--pd-fs-name);
 }
+.form input[aria-invalid="true"] { border-color: var(--pd-pink); }
 .form input::placeholder { color: var(--pd-ink-2); }
 .form input:focus-visible { outline: 3px solid var(--pd-pink); outline-offset: 1px; border-color: transparent; }
 .form button {
@@ -62,6 +66,9 @@
   cursor: pointer;
 }
 .form button:disabled { opacity: 0.5; }
+.note { display: flex; gap: 8px; margin: 6px 2px 0; font-size: var(--pd-fs-tiny); }
+.err { color: var(--pd-pink-text); }
+.count { margin-left: auto; color: var(--pd-ink-2); font-variant-numeric: tabular-nums; }
 .srOnly { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
 /* 데스크톱은 오른쪽 칸 안에 들어가므로 화면 끝까지 늘이지 않는다 */
 @media (min-width: 1024px) {

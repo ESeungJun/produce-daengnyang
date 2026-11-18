@@ -6,7 +6,7 @@
 -- ─────────────────────────────────────────────────────────────
 begin;
 create extension if not exists pgtap with schema extensions;
-select plan(119);
+select plan(128);
 
 -- ── 준비(관리자 권한) ───────────────────────────────────────
 -- 사용자: A·B·D 구글 연결(회원), C 익명, E 이메일 가입(구글 연결 없음 → 회원 아님)
@@ -212,6 +212,17 @@ select throws_ok(
   $$select public.create_entry('cat', '다시', null, null, null, null, '[{"path":"00000000-0000-0000-0000-0000000000a1/p2.webp","thumb_path":"00000000-0000-0000-0000-0000000000a1/t2.webp"}]')$$,
   'P0001', 'entry_limit', '지워도 등록 횟수는 돌아오지 않는다');
 
+-- #6 리뷰: 금지어 우회와 오탐(화면 역할에는 닫힌 함수라 잠깐 관리 역할로)
+reset role;
+select ok(public.has_banned_word('씨~발'), '기호(~)로 끊어도 금지어');
+select ok(public.has_banned_word('씨+발 ^^'), '기호(+)로 끊어도 금지어');
+select ok(public.has_banned_word('ｆｕｃｋ'), '전각 영문도 금지어');
+select ok(public.has_banned_word('시발 점수'), '예외 낱말(시발점)을 띄어 쓰면 금지어');
+select ok(not public.has_banned_word('아저씨 바보 같아요ㅋㅋ'), '아저씨 바보는 통과');
+select ok(not public.has_banned_word('출시 발표 기다려요'), '출시 발표는 통과');
+select ok(not public.has_banned_word('우리 개 새끼들 귀여워'), '개 새끼들(강아지)은 통과');
+select ok(not public.has_banned_word('시발점이 어디예요'), '시발점은 통과');
+set local role authenticated;
 -- ── 댓글·신고 (B) ───────────────────────────────────────────
 set local request.jwt.claims = '{"sub":"00000000-0000-0000-0000-0000000000b1","role":"authenticated","is_anonymous":false}';
 do $$ begin
@@ -232,6 +243,7 @@ set local request.jwt.claims = '{"sub":"00000000-0000-0000-0000-0000000000a1","r
 select is((select reports from public.admin_reports() where target = 'comment' and target_id = current_setting('t.c1')::uuid), 1, '관리자는 대상별 신고 수를 본다');
 select public.admin_set_hidden('comment', current_setting('t.c1')::uuid, true);
 select is((select count(*)::int from public.entry_comments(current_setting('t.e1')::uuid)), 0, '숨긴 댓글은 목록에서 빠진다');
+select is((select count(*)::int from public.admin_recent_hidden() where target_id = current_setting('t.c1')::uuid), 1, '숨긴 댓글은 최근 숨긴 것에서 되살릴 수 있다');
 select public.admin_dismiss('entry', current_setting('t.e1')::uuid);
 select is((select count(*)::int from public.admin_reports()), 0, '숨기기·문제없음 처리한 신고는 목록에서 닫힌다');
 select public.admin_set_hidden('comment', current_setting('t.c1')::uuid, false);

@@ -36,13 +36,15 @@ export async function MePage({ resumeLeave = false }: { resumeLeave?: boolean })
       </div>
     );
   }
-  const [{ data: profile }, { data: mine }, { data: notes }] = await Promise.all([
+  const [{ data: profile }, { data: mine }, { data: notes, error: notesError }, { count: unreadCount }] = await Promise.all([
     supabase.from("profiles").select("nickname, nickname_changed_at, is_admin").eq("id", uid).maybeSingle(),
     supabase.rpc("my_entries"),
     supabase.from("notifications").select("id, kind, payload, created_at, read_at").order("created_at", { ascending: false }).limit(20),
+    // 보이는 20개 밖의 안 읽은 것까지 센다(윗줄 점과 같은 숫자)
+    supabase.from("notifications").select("id", { count: "exact", head: true }).is("read_at", null),
   ]);
   const inbox = (notes ?? []) as NotificationRow[];
-  const unread = inbox.filter((n) => !n.read_at).length;
+  const unread = unreadCount ?? inbox.filter((n) => !n.read_at).length;
   const entries = (mine as unknown as MyEntry[] | null) ?? [];
 
   return (
@@ -61,18 +63,22 @@ export async function MePage({ resumeLeave = false }: { resumeLeave?: boolean })
             </Link>
           ) : null}
         </section>
-        <section className={s.main} aria-labelledby="mine-h">
-          <h2 id="inbox-h" className={s.h2}>
-            알림 {unread ? <span>새 {unread}</span> : null}
-          </h2>
-          <div className={s.inbox}>
-            <Inbox items={inbox} />
-          </div>
-          <h2 id="mine-h" className={s.h2}>
-            내가 올린 아이 <span>{entries.length}</span>
-          </h2>
-          <MyEntries entries={entries} />
-        </section>
+        <div className={s.main}>
+          <section aria-labelledby="inbox-h">
+            <h2 id="inbox-h" className={s.h2}>
+              알림 {unread ? <span>새 {unread}</span> : null}
+            </h2>
+            <div className={s.inbox}>
+              <Inbox items={inbox} unread={unread} failed={!!notesError} />
+            </div>
+          </section>
+          <section aria-labelledby="mine-h">
+            <h2 id="mine-h" className={s.h2}>
+              내가 올린 아이 <span>{entries.length}</span>
+            </h2>
+            <MyEntries entries={entries} />
+          </section>
+        </div>
       </div>
     </div>
   );
