@@ -9,20 +9,20 @@
  */
 import Link from "next/link";
 import { useRef, useState } from "react";
-import { BOARD_NAME, SNS_NAME, count, firstSns, snsLinks } from "@/shared/lib/format";
-import ui from "@/shared/ui/ui.module.css";
+import { BOARD_NAME, SNS_NAME, count, snsLinks } from "@/shared/lib/format";
 import { Impression } from "@/features/sns/Impression";
 import { SnsLink } from "@/features/sns/SnsLink";
 import { debutPhotos, type FeaturedCard } from "./api";
 import { PhotoFade } from "./PhotoFade";
 import s from "./featured.module.css";
 
-type Props = { debutMonth: string; debut: FeaturedCard[]; toc: React.ReactNode };
+/** below: 표지 바로 아래 한 줄(메인은 데뷔 대각선 배너, #20) */
+type Props = { debutMonth: string; debut: FeaturedCard[]; below?: React.ReactNode };
 
-export function Cover({ debutMonth, debut, toc }: Props) {
+export function Cover({ debutMonth, debut, below }: Props) {
   const slides = useRef<HTMLDivElement>(null);
   const [at, setAt] = useState(0);
-  const sns = debut[at] ? firstSns(debut[at]) : null;
+  const sns = debut[at] ? snsLinks(debut[at]) : [];
   const go = (i: number) =>
     slides.current?.scrollTo({
       left: slides.current.clientWidth * i,
@@ -71,8 +71,11 @@ export function Cover({ debutMonth, debut, toc }: Props) {
         ) : null}
       </div>
       {/* 노출은 SNS 버튼이 실제로 보일 때(휴대폰, 지금 넘겨 둔 장)만 센다. 데스크톱은 .act 가 숨어 0 크기라 세지 않는다. */}
-      <Impression key={debut[at]?.entry_id ?? "none"} className={s.act} ids={sns ? [debut[at].entry_id] : []} place="cover">
-        {sns ? <SnsLink className={ui.pill} entryId={debut[at].entry_id} sns={sns} place="cover" /> : null}
+      <Impression key={debut[at]?.entry_id ?? "none"} className={s.act} ids={sns.length ? [debut[at].entry_id] : []} place="cover">
+        {sns.length ? <span className={s.railSnsCap}>{debut[at].pet_name} SNS 구경 가기</span> : null}
+        {sns.map((x) => (
+          <SnsLink key={x.kind} className={s.railSnsBtn} entryId={debut[at].entry_id} sns={x} place="cover" iconSize="lg" label={`${debut[at].pet_name} ${SNS_NAME[x.kind]} ${x.handle}, 새 창`} />
+        ))}
       </Impression>
       {/* 1024~1279px 펼침면: 장마다 아래에 SNS 앱 아이콘(장 자체가 링크라 안에 넣지 못한다). 휴대폰·1280 이상은 숨김 */}
       {debut.map((d) => {
@@ -85,7 +88,7 @@ export function Cover({ debutMonth, debut, toc }: Props) {
           </Impression>
         );
       })}
-      {toc}
+      {below}
     </div>
   );
 }

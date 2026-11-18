@@ -1,11 +1,12 @@
 /**
- * 메인: 데뷔 표지(1280px 이상은 양옆 세로 배너) → 이달 오디션 일정 달력·바로가기(#20) → 센터 화보 → 이번 주차 차트 → 데뷔조 후보 → 연습생 모집 공고(전체 폭).
+ * 메인: 데뷔 표지(1280px 이상은 양옆 세로 배너) → 데뷔 대각선 배너 → 센터 화보 → 이번 주차 차트("어떻게 뽑나요?" 펼침) → 데뷔조 후보 → 연습생 모집 공고(전체 폭).
+ * #20 후속: 화보 사이에 끼던 회색 일정 칸·바로가기를 빼고, 안내는 투표하는 자리(차트 아래)로 옮겼다.
  * 데이터 네 가지를 한꺼번에 받는다(get_featured, 지금 라운드, 강아지·고양이 차트 4줄씩). 화면 글은 "라운드" 대신 주차(#20).
  * #16: 잡지 비유("○월호 목차", 큰 제호)를 빼고 첫 화면에서 무슨 사이트인지 한 줄로 알리게 했다. 맨 아래는 사이트 푸터(레이아웃)가 맡는다.
  */
-import { BOARD_NAME, deadlineLabel, roundName } from "@/shared/lib/format";
+import { BOARD_NAME, roundName } from "@/shared/lib/format";
 import { createClient } from "@/shared/lib/supabase/server";
-import { SectionHead, Toc, type TocItem } from "@/shared/ui/parts";
+import { SectionHead } from "@/shared/ui/parts";
 import { TopBar, page } from "@/shared/ui/TopBar";
 import { LoginButton } from "@/features/auth/LoginButton";
 import { loadBoard } from "@/features/entries/api";
@@ -14,9 +15,10 @@ import { SiteNav } from "@/features/entries/SiteNav";
 import { Band } from "@/features/rounds/Band";
 import { Chart } from "@/features/rounds/Chart";
 import { loadOpenRound } from "@/features/rounds/api";
-import { MonthPlan } from "@/features/rounds/MonthPlan";
+import { HowToPick } from "@/features/rounds/HowToPick";
 import { bandLabel, isBlind } from "@/features/rounds/schedule";
 import { Cover } from "./Cover";
+import { DebutDuo } from "./DebutDuo";
 import { DebutRail } from "./DebutRail";
 import { getFeatured } from "./server";
 import { CenterSpread, Polaroids } from "./Spread";
@@ -41,13 +43,6 @@ export async function MainPage() {
   // 모집 포스터에 붙일 지금 연습생 사진(댕댕이·냥이 번갈아 최대 4장)
   const poster = [dog[0], cat[0], dog[1], cat[1]].flatMap((e) => (e?.thumb_path ? [e.thumb_path] : []));
 
-  const toc: TocItem[] = [
-    { href: "#chart", title: "지금 픽하러 가기", note: round ? `${roundName(round.kind, round.seq)} · ${deadlineLabel(round.ends_at)}` : "다음 주차 준비 중" },
-    { href: "#center", title: "이번 주 센터", note: center.length ? center.map((c) => c.pet_name).join(" · ") : "첫 센터를 기다려요" },
-    { href: "#finalists", title: "데뷔 후보", note: "22일부터 데뷔 평가" },
-    { href: "#recruit", title: "우리 아이 등록하기", note: "1~3주차마다 2번까지" },
-    { href: "/hall", title: "명예의 전당", note: "지난 센터·데뷔 모음" },
-  ];
 
   const main = (
     <div className={s.mainCol}>
@@ -55,17 +50,7 @@ export async function MainPage() {
         <Cover
           debutMonth={debutMonth}
           debut={featured.debut}
-          toc={
-            <Toc
-              heading={`${monthNo}월 댕냥 오디션 일정`}
-              lead="마음에 드는 아이에게 픽! 로그인하면 댕댕이·냥이 각각 하루 3픽(로그인 전엔 1픽)이에요."
-              label="오디션 일정과 바로가기"
-              items={toc}
-              className={s.toc}
-            >
-              <MonthPlan month={featured.month} className={s.plan} />
-            </Toc>
-          }
+          below={<DebutDuo debut={featured.debut} debutMonth={debutMonth} />}
         />
       </div>
 
@@ -90,6 +75,7 @@ export async function MainPage() {
             <Chart lists={{ dog, cat }} />
           </>
         ) : null}
+        <HowToPick month={round?.month ?? featured.month} />
       </section>
 
       <section aria-labelledby="finalists">

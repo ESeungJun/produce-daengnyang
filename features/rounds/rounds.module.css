@@ -61,25 +61,48 @@
   .boardTitle a { font-family: var(--pd-f-body); font-size: var(--pd-fs-small); color: var(--pd-ink-2); }
 }
 
-/* ── 한 달 일정 달력(#20). 휴대폰은 2×2, 넓으면 4칸 한 줄 ── */
-.plan { display: flex; flex-direction: column; gap: 12px; }
-.planWeeks { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
-.planWeeks > li { background: var(--pd-paper); color: var(--pd-ink); border-radius: var(--pd-r-md); box-shadow: inset 0 0 0 1px var(--pd-jelly-2); padding: 12px; display: flex; flex-direction: column; gap: 6px; min-width: 0; }
-.planWeeks > li[aria-current="step"] { box-shadow: inset 0 0 0 2px var(--pd-pink); }
-.planHead { margin: 0; display: flex; align-items: center; justify-content: space-between; gap: 6px; }
-.planHead b { font-family: var(--pd-f-display); font-weight: 400; font-size: var(--pd-fs-name); }
-.planHead em { font-style: normal; font-size: var(--pd-fs-tiny); font-weight: 700; color: var(--pd-on-pink); background: var(--pd-pink); border-radius: var(--pd-r-pill); padding: 2px 8px; }
-.planRange { margin: 0; font-size: var(--pd-fs-tiny); color: var(--pd-ink-2); font-variant-numeric: tabular-nums; }
-.planDays { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(7, 1fr); gap: 2px; }
-.planDays li { font-size: var(--pd-fs-micro); line-height: 20px; text-align: center; border-radius: var(--pd-r-pill); min-width: 0; color: var(--pd-ink-2); font-variant-numeric: tabular-nums; }
-.planWeeks > li[data-kind="final"] .planDays li { color: var(--pd-pink-text); }
-.planDays li[data-today="true"] { background: var(--pd-ink); color: var(--pd-paper); font-weight: 700; justify-self: center; min-width: 20px; padding: 0 2px; }
-/* 아주 좁은 폭(360 미만)은 날짜 칸이 붙어 읽히지 않아 날짜 범위 글만 남긴다 */
-@media (max-width: 359px) { .planDays { display: none; } }
-.planWhat { margin: 0; font-size: var(--pd-fs-tiny); line-height: 1.5; color: var(--pd-ink-2); }
-.planWhat strong { display: block; color: var(--pd-ink); font-size: var(--pd-fs-small); }
-.planEnd { margin: 0; font-size: var(--pd-fs-small); line-height: 1.6; color: var(--pd-ink-2); }
-.planEnd strong { color: var(--pd-ink); margin-right: 6px; }
-@media (min-width: 720px) {
-  .planWeeks { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+/* ── "어떻게 뽑나요?" 펼침(#20): 알약 버튼 → 진행 막대 + 네 단계 ── */
+.howTo { margin: 12px 0 0; }
+.howTo summary { display: inline-flex; align-items: center; gap: 8px; min-height: 44px; padding: 0 16px; border-radius: var(--pd-r-pill); background: var(--pd-paper-2); box-shadow: inset 0 0 0 1px var(--pd-jelly-2); font-size: var(--pd-fs-small); font-weight: 700; color: var(--pd-ink); cursor: pointer; list-style: none; }
+.howTo summary::-webkit-details-marker { display: none; }
+.howTo summary small { font-size: var(--pd-fs-tiny); font-weight: 400; color: var(--pd-ink-2); }
+.howTo summary::after { content: "▾"; font-size: 1.2em; line-height: 1; color: var(--pd-ink-2); transition: transform 0.2s; }
+.howTo[open] summary::after { transform: rotate(180deg); }
+@media (prefers-reduced-motion: reduce) { .howTo summary::after { transition: none; } }
+
+.guide { margin-top: 12px; padding: 18px 16px; border-radius: var(--pd-r-md); box-shadow: inset 0 0 0 1px var(--pd-jelly-2); display: flex; flex-direction: column; gap: 18px; }
+.guideTitle { margin: 0; font-family: var(--pd-f-display); font-weight: 400; font-size: var(--pd-fs-name); color: var(--pd-ink); }
+
+/* 한 달 진행 막대: 칸 너비가 날수에 비례, 오늘 위치에 말풍선 */
+.timeline { position: relative; padding-top: 30px; }
+.today { position: absolute; top: 0; transform: translateX(-50%); /* 1일·말일에 칸 밖으로 넘치지 않게 양끝을 붙잡고, 꼬리(.todayTail)만 실제 위치로 */ white-space: nowrap; font-size: var(--pd-fs-tiny); font-weight: 700; color: var(--pd-paper); background: var(--pd-ink); border-radius: var(--pd-r-pill); padding: 2px 8px; }
+.todayTail { position: absolute; top: 20px; transform: translateX(-50%); border: 5px solid transparent; border-bottom: 0; border-top-color: var(--pd-ink); }
+.track { list-style: none; margin: 0; padding: 0; display: grid; gap: 3px; }
+.track li { min-width: 0; padding: 10px 6px 8px; display: flex; flex-direction: column; gap: 2px; background: var(--pd-paper-2); color: var(--pd-ink-2); border-top: 4px solid var(--pd-jelly); }
+.track li:first-child { border-radius: var(--pd-r-sm) 0 0 var(--pd-r-sm); }
+.track li:last-child { border-radius: 0 var(--pd-r-sm) var(--pd-r-sm) 0; }
+.track b { font-size: var(--pd-fs-small); color: var(--pd-ink); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.track span, .track em { font-size: var(--pd-fs-tiny); font-style: normal; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+/* 지난 칸: 글자 대비는 그대로 두고(AA) 윗선만 연하게, 하는 일 자리에 "끝났어요" */
+.track li[data-state="past"] { border-top-color: var(--pd-jelly-2); }
+.track li[data-kind="final"] { border-top-color: var(--pd-pink); }
+.track li[data-state="now"] { background: var(--pd-ink); color: var(--pd-paper); border-top-color: var(--pd-pink); }
+.track li[data-state="now"] b { color: var(--pd-paper); }
+
+/* 네 단계: 번호 동그라미 + 굵은 제목 + 뜻 풀이. 휴대폰 세로, 넓으면 네 칸 */
+@media (max-width: 359px) {
+  .track em { display: none; }
+  .track b { white-space: normal; }
+}
+.steps { list-style: none; margin: 0; padding: 0; display: grid; gap: 14px; counter-reset: step; }
+.steps li { counter-increment: step; display: grid; grid-template-columns: 28px minmax(0, 1fr); column-gap: 10px; align-items: start; align-content: start; }
+.steps li::before { content: counter(step); grid-row: 1 / span 2; width: 28px; height: 28px; border-radius: 50%; display: grid; place-items: center; background: var(--pd-ink); color: var(--pd-paper); font-family: var(--pd-f-display); font-size: var(--pd-fs-small); }
+.steps b { font-size: var(--pd-fs-body); color: var(--pd-ink); }
+.steps p { margin: 2px 0 0; font-size: var(--pd-fs-small); line-height: 1.6; color: var(--pd-ink-2); }
+.steps strong { color: var(--pd-ink); }
+@media (min-width: 900px) {
+  .guide { padding: 22px 24px; }
+  .steps { grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 20px; }
+  .steps li { grid-template-columns: 1fr; row-gap: 8px; }
+  .steps li::before { grid-row: auto; }
 }

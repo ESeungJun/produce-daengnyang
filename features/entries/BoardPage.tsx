@@ -17,7 +17,7 @@ import { LoginButton } from "@/features/auth/LoginButton";
 import { PicksLeft } from "@/features/picks/PicksLeft";
 import { Band } from "@/features/rounds/Band";
 import { loadOpenRound } from "@/features/rounds/api";
-import { MonthPlan } from "@/features/rounds/MonthPlan";
+import { HowToPick } from "@/features/rounds/HowToPick";
 import { bandLabel, isBlind, roundTitle } from "@/features/rounds/schedule";
 import { loadBoard, type BoardSort } from "./api";
 import { BoardGallery } from "./BoardGallery";
@@ -50,11 +50,8 @@ export async function BoardPage({ board, sort, q }: { board: Board; sort: BoardS
         <p>{round ? `${roundTitle(round)} · ${deadlineLabel(round.ends_at)}` : "다음 주차를 준비하고 있어요"}</p>
       </div>
       {round ? <Band className={s.bandGap} endsAt={round.ends_at} label={bandLabel(round, blind)} /> : null}
-      {/* 투표하러 온 사람이 규칙을 바로 볼 수 있게 접어 둔 일정 달력(#20) */}
-      <details className={s.howTo}>
-        <summary>어떻게 뽑나요?</summary>
-        <MonthPlan month={round?.month ?? `${kstDate().slice(0, 7)}-01`} />
-      </details>
+      {/* 투표하러 온 사람이 규칙을 바로 볼 수 있게 접어 둔 안내(#20) */}
+      <HowToPick month={round?.month ?? `${kstDate().slice(0, 7)}-01`} />
       {round ? <SearchBox board={board} sort={sort} q={q} /> : null}
       <div className={s.sortGap}>
         <SortLinks

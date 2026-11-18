@@ -63,7 +63,8 @@ export async function DetailPage({ board, id, fresh = false }: { board: Board; i
   const comments = e.hidden ? null : await commentsP;
 
   const closed = e.is_mine ? "mine" : !e.round.open ? "ended" : undefined;
-  const sns = snsLinks(e);
+  // SNS 는 데뷔 후보부터(#21). 주인 화면에도 같은 규칙으로 보여 줘서 남이 보는 모습과 같게 한다
+  const sns = e.sns_open ? snsLinks(e) : [];
   // 등록 직후면 첫 화면에서 보이게 맨 위(센터 띠 자리)에 공유 띠를 둔다
   const showFresh = fresh && e.is_mine && e.round.open;
 
@@ -102,6 +103,8 @@ export async function DetailPage({ board, id, fresh = false }: { board: Board; i
           {closed === "ended" ? <p className={s.notice}>마감된 주차라 픽할 수 없어요. 지금 주차는 {BOARD_NAME[board]} 게시판에서 볼 수 있어요.</p> : null}
           {e.hidden ? <p className={s.notice}>관리자가 숨긴 글이에요. 나에게만 보이고, 숨긴 동안은 댓글도 보이지 않아요.</p> : null}
           {e.round.blind ? <p className={s.notice}>마감 전 24시간부터 결과가 나올 때까지 표 수를 가려요.</p> : null}
+          {/* 주인이 SNS 를 적어 뒀는데 아직 데뷔조 후보가 아니면, 저장이 안 된 줄 알지 않게 이유를 알려 준다(#21 사용자 리뷰). 남에게는 안 보인다 */}
+          {e.is_mine && !e.sns_open && snsLinks(e).length ? <p className={s.notice}>적어 둔 SNS 는 주간 1·2위로 데뷔조 후보가 되면 여기에 아이콘으로 공개돼요.</p> : null}
           {/* SNS 가 있을 때만 노출을 센다(이동률의 분모). */}
           <Impression className={s.dtAct} ids={sns.length ? [e.id] : []} place="detail">
             {sns.map((x) => (

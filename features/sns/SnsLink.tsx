@@ -1,7 +1,8 @@
 "use client";
 /**
  * SNS 로 나가는 링크. 누르면 클릭을 기록하고 새 탭으로 연다. 기록이 실패해도 이동은 그대로 된다.
- * 앞에 각 앱의 아이콘 타일을 붙인다(#16, 눈에 잘 띄게). iconOnly 면 아이콘만(이름은 읽기 도구용 글자로).
+ * 각 앱의 아이콘 타일로 보여 준다(#16). #21 부터 화면에는 아이콘만 둔다(사용자 의견). 이름·아이디는 읽기 도구용 label 로.
+ * iconOnly=false 는 글자를 함께 써야 하는 특별한 자리에만 남겨 둔 선택지다.
  */
 import { SNS_NAME, type SnsLinkInfo } from "@/shared/lib/format";
 import { SnsIcon } from "./SnsIcon";
@@ -14,7 +15,7 @@ export function SnsLink({
   place,
   className,
   children,
-  iconOnly = false,
+  iconOnly = true,
   iconSize = "md",
   label,
 }: {

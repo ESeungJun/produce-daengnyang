@@ -408,7 +408,7 @@ export function RegisterForm(props: Props) {
 
         <fieldset className={s.field}>
           <legend>
-            SNS <em>선택</em> <span>프로필 주소나 아이디</span>
+            SNS <em>선택</em> <span>데뷔조 후보(주간 1·2위)가 되면 아이콘으로 공개돼요</span>
           </legend>
           {SNS_KINDS.map((k) => (
             <label key={k} className={s.sns}>
