@@ -81,7 +81,7 @@ export function MyEntries({ entries }: { entries: MyEntry[] }) {
       <Sheet
         open={target !== null}
         title={`${target?.pet_name ?? ""} 글을 지울까요?`}
-        body="받은 표도 함께 사라지고, 이번 라운드 등록 횟수는 돌아오지 않아요."
+        body="받은 표도 함께 사라지고, 이번 주차 등록 횟수는 돌아오지 않아요."
         mainLabel="지우기"
         subLabel="그대로 둘게요"
         onMain={remove}

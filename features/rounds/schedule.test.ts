@@ -25,7 +25,28 @@ describe("openRound·roundTitle", () => {
     expect(openRound(rounds, new Date("2026-12-01T00:00:00Z"))).toBeNull();
   });
   it("제목", () => {
-    expect(roundTitle(r({}))).toBe("11월 3라운드");
-    expect(roundTitle(r({ kind: "final", seq: 0 }))).toBe("11월 결선");
+    expect(roundTitle(r({}))).toBe("11월 3주차");
+    expect(roundTitle(r({ kind: "final", seq: 0 }))).toBe("11월 마지막 주차");
+  });
+});
+
+import { bandLabel, monthPlan } from "./schedule";
+describe("monthPlan·bandLabel (#20)", () => {
+  it("11월: 1·2·3주차와 22~30일 마지막 주차, 오늘(KST) 주차 표시", () => {
+    const p = monthPlan("2026-11-01", new Date("2026-11-18T15:30:00Z")); // 한국 19일 0시 30분
+    expect(p.last).toBe(30);
+    expect(p.today).toBe(19);
+    expect(p.weeks.map((w) => `${w.name}:${w.from}-${w.to}`)).toEqual(["1주차:1-7", "2주차:8-14", "3주차:15-21", "마지막 주차:22-30"]);
+    expect(p.weeks.filter((w) => w.now).map((w) => w.name)).toEqual(["3주차"]);
+    expect(p.nextMonth).toBe(12);
+  });
+  it("다른 달이면 지금 주차 없음, 12월 다음은 1월, 2월은 28일까지", () => {
+    expect(monthPlan("2026-12-01", new Date("2026-11-18T00:00:00Z")).weeks.some((w) => w.now)).toBe(false);
+    expect(monthPlan("2026-12-01").nextMonth).toBe(1);
+    expect(monthPlan("2027-02-01").last).toBe(28);
+  });
+  it("마감 띠 글", () => {
+    expect(bandLabel(r({}), false)).toBe("11월 3주차 투표 중 · 남은 시간");
+    expect(bandLabel(r({ kind: "final", seq: 0 }), true)).toBe("11월 마지막 주차 데뷔 평가 중 · 순위 가림 · 남은 시간");
   });
 });

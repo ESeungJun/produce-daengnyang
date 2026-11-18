@@ -24,7 +24,7 @@ describe("notificationView", () => {
   });
   it("메일·푸시 쪽 게시판 이름이 화면과 같다", () => expect(NOTICE_BOARD_NAME).toEqual(BOARD_NAME));
   it("결과 알림 문구", () => {
-    expect(notificationView({ kind: "center", payload: { pet_name: "두부", board: "dog", entry_id: id } }).text).toBe("‘두부’ 이번 주 센터 선정! 다음 라운드 동안 메인과 게시판 맨 위에 걸리고, 월말 데뷔 평가에도 올라가요");
+    expect(notificationView({ kind: "center", payload: { pet_name: "두부", board: "dog", entry_id: id } }).text).toBe("‘두부’ 이번 주 센터 선정! 다음 주간 결과가 나올 때까지 메인과 게시판 맨 위에 걸리고, 월말 데뷔 평가에도 올라가요");
     expect(notificationView({ kind: "finalist", payload: { pet_name: "콩이", board: "dog", entry_id: id } }).href).toBe(`/dog/${id}`);
   });
   it("결과 정정 알림", () =>

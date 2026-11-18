@@ -43,7 +43,7 @@ export function Cover({ debutMonth, debut, toc }: Props) {
               <div className={s.lines}>
                 <span className={s.kick}>데뷔 준비 중</span>
                 <span className={s.star}>첫 데뷔를 기다려요</span>
-                <p>매주 픽으로 센터를 뽑고, 월말 결선에서 댕댕이·냥이 한 마리씩 데뷔해요. 데뷔한 아이가 다음 달 표지 모델이에요.</p>
+                <p>매주 픽으로 센터를 뽑고, 마지막 주차 데뷔 평가에서 댕댕이·냥이 한 마리씩 데뷔해요. 데뷔한 아이가 다음 달 표지 모델이에요.</p>
               </div>
             </div>
           ) : (

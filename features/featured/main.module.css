@@ -4,16 +4,14 @@
 @media (min-width: 1024px) {
   /* 표지 아래 바로가기 한 줄(#13, #16): 다섯 항목을 가로로 */
   .toc { grid-column: 1 / -1; margin: 0; padding: 22px 24px; }
-  .toc ul { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 120px), 1fr)); gap: 12px 16px; }
-  .toc li + li { border-top: 0; }
-  .toc li { border-left: 2px dotted var(--pd-jelly); padding-left: 16px; }
-  .toc li:first-child { border-left: 0; padding-left: 0; }
-  .toc a { flex-direction: column; gap: 2px; }
-  .toc span { text-align: left; }
+  .toc > nav > ul { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 120px), 1fr)); gap: 12px 16px; }
+  .toc > nav > ul > li + li { border-top: 0; }
+  .toc > nav > ul > li { border-left: 2px dotted var(--pd-jelly); padding-left: 16px; }
+  .toc > nav > ul > li:first-child { border-left: 0; padding-left: 0; }
+  .toc > nav > ul a { flex-direction: column; gap: 2px; }
+  .toc > nav > ul span { text-align: left; }
 }
 
-/* 표지 위 소개 한 줄(#16): 소개 칸이 표지 아래라 첫 화면에서 무슨 사이트인지 알도록 모든 폭에서 */
-.strap { margin: 2px 0 10px; font-size: var(--pd-fs-small); font-weight: 700; color: var(--pd-ink-2); }
 
 /* 양옆 세로 배너(#16). 1280px 이상: 왼쪽 데뷔 댕댕이 · 가운데 본문 · 오른쪽 데뷔 냥이.
    윗줄·모집 공고·푸터는 다른 화면과 같은 1280 틀에 두고, 이 띠만 화면 폭(양옆 48 여백, 최대 1664)까지 넓힌다(화면을 오가도 로고가 튀지 않게). */
@@ -28,3 +26,6 @@
     align-items: start;
   }
 }
+
+/* 소개 칸 안 일정 달력(#20): 리드와 바로가기 사이 */
+.plan { margin: 4px 0 18px; }

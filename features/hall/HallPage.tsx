@@ -11,7 +11,6 @@ import { createClient } from "@/shared/lib/supabase/server";
 import { TopBar, page } from "@/shared/ui/TopBar";
 import ui from "@/shared/ui/ui.module.css";
 import { LoginButton } from "@/features/auth/LoginButton";
-import { PicksLeft } from "@/features/picks/PicksLeft";
 import { SiteNav } from "@/features/entries/SiteNav";
 import { groupByMonth, loadHall, type HallCard } from "./api";
 import s from "./hall.module.css";
@@ -29,16 +28,16 @@ export async function HallPage() {
   const latest = months[0]?.month;
   return (
     <div className={page.page}>
-      <TopBar nav={<SiteNav current="hall" />} right={<PicksLeft />} login={<LoginButton />} />
+      <TopBar nav={<SiteNav current="hall" />} login={<LoginButton />} />
       <div className={s.head}>
         <h1>명예의 전당</h1>
-        <p>라운드마다 1위에 오른 센터와 달마다 뽑힌 데뷔 멤버예요.</p>
+        <p>주차마다 1위에 오른 센터와 달마다 뽑힌 데뷔 멤버예요.</p>
       </div>
 
       {months.length === 0 ? (
         <div className={s.empty} role="status">
           <b>{cards ? "아직 전당에 오른 아이가 없어요" : "전당을 불러오지 못했어요"}</b>
-          <span>{cards ? "첫 라운드가 끝나면 댕댕이·냥이 1위가 여기 걸려요." : "잠시 뒤 다시 와 주세요. 게시판은 그대로 볼 수 있어요."}</span>
+          <span>{cards ? "1주차가 끝나면 댕댕이·냥이 1위가 여기 걸려요." : "잠시 뒤 다시 와 주세요. 게시판은 그대로 볼 수 있어요."}</span>
           <span className={s.emptyAct}>
             <Link className={ui.pill} href="/dog">
               댕댕이 연습생 보기

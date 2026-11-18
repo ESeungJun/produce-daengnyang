@@ -4,7 +4,7 @@
  * 위치: shared/styles/tokens.css (2026-11-18 #1에서 docs/design/ 에서 옮김) · 문서: docs/design/DESIGN_SYSTEM.md · 견본: 디자인 시스템 Artifact · 확정 시안: .work/mockups/시안_확정_V2A.html
  * 값을 바꾸면 이 파일 → DESIGN_SYSTEM.md → 견본 페이지 순서로 같이 고친다. 화면 코드는 여기 변수만 쓴다.
  *
- * 색 규칙 한 줄: 틀은 종이·잉크·회색, 분홍(--pd-pink)은 픽 버튼·남은 픽·데뷔 표 수 판·정렬 밑줄에만.
+ * 색 규칙 한 줄: 틀은 종이·잉크·회색, 분홍(--pd-pink)은 픽 버튼·남은 픽·데뷔 표 수 판·정렬 밑줄, 일정 달력의 지금 주차·마지막 주차 날짜(#20)에만.
  */
 
 :root {

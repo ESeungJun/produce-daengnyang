@@ -6,5 +6,5 @@ export const contentType = "image/png";
 export const alt = "프로듀스 댕냥 명예의 전당";
 
 export default function Image() {
-  return siteOgImage("명예의 전당", "라운드마다 1위에 오른 센터와 달마다 뽑힌 데뷔 멤버");
+  return siteOgImage("명예의 전당", "주차마다 1위에 오른 센터와 달마다 뽑힌 데뷔 멤버");
 }

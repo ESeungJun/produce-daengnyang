@@ -33,9 +33,9 @@ export function untilLabel(ms: number): string {
   return h ? `${h}시간 ${min % 60}분` : `${min}분`;
 }
 
-/** 라운드 이름: 주간 3라운드 → "3라운드", 결선 → "결선" */
+/** 화면에 쓰는 회차 이름(#20, "라운드" 대신 주차): 주간 3번째 → "3주차", 결선(22일~말일) → "마지막 주차" */
 export function roundName(kind: "weekly" | "final", seq: number): string {
-  return kind === "final" ? "결선" : `${seq}라운드`;
+  return kind === "final" ? "마지막 주차" : `${seq}주차`;
 }
 
 /**

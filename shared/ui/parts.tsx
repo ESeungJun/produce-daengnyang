@@ -19,11 +19,14 @@ export function SectionHead({ id, title, sub }: { id?: string; title: string; su
 export type TocItem = { href: string; title: string; note: string };
 
 /** 바로가기 묶음. lead 를 주면 제목 아래 한두 줄 소개(메인: 이 사이트가 무엇인지, #16). label 은 읽기 도구용 이름 */
-export function Toc({ heading, lead, label, items, className }: { heading: string; lead?: string; label?: string; items: TocItem[]; className?: string }) {
+export function Toc({ heading, lead, label, items, className, children }: { heading: string; lead?: string; label?: string; items: TocItem[]; className?: string; children?: React.ReactNode }) {
   return (
-    <nav className={`${s.toc} ${className ?? ""}`} aria-label={label ?? heading}>
+    <div className={`${s.toc} ${className ?? ""}`}>
       <h2>{heading}</h2>
       {lead ? <p className={s.tocLead}>{lead}</p> : null}
+      {children}
+      {/* 랜드마크는 바로가기 목록만(일정 글이 메뉴와 섞여 읽히지 않게, #20) */}
+      <nav aria-label={label ?? heading}>
       <ul>
         {items.map((it) => (
           <li key={it.href}>
@@ -34,7 +37,8 @@ export function Toc({ heading, lead, label, items, className }: { heading: strin
           </li>
         ))}
       </ul>
-    </nav>
+      </nav>
+    </div>
   );
 }
 

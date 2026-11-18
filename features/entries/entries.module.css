@@ -152,3 +152,12 @@
   .adWide ul { font-size: var(--pd-fs-body); line-height: 1.8; }
 }
 @media (prefers-reduced-motion: reduce) { .poster { transform: none; } }
+
+/* 게시판 "어떻게 뽑나요?" 펼침(#20) */
+.howTo { margin: 12px 0 0; }
+.howTo summary { display: inline-flex; align-items: center; gap: 6px; min-height: 44px; padding: 0 16px; border-radius: var(--pd-r-pill); background: var(--pd-paper-2); box-shadow: inset 0 0 0 1px var(--pd-jelly-2); font-size: var(--pd-fs-small); font-weight: 700; color: var(--pd-ink); cursor: pointer; list-style: none; }
+.howTo summary::-webkit-details-marker { display: none; }
+.howTo summary::after { content: "▾"; font-size: 1.2em; line-height: 1; color: var(--pd-ink-2); transition: transform 0.2s; }
+.howTo[open] summary::after { transform: rotate(180deg); }
+.howTo[open] > div { margin-top: 12px; }
+@media (prefers-reduced-motion: reduce) { .howTo summary::after { transition: none; } }

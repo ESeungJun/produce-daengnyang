@@ -12,7 +12,6 @@ import { LoginButton } from "@/features/auth/LoginButton";
 import { loadEntry } from "@/features/entries/api";
 import { memberId } from "@/features/auth/server";
 import { SignInPrompt } from "@/features/me/SignInPrompt";
-import { PicksLeft } from "@/features/picks/PicksLeft";
 import { RegisterForm } from "./RegisterForm";
 import s from "./register.module.css";
 
@@ -29,12 +28,12 @@ export async function EditPage({ board, id }: { board: Board; id: string }) {
       : e.hidden
         ? "운영자가 확인 중인 글은 고칠 수 없어요"
         : !e.round.open
-          ? "라운드가 끝난 글은 고칠 수 없어요"
+          ? "주차가 끝난 글은 고칠 수 없어요"
           : null;
 
   return (
     <div className={page.page}>
-      <TopBar back={back} right={<PicksLeft board={board} />} login={<LoginButton />} />
+      <TopBar back={back} login={<LoginButton />} />
       {why ? (
         <div className={page.notice}>
           <h1>{why}</h1>

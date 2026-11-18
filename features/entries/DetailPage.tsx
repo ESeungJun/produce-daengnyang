@@ -9,7 +9,6 @@ import { notFound } from "next/navigation";
 import { cache } from "react";
 import { BOARD_NAME, deadlineLabel, snsLinks, type Board } from "@/shared/lib/format";
 import { Impression } from "@/features/sns/Impression";
-import { CenterBanner } from "@/features/featured/CenterBanner";
 import { getFeatured } from "@/features/featured/server";
 import { SnsLink } from "@/features/sns/SnsLink";
 import { createClient } from "@/shared/lib/supabase/server";
@@ -72,7 +71,8 @@ export async function DetailPage({ board, id, fresh = false }: { board: Board; i
     <div className={page.page}>
       <TopBar back={{ href: `/${board}`, label: `${BOARD_NAME[board]} 연습생` }} nav={<SiteNav current={board} />} right={<PicksLeft board={board} />} login={<LoginButton />} />
       <ShareVisit entryId={e.id} />
-      {showFresh ? <NewEntryBanner entryId={e.id} name={e.pet_name} /> : <CenterBanner board={board} />}
+      {/* 글 상세에서는 센터 띠를 두지 않는다(#20 사용자 의견: 보던 아이에 집중) */}
+      {showFresh ? <NewEntryBanner entryId={e.id} name={e.pet_name} /> : null}
       <div className={s.detail}>
         <PhotoPager photos={e.photos} name={e.pet_name} />
         <div>
@@ -99,7 +99,7 @@ export async function DetailPage({ board, id, fresh = false }: { board: Board; i
               ) : null}
             </p>
           ) : null}
-          {closed === "ended" ? <p className={s.notice}>마감된 라운드라 픽할 수 없어요. 지금 라운드는 {BOARD_NAME[board]} 게시판에서 볼 수 있어요.</p> : null}
+          {closed === "ended" ? <p className={s.notice}>마감된 주차라 픽할 수 없어요. 지금 주차는 {BOARD_NAME[board]} 게시판에서 볼 수 있어요.</p> : null}
           {e.hidden ? <p className={s.notice}>관리자가 숨긴 글이에요. 나에게만 보이고, 숨긴 동안은 댓글도 보이지 않아요.</p> : null}
           {e.round.blind ? <p className={s.notice}>마감 전 24시간부터 결과가 나올 때까지 표 수를 가려요.</p> : null}
           {/* SNS 가 있을 때만 노출을 센다(이동률의 분모). */}
