@@ -13,3 +13,9 @@
   .bottom { display: grid; grid-template-columns: 1.4fr 1fr; gap: 28px; align-items: center; }
   .bottom > section { margin-top: 0; }
 }
+
+/* 명예의 전당 가기(#8). 휴대폰 맨 아래 제호 위 */
+.hallLink { margin: 32px 0 0; display: flex; justify-content: center; }
+@media (min-width: 1024px) {
+  .hallLink { display: none; } /* 데스크톱은 윗줄 메뉴에 있다 */
+}

@@ -16,7 +16,7 @@ import { deviceSubscription, isMine } from "./pushDevice";
 import s from "./notifications.module.css";
 
 const KEY = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY ?? "";
-type State = "loading" | "hidden" | "ios-install" | "off" | "on" | "denied";
+type State = "loading" | "hidden" | "ios-install" | "ios-inapp" | "off" | "on" | "denied";
 
 export function PushToggle() {
   const toast = useToast();
@@ -32,8 +32,9 @@ export function PushToggle() {
       hasPush: "PushManager" in window,
       hasNotification: "Notification" in window,
     });
-    // 아이폰·아이패드 설치 안내는 manifest(#8 PWA)가 생긴 뒤에 켠다. 지금은 홈 화면에 추가해도 앱처럼 열리지 않을 수 있다.
-    if (!KEY || support === "unsupported" || support === "ios-install") return void setTimeout(() => setState("hidden"), 0);
+    if (!KEY || support === "unsupported") return void setTimeout(() => setState("hidden"), 0);
+    // 아이폰·아이패드 사파리: manifest(#8)가 있어 홈 화면에 추가하면 앱으로 열리고, 그 안에서 알림을 켤 수 있다
+    if (support === "ios-install" || support === "ios-inapp") return void setTimeout(() => setState(support), 0);
     if (Notification.permission === "denied") return void setTimeout(() => setState("denied"), 0);
     // 브라우저 구독이 있어도 내 계정 줄이 아니면(같은 기기의 다른 계정) 꺼짐으로 본다
     void (async () => {
@@ -114,7 +115,9 @@ export function PushToggle() {
         {state === "on"
           ? "이 기기에서 결과 알림을 받고 있어요."
           : state === "ios-install"
-            ? "아이폰·아이패드는 사파리 공유 버튼의 '홈 화면에 추가'로 연 앱에서 알림을 켤 수 있어요."
+            ? "아이폰·아이패드는 사파리 공유 버튼의 '홈 화면에 추가'로 연 앱에서 알림을 켤 수 있어요. 앱에서는 한 번 더 로그인해 주세요."
+            : state === "ios-inapp"
+              ? "알림은 사파리에서 켤 수 있어요. 오른쪽 아래 메뉴의 '다른 브라우저로 열기'로 사파리에서 연 뒤, 공유 버튼 > '홈 화면에 추가'로 연 앱에서 로그인하고 켜 주세요."
             : state === "denied"
               ? "이 사이트 알림이 꺼져 있어요. 주소창 왼쪽 사이트 정보 > 알림을 허용으로 바꾼 뒤 새로고침해 주세요."
               : "1·2위에 오르면 알림함과 메일로 알려 드려요. 이 기기에서 바로 받으려면 켜 주세요."}

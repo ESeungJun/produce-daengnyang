@@ -1,0 +1,17 @@
+<!doctype html>
+<!-- 앱 아이콘 원본(#8). scripts/icons/make.sh 가 크롬으로 크기마다 찍는다. 색은 tokens.css --pd-pink / --pd-on-pink 와 같다. -->
+<meta charset="utf-8">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Black+Han+Sans&display=block">
+<style>
+  html, body { margin: 0; width: 100vw; height: 100vh; overflow: hidden; }
+  body { background: #D62A66; display: grid; place-items: center; }
+  /* 마스크(maskable)는 가운데 80% 안에 글자를 둔다(안드로이드가 원·둥근 사각으로 자른다) */
+  .t { font-family: "Black Han Sans", sans-serif; color: #FFFFFF; line-height: .86; text-align: center; letter-spacing: -.04em; }
+  .t span { display: block; }
+  .t .s { font-size: 13vw; letter-spacing: 0; margin-bottom: 3vw; opacity: .92; }
+  .t .b { font-size: 34vw; }
+  body.mask .t .b { font-size: 26vw; }
+  body.mask .t .s { font-size: 10vw; }
+</style>
+<div class="t"><span class="s">프로듀스</span><span class="b">댕냥</span></div>
+<script>if (location.hash === "#mask") document.body.classList.add("mask");</script>

@@ -10,14 +10,24 @@ import { Black_Han_Sans, Gowun_Dodum } from "next/font/google";
 import "./globals.css";
 import { createClient } from "@/shared/lib/supabase/server";
 import { GUEST, loadPicks } from "@/features/picks/api";
+import { SHARE_OG } from "@/features/share/meta";
 import { Providers } from "./Providers";
 
 const display = Black_Han_Sans({ weight: "400", subsets: ["latin"], preload: false, variable: "--font-display" });
 const body = Gowun_Dodum({ weight: "400", subsets: ["latin"], preload: false, variable: "--font-body" });
 
+// 공유 미리보기(og:image)·manifest 주소를 절대 주소로 만들 때 쓴다. 운영은 배포 때 NEXT_PUBLIC_SITE_URL 로 넣는다.
+const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3104";
+
 export const metadata: Metadata = {
+  metadataBase: new URL(SITE_URL),
   title: { default: "프로듀스 댕냥", template: "%s · 프로듀스 댕냥" },
   description: "우리 애를 데뷔시켜 주세요. 댕댕이·냥이(강아지·고양이) 사진 오디션, 매주 센터를 뽑고 월말에 데뷔해요.",
+  applicationName: "프로듀스 댕냥",
+  // 아이폰에서 홈 화면에 추가하면 앱 이름·상태 막대(#8). 아이콘은 app/apple-icon.png
+  appleWebApp: { capable: true, title: "댕냥", statusBarStyle: "default" },
+  openGraph: SHARE_OG,
+  twitter: { card: "summary_large_image" },
 };
 
 export const viewport: Viewport = {
