@@ -6,7 +6,7 @@
 -- ─────────────────────────────────────────────────────────────
 begin;
 create extension if not exists pgtap with schema extensions;
-select plan(132);
+select plan(137);
 
 -- ── 준비(관리자 권한) ───────────────────────────────────────
 -- 사용자: A·B·D 구글 연결(회원), C 익명, E 이메일 가입(구글 연결 없음 → 회원 아님)
@@ -381,6 +381,12 @@ select is(public.record_sns(array['00000000-0000-0000-0000-00000000f003']::uuid[
 select throws_ok($$select count(*) from public.sns_events$$, '42501', null, '손님은 기록 표를 직접 읽지 못한다');
 select is(public.record_sns(array['00000000-0000-0000-0000-00000000f004']::uuid[], null, 'center', 'visitor-aaaa'), 0, '종류가 비면 오류 없이 버린다');
 select throws_ok($$select count(*) from public.sns_daily$$, '42501', null, '손님은 하루 줄 수 표를 직접 읽지 못한다');
+-- 공유 기록(#15)
+select is(public.record_sns(array['00000000-0000-0000-0000-00000000f004']::uuid[], 'share_copy', 'detail', 'visitor-aaaa'), 1, '손님도 글 상세 공유(복사)를 남긴다');
+select is(public.record_sns(array['00000000-0000-0000-0000-00000000f004']::uuid[], 'share_sheet', 'register', 'visitor-aaaa'), 1, '등록 직후 띠의 공유 창도 남긴다');
+select is(public.record_sns(array['00000000-0000-0000-0000-00000000f004']::uuid[], 'share_visit', 'detail', 'visitor-cccc'), 1, '공유 주소로 들어온 방문을 남긴다');
+select is(public.record_sns(array['00000000-0000-0000-0000-00000000f004']::uuid[], 'share_visit', 'detail', 'visitor-cccc'), 0, '같은 사람의 공유 방문은 하루 한 번');
+select is(public.record_sns(array['00000000-0000-0000-0000-00000000f004']::uuid[], 'share_copy', 'hall', 'visitor-aaaa'), 0, '모르는 자리는 버린다');
 reset role;
 update public.sns_daily set n = 200000 where kst_date = public.kst_today();
 set local role anon;

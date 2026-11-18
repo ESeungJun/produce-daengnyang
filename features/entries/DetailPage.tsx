@@ -27,6 +27,7 @@ import { loadComments } from "@/features/comments/api";
 import { ReportButton } from "@/features/comments/ReportButton";
 import { CopyLink } from "./CopyLink";
 import { NewEntryBanner } from "./NewEntryBanner";
+import { ShareVisit } from "@/features/share/ShareVisit";
 import { PhotoPager } from "./PhotoPager";
 import { SiteNav } from "./SiteNav";
 import { countView } from "./views";
@@ -70,7 +71,8 @@ export async function DetailPage({ board, id, fresh = false }: { board: Board; i
   return (
     <div className={page.page}>
       <TopBar back={{ href: `/${board}`, label: `${BOARD_NAME[board]} 연습생` }} nav={<SiteNav current={board} />} right={<PicksLeft board={board} />} login={<LoginButton />} />
-      {showFresh ? <NewEntryBanner name={e.pet_name} /> : <CenterBanner board={board} />}
+      <ShareVisit entryId={e.id} />
+      {showFresh ? <NewEntryBanner entryId={e.id} name={e.pet_name} /> : <CenterBanner board={board} />}
       <div className={s.detail}>
         <PhotoPager photos={e.photos} name={e.pet_name} />
         <div>
@@ -105,7 +107,7 @@ export async function DetailPage({ board, id, fresh = false }: { board: Board; i
             {sns.map((x) => (
               <SnsLink key={x.kind} className={ui.pill} entryId={e.id} sns={x} place="detail" />
             ))}
-            <CopyLink name={e.pet_name} />
+            <CopyLink entryId={e.id} name={e.pet_name} place="detail" />
             {/* 신고는 주요 행동(인스타·공유)과 같은 무게로 두지 않고 줄 끝의 작은 밑줄 글자로 둔다(#6 디자인 리뷰) */}
             {e.is_mine ? null : <ReportButton target="entry" targetId={e.id} className={s.reportLink} />}
           </Impression>
