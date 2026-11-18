@@ -6,7 +6,7 @@
 -- ─────────────────────────────────────────────────────────────
 begin;
 create extension if not exists pgtap with schema extensions;
-select plan(111);
+select plan(128);
 
 -- ── 준비(관리자 권한) ───────────────────────────────────────
 -- 사용자: A·B·D 구글 연결(회원), C 익명, E 이메일 가입(구글 연결 없음 → 회원 아님)
@@ -212,6 +212,17 @@ select throws_ok(
   $$select public.create_entry('cat', '다시', null, null, null, null, '[{"path":"00000000-0000-0000-0000-0000000000a1/p2.webp","thumb_path":"00000000-0000-0000-0000-0000000000a1/t2.webp"}]')$$,
   'P0001', 'entry_limit', '지워도 등록 횟수는 돌아오지 않는다');
 
+-- #6 리뷰: 금지어 우회와 오탐(화면 역할에는 닫힌 함수라 잠깐 관리 역할로)
+reset role;
+select ok(public.has_banned_word('씨~발'), '기호(~)로 끊어도 금지어');
+select ok(public.has_banned_word('씨+발 ^^'), '기호(+)로 끊어도 금지어');
+select ok(public.has_banned_word('ｆｕｃｋ'), '전각 영문도 금지어');
+select ok(public.has_banned_word('시발 점수'), '예외 낱말(시발점)을 띄어 쓰면 금지어');
+select ok(not public.has_banned_word('아저씨 바보 같아요ㅋㅋ'), '아저씨 바보는 통과');
+select ok(not public.has_banned_word('출시 발표 기다려요'), '출시 발표는 통과');
+select ok(not public.has_banned_word('우리 개 새끼들 귀여워'), '개 새끼들(강아지)은 통과');
+select ok(not public.has_banned_word('시발점이 어디예요'), '시발점은 통과');
+set local role authenticated;
 -- ── 댓글·신고 (B) ───────────────────────────────────────────
 set local request.jwt.claims = '{"sub":"00000000-0000-0000-0000-0000000000b1","role":"authenticated","is_anonymous":false}';
 do $$ begin
@@ -220,6 +231,27 @@ end $$;
 select throws_ok(format('select public.add_comment(%L, %L)', current_setting('t.e1'), repeat('가', 101)), 'P0001', 'invalid_body', '댓글 100자 넘으면 거절');
 select lives_ok(format('select public.report(%L, %L, %L)', 'comment', current_setting('t.c1'), '테스트'), '댓글 신고');
 select throws_ok(format('select public.report(%L, %L)', 'comment', current_setting('t.c1')), 'P0001', 'already_reported', '같은 대상은 한 번만 신고');
+-- #6 금지어·댓글 수·관리자
+select throws_ok(format('select public.add_comment(%L, %L)', current_setting('t.e1'), '씨 1 발 이게 뭐야'), 'P0001', 'banned_word', '금지어는 띄어 써도 거절');
+select is((select max(total) from public.entry_comments(current_setting('t.e1')::uuid)), 1, '댓글 목록이 전체 수를 같이 준다');
+select lives_ok(format('select public.report(%L, %L)', 'entry', current_setting('t.e1')), '글 신고');
+select throws_ok($$select * from public.admin_reports()$$, 'P0001', 'not_admin', '관리자가 아니면 신고 목록을 못 본다');
+reset role;
+update public.profiles set is_admin = true where id = '00000000-0000-0000-0000-0000000000a1';
+set local role authenticated;
+set local request.jwt.claims = '{"sub":"00000000-0000-0000-0000-0000000000a1","role":"authenticated","is_anonymous":false}';
+select is((select reports from public.admin_reports() where target = 'comment' and target_id = current_setting('t.c1')::uuid), 1, '관리자는 대상별 신고 수를 본다');
+select public.admin_set_hidden('comment', current_setting('t.c1')::uuid, true);
+select is((select count(*)::int from public.entry_comments(current_setting('t.e1')::uuid)), 0, '숨긴 댓글은 목록에서 빠진다');
+select is((select count(*)::int from public.admin_recent_hidden() where target_id = current_setting('t.c1')::uuid), 1, '숨긴 댓글은 최근 숨긴 것에서 되살릴 수 있다');
+select public.admin_dismiss('entry', current_setting('t.e1')::uuid);
+select is((select count(*)::int from public.admin_reports()), 0, '숨기기·문제없음 처리한 신고는 목록에서 닫힌다');
+select public.admin_set_hidden('comment', current_setting('t.c1')::uuid, false);
+select is((select count(*)::int from public.entry_comments(current_setting('t.e1')::uuid)), 1, '되살리면 다시 보인다');
+reset role;
+update public.profiles set is_admin = false where id = '00000000-0000-0000-0000-0000000000a1';
+set local role authenticated;
+set local request.jwt.claims = '{"sub":"00000000-0000-0000-0000-0000000000b1","role":"authenticated","is_anonymous":false}';
 select throws_ok(
   $$insert into public.push_subscriptions (user_id, endpoint, p256dh, auth) values ('00000000-0000-0000-0000-0000000000b1', 'http://169.254.169.254/latest', 'k', 'a')$$,
   '23514', null, '푸시 주소는 알려진 푸시 서비스만');

@@ -21,7 +21,8 @@ import { useLoginSheet } from "@/features/auth/LoginSheet";
 import { ANON_FAIL_TEXT, pickErrorOutcome, pickedText } from "./messages";
 
 export type Viewer = "guest" | "anon" | "member";
-export type PicksInit = { viewer: Viewer; remaining: Record<Board, number>; picked: string[] };
+/** unread: 회원의 안 읽은 알림 수(#6, "내 정보" 점). 픽과 함께 레이아웃이 한 번 읽는다 */
+export type PicksInit = { viewer: Viewer; remaining: Record<Board, number>; picked: string[]; unread?: number };
 
 type Ctx = {
   viewer: Viewer;
@@ -32,6 +33,9 @@ type Ctx = {
   bump: (entryId: string) => number;
   pending: ReadonlySet<string>;
   pick: (entryId: string, board: Board) => Promise<void>;
+  /** 안 읽은 알림 수. 알림함이 읽음 처리하면 clearUnread 로 0 */
+  unread: number;
+  clearUnread: () => void;
 };
 
 const PicksContext = createContext<Ctx | null>(null);
@@ -47,6 +51,8 @@ export function PicksProvider({ init, children }: { init: PicksInit; children: R
   const toast = useToast();
   const openLogin = useLoginSheet();
   const [viewer, setViewer] = useState(init.viewer);
+  const [unread, setUnread] = useState(init.unread ?? 0);
+  const clearUnread = useCallback(() => setUnread(0), []);
   const guestBusy = useRef(false);
   // 픽 때문에 시트를 열 때는 하려던 픽을 적어 둔다(다른 이유로 열면 LoginSheet 가 지운다)
   const askLogin = useCallback(
@@ -145,8 +151,10 @@ export function PicksProvider({ init, children }: { init: PicksInit; children: R
       bump: (id) => bumps[id] ?? 0,
       pending,
       pick,
+      unread,
+      clearUnread,
     }),
-    [viewer, remaining, focusBoard, picked, bumps, pending, pick],
+    [viewer, remaining, focusBoard, picked, bumps, pending, pick, unread, clearUnread],
   );
   return <PicksContext.Provider value={value}>{children}</PicksContext.Provider>;
 }

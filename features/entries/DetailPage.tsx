@@ -1,6 +1,6 @@
 /**
  * 글 상세: 사진(1~3장) · 이름 · 큰 픽 버튼 · 소개 · SNS 구경 가기 · 공유.
- * 응원 댓글은 #6, 공유 미리보기 이미지는 #8 에서 더한다.
+ * 응원 댓글·신고는 #6(features/comments), 공유 미리보기 이미지는 #8 에서 더한다.
  * getEntry 는 요청 하나 안에서 한 번만 부른다(제목 metadata 와 화면이 같이 쓴다).
  * 조회수는 여기서 센다(views.ts, 응답 뒤). 내 글·숨김 글은 세지 않는다. 가림 기간에는 DB 가 view_count 를 null 로 줘서 숨는다.
  */
@@ -22,6 +22,9 @@ import { PicksLeft } from "@/features/picks/PicksLeft";
 import { VoteCount } from "@/features/picks/VoteCount";
 import { roundTitle } from "@/features/rounds/schedule";
 import { loadEntry } from "./api";
+import { Comments } from "@/features/comments/Comments";
+import { loadComments } from "@/features/comments/api";
+import { ReportButton } from "@/features/comments/ReportButton";
 import { CopyLink } from "./CopyLink";
 import { NewEntryBanner } from "./NewEntryBanner";
 import { PhotoPager } from "./PhotoPager";
@@ -34,6 +37,9 @@ export const getEntry = cache(async (id: string) => loadEntry(await createClient
 /** fresh: 등록 직후(?new=1). 내 글일 때만 공유 띠를 띄운다 */
 export async function DetailPage({ board, id, fresh = false }: { board: Board; id: string; fresh?: boolean }) {
   void getFeatured().catch(() => null); // 위 센터 띠를 글과 같이 읽기 시작
+  const supabase = await createClient();
+  // 댓글도 글과 같이 읽기 시작한다(entry_comments 가 숨김·삭제 글을 스스로 거르므로 글 결과를 기다릴 필요가 없다)
+  const commentsP = loadComments(supabase, id);
   const e = await getEntry(id);
   if (e === "deleted") {
     return (
@@ -50,9 +56,11 @@ export async function DetailPage({ board, id, fresh = false }: { board: Board; i
   }
   if (!e || e.board !== board) notFound();
   if (!e.is_mine && !e.hidden) {
-    const { data } = await (await createClient()).auth.getClaims();
+    const { data } = await supabase.auth.getClaims();
     await countView(e.id, data?.claims?.sub ?? null);
   }
+  // 숨긴 글은 주인에게만 보이고 댓글도 받지 않는다(add_comment 가 막는다)
+  const comments = e.hidden ? null : await commentsP;
 
   const closed = e.is_mine ? "mine" : !e.round.open ? "ended" : undefined;
   const sns = snsLinks(e);
@@ -90,7 +98,7 @@ export async function DetailPage({ board, id, fresh = false }: { board: Board; i
             </p>
           ) : null}
           {closed === "ended" ? <p className={s.notice}>마감된 라운드라 픽할 수 없어요. 지금 라운드는 {BOARD_NAME[board]} 게시판에서 볼 수 있어요.</p> : null}
-          {e.hidden ? <p className={s.notice}>관리자가 숨긴 글이에요. 나에게만 보여요.</p> : null}
+          {e.hidden ? <p className={s.notice}>관리자가 숨긴 글이에요. 나에게만 보이고, 숨긴 동안은 댓글도 보이지 않아요.</p> : null}
           {e.round.blind ? <p className={s.notice}>마감 전 24시간부터 결과가 나올 때까지 표 수를 가려요.</p> : null}
           {/* SNS 가 있을 때만 노출을 센다(이동률의 분모). */}
           <Impression className={s.dtAct} ids={sns.length ? [e.id] : []} place="detail">
@@ -98,7 +106,9 @@ export async function DetailPage({ board, id, fresh = false }: { board: Board; i
               <SnsLink key={x.kind} className={ui.pill} entryId={e.id} sns={x} place="detail" />
             ))}
             <CopyLink name={e.pet_name} />
+            {e.is_mine ? null : <ReportButton target="entry" targetId={e.id} className={ui.ghost} />}
           </Impression>
+          {comments ? <Comments entryId={e.id} petName={e.pet_name} initial={comments.items} total={comments.total} loadFailed={comments.failed} /> : null}
         </div>
       </div>
     </div>

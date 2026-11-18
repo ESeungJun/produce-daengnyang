@@ -1,6 +1,7 @@
 // Supabase 가 만든 DB 타입. 손으로 고치지 않는다.
 // 마이그레이션을 바꾸면 다시 만든다: Supabase MCP generate_typescript_types 또는
 // npx supabase@3.2.0 gen types typescript --project-id szqxjeegveouzjorkvbj > shared/lib/supabase/database.types.ts
+
 export type Json = string | number | boolean | null | { [key: string]: Json | undefined } | Json[]
 
 export type Database = {
@@ -338,6 +339,22 @@ isOneToOne: false
             "add_comment":
 { Args: { "p_body": string,"p_entry_id": string }; Returns: string
                            },
+"admin_dismiss":
+{ Args: { "p_target": Database["public"]['Enums']["report_target"],"p_target_id": string }; Returns: undefined
+                           },
+"admin_recent_hidden":
+{ Args: { "p_days"?: number }; Returns: {
+              "author_name": string,"board": Database["public"]['Enums']["board_kind"],"body": string,"entry_id": string,"hidden_at": string,"pet_name": string,"target": Database["public"]['Enums']["report_target"],"target_id": string,"thumb_path": string
+            }[]
+                           },
+"admin_reports":
+{ Args: { "p_limit"?: number }; Returns: {
+              "author_id": string,"author_name": string,"board": Database["public"]['Enums']["board_kind"],"body": string,"deleted": boolean,"entry_id": string,"hidden": boolean,"last_at": string,"pet_name": string,"reasons": (string)[],"reports": number,"target": Database["public"]['Enums']["report_target"],"target_id": string,"thumb_path": string
+            }[]
+                           },
+"admin_set_hidden":
+{ Args: { "p_hidden": boolean,"p_target": Database["public"]['Enums']["report_target"],"p_target_id": string }; Returns: undefined
+                           },
 "board_entries":
 { Args: { "p_board": Database["public"]['Enums']["board_kind"],"p_limit"?: number,"p_offset"?: number,"p_q"?: string,"p_seed"?: string,"p_sort"?: string }; Returns: {
               "bio": string,"created_at": string,"id": string,"is_mine": boolean,"pet_name": string,"photo_count": number,"pick_count": number,"picked_today": boolean,"prev_rank": number,"rank": number,"thumb_path": string,"view_count": number
@@ -403,7 +420,7 @@ isOneToOne: false
                            },
 "entry_comments":
 { Args: { "p_entry_id": string,"p_limit"?: number,"p_offset"?: number }; Returns: {
-              "body": string,"created_at": string,"id": string,"is_entry_owner": boolean,"is_mine": boolean,"nickname": string
+              "body": string,"created_at": string,"id": string,"is_entry_owner": boolean,"is_mine": boolean,"nickname": string,"total": number
             }[]
                            },
 "get_entry":
@@ -414,6 +431,9 @@ isOneToOne: false
                            },
 "get_featured_at":
 { Args: { "p_at": string }; Returns: Json
+                           },
+"has_banned_word":
+{ Args: { "p_text": string }; Returns: boolean
                            },
 "has_hidden_chars":
 { Args: { "t": string }; Returns: boolean
@@ -458,6 +478,9 @@ isOneToOne: false
                            },
 "report":
 { Args: { "p_reason"?: string,"p_target": Database["public"]['Enums']["report_target"],"p_target_id": string }; Returns: undefined
+                           },
+"require_admin":
+{ Args: Record<PropertyKey, never>; Returns: string
                            },
 "require_member":
 { Args: Record<PropertyKey, never>; Returns: string

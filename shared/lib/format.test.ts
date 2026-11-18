@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { countdown, deadlineLabel, firstSns, issueLabel, rankDelta, roundName, snsHandle, snsLinks, untilLabel } from "./format";
+import { countdown, deadlineLabel, firstSns, issueLabel, rankDelta, roundName, snsHandle, snsLinks, timeAgo, untilLabel } from "./format";
 
 describe("countdown", () => {
   it("하루 넘게 남으면 일수를 앞에", () => expect(countdown((2 * 86400 + 5 * 3600 + 3 * 60 + 9) * 1000)).toBe("2일 05:03:09"));
@@ -51,4 +51,23 @@ describe("untilLabel", () => {
   it("시간과 분", () => expect(untilLabel((5 * 60 + 12) * 60000)).toBe("5시간 12분"));
   it("한 시간 미만", () => expect(untilLabel(12 * 60000)).toBe("12분"));
   it("1분 미만도 1분", () => expect(untilLabel(5000)).toBe("1분"));
+});
+
+describe("timeAgo", () => {
+  const now = new Date("2026-11-18T12:00:00+09:00");
+  it("1분 안은 방금, 1시간 안은 분", () => {
+    expect(timeAgo("2026-11-18T11:59:30+09:00", now)).toBe("방금");
+    expect(timeAgo("2026-11-18T11:48:00+09:00", now)).toBe("12분 전");
+  });
+  it("같은 날은 시간, 전날은 어제(KST 날짜 기준)", () => {
+    expect(timeAgo("2026-11-18T00:10:00+09:00", now)).toBe("11시간 전");
+    expect(timeAgo("2026-11-17T23:50:00+09:00", now)).toBe("어제");
+  });
+  it("30일이 넘으면 날짜", () => {
+    expect(timeAgo("2026-11-15T12:00:00+09:00", now)).toBe("3일 전");
+    expect(timeAgo("2026-09-01T12:00:00+09:00", now)).toBe("9월 1일");
+  });
+  it("미래 시각(시계 차이)은 방금", () => {
+    expect(timeAgo("2026-11-18T12:05:00+09:00", now)).toBe("방금");
+  });
 });

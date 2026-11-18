@@ -18,7 +18,11 @@ export async function loadPicks(supabase: SupabaseClient<Database>): Promise<Pic
   if (!claims?.sub) return GUEST;
   const providers = (claims.app_metadata as { providers?: string[] } | undefined)?.providers ?? [];
   const member = providers.includes("google");
-  const { data, error } = await supabase.rpc("my_picks_today");
+  const [{ data, error }, inbox] = await Promise.all([
+    supabase.rpc("my_picks_today"),
+    // 안 읽은 알림 수("내 정보" 점, #6). 못 읽으면 0 으로 둔다
+    member ? supabase.from("notifications").select("id", { count: "exact", head: true }).is("read_at", null) : Promise.resolve({ count: 0 }),
+  ]);
   // 읽지 못하면 남은 픽을 3/3 으로 잘못 보여 주지 않게 던진다(레이아웃이 손님 화면으로 띄운다).
   if (error) throw error;
   const remaining = { dog: member ? 3 : 1, cat: member ? 3 : 1 };
@@ -27,5 +31,5 @@ export async function loadPicks(supabase: SupabaseClient<Database>): Promise<Pic
     remaining[row.board] = row.remaining;
     picked.push(...row.picked);
   }
-  return { viewer: member ? "member" : "anon", remaining, picked };
+  return { viewer: member ? "member" : "anon", remaining, picked, unread: inbox.count ?? 0 };
 }
