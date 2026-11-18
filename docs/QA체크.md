@@ -57,7 +57,7 @@ P0 실패 없음.
 | # | 항목 | 확인 방법 | 결과 |
 |---|---|---|---|
 | 1 | `/manifest.webmanifest` 200, 아이콘 192·512·마스크용 512·apple 180 | curl, 아이콘 PNG 열어 봄(마스크용 글자가 가운데 80% 안) | ✅ |
-| 2 | 서비스 워커가 모든 화면에서 등록되고 `pd-offline-v1` 캐시에 안내 화면이 담김 | agent-browser `navigator.serviceWorker.controller`, `caches.keys()` | ✅ |
+| 2 | 서비스 워커가 모든 화면에서 등록되고 `pd-offline-v2` 캐시에 안내 화면이 담김 | agent-browser `navigator.serviceWorker.controller`, `caches.keys()` | ✅ |
 | 3 | 서버가 응답하지 않을 때 페이지 이동 → 오프라인 안내(인터넷이 되면 "잠시 연결이 불안정해요") | 서버를 끄고 `/hall` 이동, 캡처 10번 | ✅ |
 | 4 | 글 공유 미리보기 1200×630: 사진·게시판·이름·"우리 애 픽해 주세요" | `/dog/<글>/opengraph-image` 캡처(로컬은 JPEG 원본으로 확인) | ✅ |
 | 5 | 사진을 못 받으면 회색 판 + 제호, 글꼴을 못 받으면 글자 없이 | 로컬(이미지 변환 없음, WebP 원본) 캡처 6번 | ✅ |
