@@ -1,7 +1,8 @@
 /** 글 상세(/dog/<글 번호>). 조립은 features/entries/DetailPage. */
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
-import { isBoard } from "@/shared/lib/format";
+import { BOARD_NAME, isBoard } from "@/shared/lib/format";
+import { SHARE_OG } from "@/features/share/meta";
 import { DetailPage, getEntry } from "@/features/entries/DetailPage";
 
 type Props = { params: Promise<{ board: string; id: string }>; searchParams: Promise<{ new?: string }> };
@@ -11,7 +12,11 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   if (!isBoard(board)) return {};
   const e = await getEntry(id);
   if (e === "deleted") return { title: "지워진 글이에요" };
-  return e ? { title: `${e.pet_name} 픽해 주세요`, description: e.bio ?? undefined } : {};
+  if (!e) return {};
+  // 공유 미리보기(#8): 제목·설명은 카톡·인스타 카드에 그대로 찍힌다. 그림은 같은 폴더 opengraph-image.tsx
+  const title = `${e.pet_name} 픽해 주세요`;
+  const description = e.bio || `${BOARD_NAME[e.board]} 연습생 ${e.pet_name}에게 오늘의 픽을 주세요. 매주 센터, 월말 데뷔.`;
+  return { title, description, openGraph: { ...SHARE_OG, title, description, url: `/${board}/${id}` } };
 }
 
 export default async function Page({ params, searchParams }: Props) {

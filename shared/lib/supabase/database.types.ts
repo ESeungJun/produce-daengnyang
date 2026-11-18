@@ -468,6 +468,9 @@ isOneToOne: false
 "get_featured_at":
 { Args: { "p_at": string }; Returns: Json
                            },
+"hall_of_fame":
+{ Args: { "p_months"?: number }; Returns: Json
+                           },
 "has_banned_word":
 { Args: { "p_text": string }; Returns: boolean
                            },

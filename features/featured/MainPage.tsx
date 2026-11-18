@@ -3,9 +3,11 @@
  * 데이터 네 가지를 한꺼번에 받는다(get_featured, 지금 라운드, 강아지·고양이 차트 4줄씩).
  */
 import { BOARD_NAME, deadlineLabel, issueLabel, roundName } from "@/shared/lib/format";
+import Link from "next/link";
 import { createClient } from "@/shared/lib/supabase/server";
 import { Colophon, SectionHead, Toc, type TocItem } from "@/shared/ui/parts";
 import { TopBar, page } from "@/shared/ui/TopBar";
+import ui from "@/shared/ui/ui.module.css";
 import { LoginButton } from "@/features/auth/LoginButton";
 import { loadBoard } from "@/features/entries/api";
 import { RecruitAd } from "@/features/entries/RecruitAd";
@@ -42,6 +44,7 @@ export async function MainPage() {
     { href: "#chart", title: chartTitle, note: round ? deadlineLabel(round.ends_at) : "다음 라운드 준비 중" },
     { href: "#finalists", title: "데뷔조 후보", note: "22일부터 데뷔 평가" },
     { href: "#recruit", title: "연습생 모집", note: "라운드마다 2번까지" },
+    { href: "/hall", title: "명예의 전당", note: "지난 센터·데뷔 모음" },
   ];
 
   return (
@@ -85,6 +88,13 @@ export async function MainPage() {
           <RecruitAd id="recruit" title="연습생 모집 공고" closed={round?.kind === "final"} />
         </div>
       </section>
+
+      {/* 휴대폰은 윗줄 메뉴가 없어 여기서 명예의 전당으로 간다(#8) */}
+      <p className={s.hallLink}>
+        <Link className={ui.ghost} href="/hall">
+          명예의 전당 보기
+        </Link>
+      </p>
 
       <Colophon issue={issue.replace(" ", "년 ")} />
     </div>
