@@ -10,10 +10,14 @@ import type { PicksInit } from "./PicksProvider";
 export const GUEST: PicksInit = { viewer: "guest", remaining: { dog: 1, cat: 1 }, picked: [] };
 
 export async function loadPicks(supabase: SupabaseClient<Database>): Promise<PicksInit> {
-  const { data: auth } = await supabase.auth.getUser();
-  const user = auth.user;
-  if (!user) return GUEST;
-  const member = (user.identities ?? []).some((i) => i.provider === "google");
+  // getClaims: 비대칭 서명 키면 Auth 서버를 부르지 않고 토큰 서명만 확인한다(모든 페이지가 부르므로 빠르게).
+  // 회원 표시는 토큰의 app_metadata.providers 로 본다. 구글을 붙인 직후 토큰이 갱신되기 전에는 손님 한도로 보일 수 있지만,
+  // 실제 한도는 DB(caller_is_member: auth.identities)가 정하므로 화면 표시만 잠깐 늦다(#3 에서 연결 뒤 세션을 새로 받는다).
+  const { data: auth } = await supabase.auth.getClaims();
+  const claims = auth?.claims;
+  if (!claims?.sub) return GUEST;
+  const providers = (claims.app_metadata as { providers?: string[] } | undefined)?.providers ?? [];
+  const member = providers.includes("google");
   const { data, error } = await supabase.rpc("my_picks_today");
   // 읽지 못하면 남은 픽을 3/3 으로 잘못 보여 주지 않게 던진다(레이아웃이 손님 화면으로 띄운다).
   if (error) throw error;

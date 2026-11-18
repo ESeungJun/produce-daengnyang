@@ -33,12 +33,12 @@
 .chart li .rk[data-blind="true"] { color: var(--pd-ink-2); }
 .thumb { width: 60px; height: 60px; object-fit: cover; border-radius: var(--pd-r-sm); background: var(--pd-paper-2); }
 .nm { min-width: 0; color: inherit; text-decoration: none; }
-.nm b { display: block; font-size: 16px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.nm b { display: block; font-size: var(--pd-fs-name); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .nm small { font-size: var(--pd-fs-tiny); color: var(--pd-ink-2); font-variant-numeric: tabular-nums; }
 .up { color: var(--pd-up); }
 .down { color: var(--pd-pink-text); }
 .new { color: var(--pd-ink); font-weight: 700; }
-.empty { padding: 18px 0; color: var(--pd-ink-2); font-size: 14px; margin: 0; }
+.empty { padding: 18px 0; color: var(--pd-ink-2); font-size: var(--pd-fs-ui); margin: 0; }
 
 .tabs { margin: 14px 0 0; }
 .boards { display: grid; gap: 0; }
@@ -56,7 +56,7 @@
     margin: 0 0 4px;
     font-family: var(--pd-f-display);
     font-weight: 400;
-    font-size: 28px;
+    font-size: var(--pd-fs-d-board);
   }
   .boardTitle a { font-family: var(--pd-f-body); font-size: var(--pd-fs-small); color: var(--pd-ink-2); }
 }

@@ -6,7 +6,7 @@
 -- ─────────────────────────────────────────────────────────────
 begin;
 create extension if not exists pgtap with schema extensions;
-select plan(96);
+select plan(108);
 
 -- ── 준비(관리자 권한) ───────────────────────────────────────
 -- 사용자: A·B·D 구글 연결(회원), C 익명, E 이메일 가입(구글 연결 없음 → 회원 아님)
@@ -30,7 +30,7 @@ select is((select count(*) from pg_tables where schemaname = 'public' and not ro
 select is(
   (select array_agg(p.proname::text order by p.proname) from pg_proc p join pg_namespace n on n.oid = p.pronamespace
      where n.nspname = 'public' and has_function_privilege('anon', p.oid, 'execute')),
-  array['board_entries', 'cast_pick', 'entry_comments', 'get_entry', 'get_featured', 'has_hidden_chars', 'my_picks_today'],
+  array['board_entries', 'cast_pick', 'entry_comments', 'get_entry', 'get_featured', 'has_hidden_chars', 'my_picks_today', 'record_sns'],
   '손님(anon)이 부를 수 있는 함수는 허용 목록뿐');
 
 -- 라운드: 지금 열린 주간(t1), 끝난 주간(t0)
@@ -97,11 +97,15 @@ select throws_ok(
 do $$ begin
   perform set_config('t.e1', public.create_entry('dog', ' 보리 ', '산책 좋아해요', 'https://www.instagram.com/bori_dog', null, null,
     '[{"path":"00000000-0000-0000-0000-0000000000a1/p1.webp","thumb_path":"00000000-0000-0000-0000-0000000000a1/t1.webp"}]')::text, true);
-  perform set_config('t.e2', public.create_entry('cat', '나비', null, null, 'https://www.tiktok.com/@nabi.cat', 'https://youtube.com/@nabi',
+  perform set_config('t.e2', public.create_entry('cat', '나비', null, null, 'https://www.threads.com/@nabi.cat', 'https://youtube.com/@nabi',
     '[{"path":"00000000-0000-0000-0000-0000000000a1/p2.webp","thumb_path":"00000000-0000-0000-0000-0000000000a1/t2.webp"}]')::text, true);
 end $$;
 
 select is((public.get_entry(current_setting('t.e1')::uuid) ->> 'pet_name'), '보리', '등록하면 이름 앞뒤 공백을 지운다');
+select is((public.get_entry(current_setting('t.e2')::uuid) ->> 'threads'), 'https://www.threads.com/@nabi.cat', '스레드 주소를 스레드 칸에 저장한다');
+select throws_ok(
+  $$select public.create_entry('cat', '나비', null, null, 'https://www.tiktok.com/@nabi.cat', null, '[{"path":"00000000-0000-0000-0000-0000000000a1/p1.webp","thumb_path":"00000000-0000-0000-0000-0000000000a1/t1.webp"}]')$$,
+  'P0001', 'invalid_sns', '스레드 칸에 틱톡 주소는 거절');
 select is(jsonb_array_length(public.get_entry(current_setting('t.e1')::uuid) -> 'photos'), 1, '사진 목록이 붙는다');
 select throws_ok(
   $$select public.create_entry('dog', '셋째', null, null, null, null, '[{"path":"00000000-0000-0000-0000-0000000000a1/p1.webp","thumb_path":"00000000-0000-0000-0000-0000000000a1/t1.webp"}]')$$,
@@ -255,6 +259,14 @@ update public.rounds set ends_at = now() + interval '1 hour' where month = '2000
 set local role authenticated;
 set local request.jwt.claims = '{"sub":"00000000-0000-0000-0000-0000000000b1","role":"authenticated","is_anonymous":false}';
 select ok((select bool_and(pick_count is null and view_count is null and rank is null and prev_rank is null) from public.board_entries('dog')), '마감 24시간 전부터 표 수·조회수·순위·순위 변동을 가린다');
+set local role postgres;
+select set_config('t.seed_order', (select array_agg(id order by md5(id::text || public.kst_today()::text || 'visitor-aaaa'))::text
+  from public.entries where board = 'dog' and round_id = (select id from public.current_round()) and deleted_at is null and hidden_at is null), true);
+set local role anon;
+set local request.jwt.claims = '{"role":"anon"}';
+select is((select array_agg(id) from public.board_entries('dog', p_seed => 'visitor-aaaa')), current_setting('t.seed_order')::uuid[],
+          '가림 기간 손님은 자기 방문자 키(p_seed)로 섞인 순서를 본다');
+set local request.jwt.claims = '{"sub":"00000000-0000-0000-0000-0000000000b1","role":"authenticated","is_anonymous":false}';
 
 set local role postgres;
 insert into public.rounds (month, kind, seq, starts_at, ends_at) values ('2000-03-01', 'final', 0, now() - interval '30 seconds', now() + interval '1 day');
@@ -306,6 +318,21 @@ set local request.jwt.claims = '{"role":"anon"}';
 select lives_ok($$select public.get_featured()$$, '손님은 인자 없는 get_featured()를 부를 수 있다');
 select throws_ok($$select public.get_featured_at(now())$$, '42501', null, '손님은 기준 시각을 바꿔 부를 수 없다');
 select throws_ok($$select count(*) from public.rank_snapshots$$, '42501', null, '손님은 순위 기록 표를 직접 읽지 못한다');
+
+-- ── SNS 이동률 기록(#11) ─────────────────────────────────────
+select is(public.record_sns(array['00000000-0000-0000-0000-00000000f004']::uuid[], 'view', 'center', 'visitor-aaaa'), 1, '손님도 센터 노출을 남긴다');
+select is(public.record_sns(array['00000000-0000-0000-0000-00000000f004']::uuid[], 'view', 'center', 'visitor-aaaa'), 0, '같은 사람·날·글·자리는 한 번만 센다');
+select is(public.record_sns(array['00000000-0000-0000-0000-00000000f004']::uuid[], 'tiktok', 'center', 'visitor-aaaa'), 0, '모르는 SNS 종류는 버린다');
+select is(public.record_sns(array['00000000-0000-0000-0000-00000000f003']::uuid[], 'instagram', 'center', 'visitor-aaaa'), 0, '숨긴 글의 클릭은 남기지 않는다');
+select throws_ok($$select count(*) from public.sns_events$$, '42501', null, '손님은 기록 표를 직접 읽지 못한다');
+select is(public.record_sns(array['00000000-0000-0000-0000-00000000f004']::uuid[], null, 'center', 'visitor-aaaa'), 0, '종류가 비면 오류 없이 버린다');
+select throws_ok($$select count(*) from public.sns_daily$$, '42501', null, '손님은 하루 줄 수 표를 직접 읽지 못한다');
+reset role;
+update public.sns_daily set n = 200000 where kst_date = public.kst_today();
+set local role anon;
+select is(public.record_sns(array['00000000-0000-0000-0000-00000000f004']::uuid[], 'view', 'detail', 'visitor-bbbb'), 0, '하루 상한을 넘으면 더 쌓지 않는다');
+reset role;
+select is((select n from public.sns_daily where kst_date = public.kst_today()), 200000, '상한을 넘은 날은 줄 수도 그대로');
 
 select * from finish();
 rollback;

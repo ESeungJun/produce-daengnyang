@@ -62,12 +62,21 @@ export function PicksProvider({ init, children }: { init: PicksInit; children: R
         return o.kind === "sheet" ? openLogin("pick") : toast(o.text);
       }
       setPending((p) => new Set(p).add(entryId));
-      const { data, error } = await browserClient().rpc("cast_pick", { p_entry_id: entryId });
-      setPending((p) => {
-        const n = new Set(p);
-        n.delete(entryId);
-        return n;
-      });
+      let res;
+      try {
+        res = await (await browserClient()).rpc("cast_pick", { p_entry_id: entryId });
+      } catch {
+        // supabase-js 를 불러오지 못했다(네트워크). 버튼이 처리 중에 멈추지 않게 풀고 알린다.
+        res = null;
+      } finally {
+        setPending((p) => {
+          const n = new Set(p);
+          n.delete(entryId);
+          return n;
+        });
+      }
+      if (!res) return toast("픽을 보내지 못했어요. 인터넷 연결을 확인하고 다시 눌러 주세요");
+      const { data, error } = res;
       if (error) {
         const o = pickErrorOutcome(error.message, board);
         if (error.message === "already_picked") setPicked((s) => new Set(s).add(entryId));

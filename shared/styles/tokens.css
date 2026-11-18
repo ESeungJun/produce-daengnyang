@@ -44,6 +44,21 @@
   --pd-fs-body: 15px;
   --pd-fs-small: 13px;
   --pd-fs-tiny: 12px;        /* 표 수·날짜 */
+  --pd-fs-ui: 14px;          /* 버튼·탭·정렬·보조 문단·시트 본문 */
+  --pd-fs-name: 16px;        /* 차트·폴라로이드 이름 */
+  --pd-fs-micro: 11px;       /* 사진 위 알약 라벨, 닫힌 픽 버튼 글자 */
+  --pd-fs-pick-lg: 20px;     /* 큰 픽 버튼 글자 */
+  --pd-fs-card: 26px;        /* 센터 화보 이름 */
+  --pd-fs-ad: 34px;          /* 모집 공고 제목 */
+  --pd-fs-name-lg: 40px;     /* 글 상세 이름 */
+  /* 데스크톱(1024px~)에서만 바뀌는 크기(시안 .desk) */
+  --pd-fs-d-logo: 26px;
+  --pd-fs-d-board: 28px;     /* 차트 판 게시판 이름 */
+  --pd-fs-d-card: 36px;
+  --pd-fs-d-section: 52px;
+  --pd-fs-d-star: 84px;
+  --pd-fs-d-cover: 120px;
+  --pd-fs-d-close: 150px;
 
   /* ── 모서리 ── */
   --pd-r-pill: 999px;        /* 버튼·탭·칩·입력칸 */

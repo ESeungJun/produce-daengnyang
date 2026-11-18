@@ -15,15 +15,15 @@ import { Band } from "@/features/rounds/Band";
 import { Chart } from "@/features/rounds/Chart";
 import { loadOpenRound } from "@/features/rounds/api";
 import { isBlind } from "@/features/rounds/schedule";
-import { loadFeatured } from "./api";
 import { Cover } from "./Cover";
+import { getFeatured } from "./server";
 import { CenterSpread, Polaroids } from "./Spread";
 import s from "./main.module.css";
 
 export async function MainPage() {
   const supabase = await createClient();
   const [featured, round, dog, cat] = await Promise.all([
-    loadFeatured(supabase),
+    getFeatured(),
     loadOpenRound(supabase),
     loadBoard(supabase, "dog", { limit: 4 }),
     loadBoard(supabase, "cat", { limit: 4 }),

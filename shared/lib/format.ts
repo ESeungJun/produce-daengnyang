@@ -65,24 +65,36 @@ export function rankDelta(rank: number | null, prev: number | null): { mark: str
   return { mark: "–", dir: "same" };
 }
 
-/** SNS 주소 → 화면 이름. 인스타 "@bori.corgi", 틱톡 "@bori", 유튜브 "@bori" 또는 "유튜브 채널" */
+/** SNS 주소 → 화면 이름. 인스타 "@bori.corgi", 스레드 "@bori", 유튜브 "@bori" 또는 "유튜브 채널". 규칙은 DB valid_sns 와 같다. */
 export function snsHandle(url: string): string | null {
-  const m = url.match(/^https:\/\/(?:www\.|m\.)?(instagram|tiktok|youtube)\.com\/(@?[A-Za-z0-9._-]+|channel\/[A-Za-z0-9_-]+)\/?$/);
+  const m =
+    url.match(/^https:\/\/(?:www\.)?instagram\.com\/([A-Za-z0-9._]{1,30})\/?$/) ??
+    url.match(/^https:\/\/(?:www\.)?threads\.(?:com|net)\/@([A-Za-z0-9._]{1,30})\/?$/) ??
+    url.match(/^https:\/\/(?:(?:www|m)\.)?youtube\.com\/(?:@([A-Za-z0-9._-]{1,30})|(channel)\/[A-Za-z0-9_-]{10,40})\/?$/);
   if (!m) return null;
-  const tail = m[2];
-  if (tail.startsWith("channel/")) return "유튜브 채널";
-  return tail.startsWith("@") ? tail : `@${tail}`;
+  if (m[2] === "channel") return "유튜브 채널";
+  return `@${m[1]}`;
 }
 
-export const SNS_NAME = { instagram: "인스타", tiktok: "틱톡", youtube: "유튜브" } as const;
-export type SnsKind = keyof typeof SNS_NAME;
+/** 글에 붙일 수 있는 SNS(사용자 결정 2026-11-18, #11). 이 순서로 버튼을 놓는다. */
+export const SNS_KINDS = ["instagram", "threads", "youtube"] as const;
+export type SnsKind = (typeof SNS_KINDS)[number];
+export const SNS_NAME: Record<SnsKind, string> = { instagram: "인스타", threads: "스레드", youtube: "유튜브" };
 
-/** 글의 SNS 중 처음 하나를 "@bori.corgi 인스타 구경 가기" 버튼으로. 없으면 null. */
-export function firstSns(e: Partial<Record<SnsKind, string | null>>): { url: string; label: string } | null {
-  for (const kind of ["instagram", "tiktok", "youtube"] as const) {
+export type SnsLinkInfo = { kind: SnsKind; url: string; handle: string };
+
+/** 글의 SNS 중 주소 규칙에 맞는 것만 순서대로. */
+export function snsLinks(e: Partial<Record<SnsKind, string | null>>): SnsLinkInfo[] {
+  const out: SnsLinkInfo[] = [];
+  for (const kind of SNS_KINDS) {
     const url = e[kind];
     const handle = url ? snsHandle(url) : null;
-    if (url && handle) return { url, label: `${handle} ${SNS_NAME[kind]} 구경 가기` };
+    if (url && handle) out.push({ kind, url, handle });
   }
-  return null;
+  return out;
+}
+
+/** 글의 SNS 중 처음 하나. 없으면 null. */
+export function firstSns(e: Partial<Record<SnsKind, string | null>>): SnsLinkInfo | null {
+  return snsLinks(e)[0] ?? null;
 }

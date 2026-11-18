@@ -13,13 +13,15 @@ export const PAGE_SIZE = 24;
 export async function loadBoard(
   supabase: SupabaseClient<Database>,
   board: Board,
-  opts: { sort?: BoardSort; limit?: number; offset?: number } = {},
+  opts: { sort?: BoardSort; limit?: number; offset?: number; seed?: string | null } = {},
 ): Promise<BoardEntry[]> {
   const { data, error } = await supabase.rpc("board_entries", {
     p_board: board,
     p_sort: opts.sort ?? "popular",
     p_limit: opts.limit ?? PAGE_SIZE,
     p_offset: opts.offset ?? 0,
+    // 가림 기간 섞기 순서의 seed(방문자 키). 없으면 DB 가 로그인 사용자 번호나 'guest' 를 쓴다.
+    ...(opts.seed ? { p_seed: opts.seed } : {}),
   });
   if (error) throw error;
   return data ?? [];
@@ -31,7 +33,7 @@ export type EntryDetail = {
   pet_name: string;
   bio: string | null;
   instagram: string | null;
-  tiktok: string | null;
+  threads: string | null;
   youtube: string | null;
   pick_count: number | null;
   view_count: number | null;

@@ -1,6 +1,6 @@
 /* 게시판 카드·모집 공고·글 상세. 원본: .work/mockups/v2a.css */
 .bhead h1 { font-family: var(--pd-f-display); font-weight: 400; font-size: var(--pd-fs-page); line-height: 1; margin: 6px 0 4px; }
-.bhead p { margin: 0; font-size: 14px; color: var(--pd-ink-2); }
+.bhead p { margin: 0; font-size: var(--pd-fs-ui); color: var(--pd-ink-2); }
 
 .gal { display: grid; grid-template-columns: 1fr 1fr; gap: 16px 10px; padding: 14px 0; list-style: none; margin: 0; }
 .gcard { position: relative; min-width: 0; }
@@ -13,7 +13,7 @@
   background: var(--pd-butter);
   color: var(--pd-on-butter);
   font-family: var(--pd-f-display);
-  font-size: 14px;
+  font-size: var(--pd-fs-ui);
   padding: 2px 9px;
   border-radius: var(--pd-r-pill);
 }
@@ -31,8 +31,8 @@
 .empty p { margin: 0 0 14px; }
 
 .ad { margin-top: 34px; background: var(--pd-butter); color: var(--pd-on-butter); border-radius: var(--pd-r-xl); padding: 22px 20px; }
-.ad h2 { margin: 0; font-family: var(--pd-f-display); font-weight: 400; font-size: 34px; line-height: 1.02; }
-.ad ul { margin: 12px 0 0; padding: 0 0 0 18px; font-size: 14px; }
+.ad h2 { margin: 0; font-family: var(--pd-f-display); font-weight: 400; font-size: var(--pd-fs-ad); line-height: 1.02; }
+.ad ul { margin: 12px 0 0; padding: 0 0 0 18px; font-size: var(--pd-fs-ui); }
 .adBtn {
   margin-top: 16px;
   width: 100%;
@@ -58,7 +58,7 @@
 .pagerDots span[data-on="true"] { background: var(--pd-pink); width: 22px; border-radius: 5px; }
 .dtHead { display: flex; justify-content: space-between; align-items: center; gap: 12px; padding-top: 14px; }
 .dtHead > div { min-width: 0; }
-.dtHead h1 { margin: 0; font-family: var(--pd-f-display); font-weight: 400; font-size: 40px; line-height: 1; overflow-wrap: anywhere; }
+.dtHead h1 { margin: 0; font-family: var(--pd-f-display); font-weight: 400; font-size: var(--pd-fs-name-lg); line-height: 1; overflow-wrap: anywhere; }
 .dtHead p { margin: 4px 0 0; font-size: var(--pd-fs-small); color: var(--pd-ink-2); font-variant-numeric: tabular-nums; }
 .bio { margin: 12px 0 0; font-size: var(--pd-fs-body); }
 .dtAct { display: flex; gap: 8px; padding-top: 12px; flex-wrap: wrap; }

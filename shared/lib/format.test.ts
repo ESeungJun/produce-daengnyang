@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { countdown, deadlineLabel, firstSns, issueLabel, rankDelta, roundName, snsHandle, untilLabel } from "./format";
+import { countdown, deadlineLabel, firstSns, issueLabel, rankDelta, roundName, snsHandle, snsLinks, untilLabel } from "./format";
 
 describe("countdown", () => {
   it("하루 넘게 남으면 일수를 앞에", () => expect(countdown((2 * 86400 + 5 * 3600 + 3 * 60 + 9) * 1000)).toBe("2일 05:03:09"));
@@ -26,16 +26,23 @@ describe("rankDelta", () => {
   it("가림 기간(순위 없음)엔 표시하지 않음", () => expect(rankDelta(null, null)).toBeNull());
 });
 
-describe("snsHandle·firstSns", () => {
-  it("인스타·틱톡·유튜브", () => {
+describe("snsHandle·snsLinks", () => {
+  it("인스타·스레드·유튜브", () => {
     expect(snsHandle("https://www.instagram.com/bori.corgi/")).toBe("@bori.corgi");
-    expect(snsHandle("https://tiktok.com/@bori")).toBe("@bori");
+    expect(snsHandle("https://www.threads.com/@bori")).toBe("@bori");
+    expect(snsHandle("https://threads.net/@bori.dog")).toBe("@bori.dog");
     expect(snsHandle("https://m.youtube.com/@bori-tv")).toBe("@bori-tv");
     expect(snsHandle("https://youtube.com/channel/UC1234567890abc")).toBe("유튜브 채널");
   });
-  it("허용 도메인이 아니면 null", () => expect(snsHandle("https://evil.example/bori")).toBeNull());
-  it("첫 SNS 를 버튼 문구로", () => {
-    expect(firstSns({ instagram: null, tiktok: "https://tiktok.com/@bori" })).toEqual({ url: "https://tiktok.com/@bori", label: "@bori 틱톡 구경 가기" });
+  it("틱톡·허용 안 된 주소는 null", () => {
+    expect(snsHandle("https://tiktok.com/@bori")).toBeNull();
+    expect(snsHandle("https://evil.example/bori")).toBeNull();
+    expect(snsHandle("https://www.threads.com/bori")).toBeNull(); // 스레드는 @ 가 있어야 한다
+    expect(snsHandle("https://instagram.com.evil.example/bori")).toBeNull();
+  });
+  it("규칙에 맞는 것만 인스타 → 스레드 → 유튜브 순서로", () => {
+    expect(snsLinks({ youtube: "https://youtube.com/@b", threads: "https://threads.com/@b", instagram: "https://evil.example/b" }).map((x) => x.kind)).toEqual(["threads", "youtube"]);
+    expect(firstSns({ instagram: null, threads: "https://threads.com/@bori" })).toEqual({ kind: "threads", url: "https://threads.com/@bori", handle: "@bori" });
     expect(firstSns({})).toBeNull();
   });
 });

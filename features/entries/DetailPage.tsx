@@ -6,7 +6,11 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { cache } from "react";
-import { BOARD_NAME, SNS_NAME, deadlineLabel, snsHandle, type Board, type SnsKind } from "@/shared/lib/format";
+import { BOARD_NAME, deadlineLabel, snsLinks, type Board } from "@/shared/lib/format";
+import { Impression } from "@/features/sns/Impression";
+import { CenterBanner } from "@/features/featured/CenterBanner";
+import { getFeatured } from "@/features/featured/server";
+import { SnsLink } from "@/features/sns/SnsLink";
 import { createClient } from "@/shared/lib/supabase/server";
 import { Notice } from "@/shared/ui/Notice";
 import { TopBar, page } from "@/shared/ui/TopBar";
@@ -25,6 +29,7 @@ import s from "./entries.module.css";
 export const getEntry = cache(async (id: string) => loadEntry(await createClient(), id));
 
 export async function DetailPage({ board, id }: { board: Board; id: string }) {
+  void getFeatured().catch(() => null); // 위 센터 띠를 글과 같이 읽기 시작
   const e = await getEntry(id);
   if (e === "deleted") {
     return (
@@ -42,13 +47,12 @@ export async function DetailPage({ board, id }: { board: Board; id: string }) {
   if (!e || e.board !== board) notFound();
 
   const closed = e.is_mine ? "mine" : !e.round.open ? "ended" : undefined;
-  const sns = (["instagram", "tiktok", "youtube"] as SnsKind[])
-    .map((k) => ({ k, url: e[k], handle: e[k] ? snsHandle(e[k]!) : null }))
-    .filter((x): x is { k: SnsKind; url: string; handle: string } => !!x.url && !!x.handle);
+  const sns = snsLinks(e);
 
   return (
     <div className={page.page}>
       <TopBar back={{ href: `/${board}`, label: `${BOARD_NAME[board]} 연습생` }} nav={<SiteNav current={board} />} right={<PicksLeft board={board} />} login={<LoginButton />} />
+      <CenterBanner board={board} />
       <div className={s.detail}>
         <PhotoPager photos={e.photos} name={e.pet_name} />
         <div>
@@ -68,14 +72,13 @@ export async function DetailPage({ board, id }: { board: Board; id: string }) {
           {closed === "ended" ? <p className={s.notice}>마감된 라운드라 픽할 수 없어요. 지금 라운드는 {BOARD_NAME[board]} 게시판에서 볼 수 있어요.</p> : null}
           {e.hidden ? <p className={s.notice}>관리자가 숨긴 글이에요. 나에게만 보여요.</p> : null}
           {e.round.blind ? <p className={s.notice}>마감 전 24시간부터 결과가 나올 때까지 표 수를 가려요.</p> : null}
-          <div className={s.dtAct}>
+          {/* SNS 가 있을 때만 노출을 센다(이동률의 분모). */}
+          <Impression className={s.dtAct} ids={sns.length ? [e.id] : []} place="detail">
             {sns.map((x) => (
-              <a key={x.k} className={ui.pill} href={x.url} target="_blank" rel="noopener noreferrer">
-                {x.handle} {SNS_NAME[x.k]} 구경 가기
-              </a>
+              <SnsLink key={x.kind} className={ui.pill} entryId={e.id} sns={x} place="detail" />
             ))}
             <CopyLink name={e.pet_name} />
-          </div>
+          </Impression>
         </div>
       </div>
     </div>

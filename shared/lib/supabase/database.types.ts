@@ -70,7 +70,7 @@ export type Database = {
           pick_count: number
           round_id: number
           source_entry_id: string | null
-          tiktok: string | null
+          threads: string | null
           updated_at: string
           view_count: number
           youtube: string | null
@@ -89,7 +89,7 @@ export type Database = {
           pick_count?: number
           round_id: number
           source_entry_id?: string | null
-          tiktok?: string | null
+          threads?: string | null
           updated_at?: string
           view_count?: number
           youtube?: string | null
@@ -108,7 +108,7 @@ export type Database = {
           pick_count?: number
           round_id?: number
           source_entry_id?: string | null
-          tiktok?: string | null
+          threads?: string | null
           updated_at?: string
           view_count?: number
           youtube?: string | null
@@ -343,6 +343,56 @@ export type Database = {
           },
         ]
       }
+      sns_daily: {
+        Row: {
+          kst_date: string
+          n: number
+        }
+        Insert: {
+          kst_date: string
+          n?: number
+        }
+        Update: {
+          kst_date?: string
+          n?: number
+        }
+        Relationships: []
+      }
+      sns_events: {
+        Row: {
+          created_at: string
+          entry_id: string
+          kind: string
+          kst_date: string
+          place: string
+          viewer_key: string
+        }
+        Insert: {
+          created_at?: string
+          entry_id: string
+          kind: string
+          kst_date: string
+          place: string
+          viewer_key: string
+        }
+        Update: {
+          created_at?: string
+          entry_id?: string
+          kind?: string
+          kst_date?: string
+          place?: string
+          viewer_key?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "sns_events_entry_id_fkey"
+            columns: ["entry_id"]
+            isOneToOne: false
+            referencedRelation: "entries"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       reports: {
         Row: {
           created_at: string
@@ -460,6 +510,7 @@ export type Database = {
           p_limit?: number
           p_offset?: number
           p_q?: string
+          p_seed?: string
           p_sort?: string
         }
         Returns: {
@@ -487,7 +538,7 @@ export type Database = {
           p_bio: string
           p_instagram: string
           p_pet_name: string
-          p_tiktok: string
+          p_threads: string
           p_youtube: string
         }
         Returns: undefined
@@ -503,7 +554,7 @@ export type Database = {
           p_instagram: string
           p_pet_name: string
           p_photos: Json
-          p_tiktok: string
+          p_threads: string
           p_youtube: string
         }
         Returns: string
@@ -571,6 +622,15 @@ export type Database = {
         }
         Returns: undefined
       }
+      record_sns: {
+        Args: {
+          p_entry_ids: string[]
+          p_kind: string
+          p_place: string
+          p_viewer_key: string
+        }
+        Returns: number
+      }
       require_member: { Args: never; Returns: string }
       snapshot_ranks: { Args: never; Returns: number }
       update_entry: {
@@ -580,7 +640,7 @@ export type Database = {
           p_instagram: string
           p_pet_name: string
           p_photos?: Json
-          p_tiktok: string
+          p_threads: string
           p_youtube: string
         }
         Returns: Json
