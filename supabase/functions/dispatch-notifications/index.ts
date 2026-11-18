@@ -1,28 +1,35 @@
 /**
  * dispatch-notifications (#7, 설계서 4-4 5번)
- * 결과 알림(center·finalist·debut)을 메일(Resend)과 웹 푸시로 보낸다. 알림함 줄은 결과 확정 때 DB 가 이미 넣었다.
+ * 결과 알림(center·finalist·debut)을 메일(Gmail SMTP)과 웹 푸시로 보낸다. 알림함 줄은 결과 확정 때 DB 가 이미 넣었다.
  * 부르는 곳: DB 의 kick_dispatch()(매일 0시 자정 작업, 관리자 다시 계산) → pg_net → 이 함수. 사용자 토큰이 없으므로
  *   게이트웨이 JWT 확인은 끄고(verify_jwt false), 헤더 x-dispatch-token 을 DB 의 dispatch_token_ok() 로 확인한다.
  * 1. 토큰 확인. 틀리면 401.
  * 2. dispatch_queue(): 최근 3일 결과 알림 중 메일·푸시를 아직 못 보낸 것(메일 주소 포함).
- * 3. 메일: RESEND_API_KEY·MAIL_FROM 이 없으면 건너뛴다(표시하지 않아 설정 뒤 다음 실행 때 보낸다).
- *    알림 번호로 Idempotency-Key 를 붙여 두 번 불려도 한 통만 간다. 메일 주소가 없는 계정은 "보냄"으로 표시한다.
+ * 3. 메일: GMAIL_USER·GMAIL_APP_PASSWORD 가 없으면 건너뛴다(표시하지 않아 설정 뒤 다음 실행 때 보낸다).
+ *    Gmail(smtp.gmail.com:465, SSL)로 연결 하나를 열어 차례로 보낸다. Supabase Edge Function 은 25·587 포트를 막아 465 를 쓴다.
+ *    로그인이 거절되면(EAUTH) 남은 메일은 보내지 않고 다음 실행으로 넘긴다(틀린 비밀번호로 계속 두드리면 구글이 계정을 잠글 수 있어서).
+ *    메일 주소가 없는 계정은 "보냄"으로 표시한다.
  * 4. 푸시: VAPID 키가 없으면 건너뛴다. 구독마다 보내고, 410·404(구독 끝남)면 그 구독을 지운다.
  *    구독이 없거나 한 곳이라도 받았거나 모두 끝난 구독이면 "보냄"으로 표시한다. 일시 오류만 남겨 다음 실행 때 다시 보낸다.
  * 5. 보낸 표시는 mark_dispatched(). 표시가 실패하면 500(다음 실행 때 다시 보낼 수 있음). 알림함 줄은 그대로다.
- * 메일은 550ms 간격으로 보낸다(Resend 기본 초당 2통).
- * 비밀값: RESEND_API_KEY, MAIL_FROM("프로듀스 댕냥 <알림@도메인>"), VAPID_PUBLIC_KEY, VAPID_PRIVATE_KEY, VAPID_SUBJECT(mailto:…), SITE_URL.
+ * Gmail 개인 계정은 하루 500통까지라 라운드마다 1·2위 주인(하루 수십 통 이하)이면 넉넉하다.
+ * 비밀값: GMAIL_USER(보내는 Gmail 주소), GMAIL_APP_PASSWORD(구글 계정의 앱 비밀번호 16자), MAIL_FROM_NAME(보내는 이름, 기본 "프로듀스 댕냥"),
+ *   VAPID_PUBLIC_KEY, VAPID_PRIVATE_KEY, VAPID_SUBJECT(mailto:…), SITE_URL. 보내는 주소는 공개 저장소라 코드·문서에 적지 않는다.
  */
 import { createClient } from "npm:@supabase/supabase-js@2.119.0";
 import webpush from "npm:web-push@3.6.7";
+import nodemailer from "npm:nodemailer@6.9.16";
 import { noticeView } from "../_shared/notice.ts";
 
 const url = Deno.env.get("SUPABASE_URL")!;
 const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
 const admin = createClient(url, serviceKey, { auth: { persistSession: false, autoRefreshToken: false } });
 
-const RESEND_API_KEY = Deno.env.get("RESEND_API_KEY") ?? "";
-const MAIL_FROM = Deno.env.get("MAIL_FROM") ?? "";
+const GMAIL_USER = Deno.env.get("GMAIL_USER") ?? "";
+// 구글은 앱 비밀번호를 4자씩 띄어 보여 준다. 띄어 쓴 채 넣어도 되게 공백을 뺀다
+const GMAIL_APP_PASSWORD = (Deno.env.get("GMAIL_APP_PASSWORD") ?? "").replace(/\s/g, "");
+const MAIL_FROM_NAME = Deno.env.get("MAIL_FROM_NAME") || "프로듀스 댕냥";
+const mailReady = !!(GMAIL_USER && GMAIL_APP_PASSWORD);
 const SITE_URL = (Deno.env.get("SITE_URL") ?? "http://localhost:3104").replace(/\/$/, "");
 const VAPID_PUBLIC_KEY = Deno.env.get("VAPID_PUBLIC_KEY") ?? "";
 const VAPID_PRIVATE_KEY = Deno.env.get("VAPID_PRIVATE_KEY") ?? "";
@@ -48,17 +55,41 @@ function mailHtml(text: string, link: string): string {
 </div>`;
 }
 
-async function sendMail(r: Row): Promise<boolean> {
+type Mailer = ReturnType<typeof nodemailer.createTransport>;
+type MailResult = "sent" | "failed" | "auth";
+
+function gmail(): Mailer {
+  return nodemailer.createTransport({
+    host: "smtp.gmail.com",
+    port: 465,
+    secure: true,
+    auth: { user: GMAIL_USER, pass: GMAIL_APP_PASSWORD },
+    pool: true, // 한 번 로그인한 연결로 차례로 보낸다
+    maxConnections: 1,
+    connectionTimeout: 10_000,
+    greetingTimeout: 10_000,
+    socketTimeout: 20_000,
+  });
+}
+
+async function sendMail(mailer: Mailer, r: Row): Promise<MailResult> {
   const { text, href } = noticeView(r.kind, r.payload);
   const link = `${SITE_URL}${href ?? "/me"}`;
-  const res = await fetch("https://api.resend.com/emails", {
-    method: "POST",
-    headers: { Authorization: `Bearer ${RESEND_API_KEY}`, "Content-Type": "application/json", "Idempotency-Key": `pd-notice-${r.id}` },
-    body: JSON.stringify({ from: MAIL_FROM, to: [r.email], subject: text, html: mailHtml(text, link), text: `${text}\n\n${link}` }),
-  }).catch(() => null);
-  if (!res) return false;
-  await res.body?.cancel();
-  return res.ok;
+  try {
+    await mailer.sendMail({
+      from: { name: MAIL_FROM_NAME, address: GMAIL_USER },
+      to: r.email!,
+      subject: text,
+      html: mailHtml(text, link),
+      text: `${text}\n\n${link}`,
+    });
+    return "sent";
+  } catch (e) {
+    const code = (e as { code?: string }).code ?? "unknown";
+    // 주소·비밀번호는 남기지 않는다. 오류 종류만
+    console.error(`dispatch-notifications: 메일 실패 notice=${r.id} code=${code}`);
+    return code === "EAUTH" ? "auth" : "failed";
+  }
 }
 
 /** 이 사람의 모든 구독에 보낸다. 다시 시도할 필요가 없으면 true. */
@@ -102,14 +133,24 @@ Deno.serve(async (req) => {
 
   // 3. 메일
   const mailed: number[] = [];
-  if (RESEND_API_KEY && MAIL_FROM) {
-    for (const r of rows.filter((x) => x.need_email)) {
-      if (!r.email) {
-        mailed.push(r.id);
-        continue;
+  let mailAuthFailed = false;
+  if (mailReady) {
+    const mailer = gmail();
+    try {
+      for (const r of rows.filter((x) => x.need_email)) {
+        if (!r.email) {
+          mailed.push(r.id);
+          continue;
+        }
+        const res = await sendMail(mailer, r);
+        if (res === "sent") mailed.push(r.id);
+        if (res === "auth") {
+          mailAuthFailed = true;
+          break;
+        }
       }
-      if (await sendMail(r)) mailed.push(r.id);
-      await new Promise((ok) => setTimeout(ok, 550)); // Resend 기본 속도 제한(초당 2통)에 걸리지 않게
+    } finally {
+      mailer.close();
     }
   }
 
@@ -131,7 +172,7 @@ Deno.serve(async (req) => {
     console.error(`dispatch-notifications: 보낸 표시 실패 mailed=${mailed.length} pushed=${pushed.length}`);
     return json({ error: "mark_failed" }, 500);
   }
-  const result = { queued: rows.length, mailed: mailed.length, pushed: pushed.length, mail_ready: !!(RESEND_API_KEY && MAIL_FROM), push_ready: pushReady };
+  const result = { queued: rows.length, mailed: mailed.length, pushed: pushed.length, mail_ready: mailReady, mail_auth_failed: mailAuthFailed, push_ready: pushReady };
   console.log(`dispatch-notifications: ${JSON.stringify(result)}`);
   return json(result);
 });
