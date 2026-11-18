@@ -7,10 +7,10 @@ export function SiteNav({ current }: { current?: Board }) {
   return (
     <>
       <Link href="/dog" aria-current={current === "dog" ? "page" : undefined}>
-        강아지
+        댕댕이
       </Link>
       <Link href="/cat" aria-current={current === "cat" ? "page" : undefined}>
-        고양이
+        냥이
       </Link>
       <RegisterButton />
     </>

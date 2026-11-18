@@ -5,7 +5,7 @@
 import { kstDate } from "./kst";
 
 export type Board = "dog" | "cat";
-export const BOARD_NAME: Record<Board, string> = { dog: "강아지", cat: "고양이" };
+export const BOARD_NAME: Record<Board, string> = { dog: "댕댕이", cat: "냥이" };
 
 export function isBoard(v: string): v is Board {
   return v === "dog" || v === "cat";
