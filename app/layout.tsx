@@ -17,7 +17,7 @@ const body = Gowun_Dodum({ weight: "400", subsets: ["latin"], preload: false, va
 
 export const metadata: Metadata = {
   title: { default: "프로듀스 댕냥", template: "%s · 프로듀스 댕냥" },
-  description: "우리 애를 데뷔시켜 주세요. 강아지·고양이 사진 오디션, 매주 센터를 뽑고 월말에 데뷔해요.",
+  description: "우리 애를 데뷔시켜 주세요. 댕댕이·냥이(강아지·고양이) 사진 오디션, 매주 센터를 뽑고 월말에 데뷔해요.",
 };
 
 export const viewport: Viewport = {

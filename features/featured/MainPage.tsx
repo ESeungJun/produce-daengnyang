@@ -55,7 +55,7 @@ export async function MainPage() {
         <SectionHead
           id="center"
           title="이번 주 센터 화보"
-          sub={center.length ? `${center[0].round_seq}라운드 1위. 다음 라운드 내내 사이트 곳곳에 걸려요.` : "첫 라운드가 끝나면 강아지·고양이 1위가 여기 걸려요."}
+          sub={center.length ? `${center[0].round_seq}라운드 1위. 다음 라운드 내내 사이트 곳곳에 걸려요.` : "첫 라운드가 끝나면 댕댕이·냥이 1위가 여기 걸려요."}
         />
         {center.length ? <CenterSpread center={center} past={pastCenters} /> : null}
       </section>
