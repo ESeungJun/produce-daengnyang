@@ -1,5 +1,5 @@
 /**
- * 상태가 없는 작은 공통 부품: 섹션 제목, 목차, 맨 아래 제호, 정렬 링크.
+ * 상태가 없는 작은 공통 부품: 섹션 제목, 바로가기(목차), 정렬 링크.
  * 화면마다 같은 모양을 쓰게 하려고 모았다(DESIGN_SYSTEM.md 5절).
  */
 import Link from "next/link";
@@ -18,10 +18,12 @@ export function SectionHead({ id, title, sub }: { id?: string; title: string; su
 
 export type TocItem = { href: string; title: string; note: string };
 
-export function Toc({ heading, items, className }: { heading: string; items: TocItem[]; className?: string }) {
+/** 바로가기 묶음. lead 를 주면 제목 아래 한두 줄 소개(메인: 이 사이트가 무엇인지, #16). label 은 읽기 도구용 이름 */
+export function Toc({ heading, lead, label, items, className }: { heading: string; lead?: string; label?: string; items: TocItem[]; className?: string }) {
   return (
-    <nav className={`${s.toc} ${className ?? ""}`} aria-label={heading}>
+    <nav className={`${s.toc} ${className ?? ""}`} aria-label={label ?? heading}>
       <h2>{heading}</h2>
+      {lead ? <p className={s.tocLead}>{lead}</p> : null}
       <ul>
         {items.map((it) => (
           <li key={it.href}>
@@ -37,16 +39,6 @@ export function Toc({ heading, items, className }: { heading: string; items: Toc
 }
 
 /** 맨 아래 제호. 휴대폰은 두 줄, 데스크톱은 한 줄로 크게. */
-export function Colophon({ issue }: { issue: string }) {
-  return (
-    <p className={s.close}>
-      프로듀스 <br className={s.mobileBreak} />
-      댕냥
-      <small>{issue} · 표는 언제나 무료</small>
-    </p>
-  );
-}
-
 export type SortOption = { key: string; label: string; href: string };
 
 /** 정렬 링크(인기순·최신순). 가림 기간에는 인기순 자리에 "섞어 보기"가 온다. */

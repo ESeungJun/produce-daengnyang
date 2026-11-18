@@ -4,14 +4,13 @@
  * 이름 검색(?q=, #5)은 지금 라운드·이 게시판 안에서만 찾고, 정렬·가림 규칙은 그대로 따른다.
  */
 import Link from "next/link";
-import { BOARD_NAME, deadlineLabel, issueLabel, type Board } from "@/shared/lib/format";
-import { kstDate } from "@/shared/lib/kst";
+import { BOARD_NAME, deadlineLabel, type Board } from "@/shared/lib/format";
 import { cookies } from "next/headers";
 import { createClient } from "@/shared/lib/supabase/server";
 import { VISITOR_COOKIE, cleanVisitorKey } from "@/shared/lib/visitor";
 import { CenterBanner } from "@/features/featured/CenterBanner";
 import { getFeatured } from "@/features/featured/server";
-import { Colophon, SortLinks } from "@/shared/ui/parts";
+import { SortLinks } from "@/shared/ui/parts";
 import { TopBar, page } from "@/shared/ui/TopBar";
 import { LoginButton } from "@/features/auth/LoginButton";
 import { PicksLeft } from "@/features/picks/PicksLeft";
@@ -38,7 +37,6 @@ export async function BoardPage({ board, sort, q }: { board: Board; sort: BoardS
   const blind = round ? isBlind(round) : false;
   // 결선 기간(22일~말일)에는 새 등록을 받지 않는다(기획서 4절).
   const final = round?.kind === "final";
-  const issue = issueLabel(`${kstDate().slice(0, 7)}-01`);
   const searching = isSearch(q);
 
   return (
@@ -49,14 +47,6 @@ export async function BoardPage({ board, sort, q }: { board: Board; sort: BoardS
         <h1>{BOARD_NAME[board]} 연습생</h1>
         <p>{round ? `${roundTitle(round)} · ${deadlineLabel(round.ends_at)}` : "다음 라운드를 준비하고 있어요"}</p>
       </div>
-      {/* 휴대폰에는 윗줄 메뉴가 없어 게시판을 여기서 바꾼다(데스크톱은 숨김) */}
-      <nav className={`${ui.tabs} ${s.boardTabs}`} aria-label="게시판">
-        {(["dog", "cat"] as const).map((b) => (
-          <Link key={b} href={`/${b}`} aria-current={b === board ? "page" : undefined}>
-            {BOARD_NAME[b]}
-          </Link>
-        ))}
-      </nav>
       {round ? <Band className={s.bandGap} endsAt={round.ends_at} /> : null}
       {round ? <SearchBox board={board} sort={sort} q={q} /> : null}
       <div className={s.sortGap}>
@@ -91,7 +81,6 @@ export async function BoardPage({ board, sort, q }: { board: Board; sort: BoardS
         </div>
       )}
       <RecruitAd closed={final} />
-      <Colophon issue={issue.replace(" ", "년 ")} />
     </div>
   );
 }

@@ -23,7 +23,6 @@
 .meta { font-size: var(--pd-fs-tiny); color: var(--pd-ink-2); font-variant-numeric: tabular-nums; }
 .more { display: flex; flex-direction: column; align-items: center; gap: 8px; padding: 4px 0 8px; }
 .moreFail { margin: 0; font-size: var(--pd-fs-small); color: var(--pd-ink-2); text-align: center; }
-.boardTabs { margin-top: 14px; }
 .manual { display: grid; gap: 4px; width: 100%; font-size: var(--pd-fs-small); color: var(--pd-ink-2); }
 .manual input { min-height: 44px; padding: 0 12px; border: 1px solid var(--pd-jelly); border-radius: var(--pd-r-sm); background: var(--pd-paper-2); color: var(--pd-ink); }
 .adNote { margin: 14px 0 0; font-size: var(--pd-fs-small); color: var(--pd-ink-2); }
@@ -93,7 +92,6 @@
   .gal { grid-template-columns: repeat(4, 1fr); gap: 24px 18px; }
   .detail { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 40px; align-items: start; }
   .ad { max-width: 560px; }
-  .boardTabs { display: none; }
 }
 .bandGap { margin-top: 14px; }
 .sortGap { margin-top: 12px; }
@@ -119,3 +117,38 @@
 .searchNote { margin: 8px 0 0; font-size: var(--pd-fs-small); color: var(--pd-ink-2); }
 .searchNote a { color: var(--pd-ink); font-weight: 700; }
 .srOnly { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+
+/* 메인 모집 공고(#16): 전체 폭 긴 띠, 왼쪽 글 · 오른쪽 포스터 */
+.adWide { display: grid; gap: 20px; }
+.adWide .adBtn { max-width: 320px; }
+.poster {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 16px;
+  background: var(--pd-paper);
+  color: var(--pd-ink);
+  border-radius: var(--pd-r-md);
+  box-shadow: var(--pd-card-edge);
+  transform: rotate(1.5deg);
+  max-width: 360px;
+  width: 100%;
+  justify-self: center;
+}
+.posterTop { font-size: var(--pd-fs-tiny); font-weight: 700; letter-spacing: 0.08em; color: var(--pd-ink-2); }
+.posterPics { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
+.posterPics[data-n="1"] { grid-template-columns: 1fr; }
+.posterPics img { display: block; width: 100%; aspect-ratio: 1; object-fit: cover; border-radius: var(--pd-r-xs); background: var(--pd-paper-2); }
+.posterPics[data-n="3"] img:first-child { grid-column: 1 / -1; aspect-ratio: 2 / 1; }
+.posterEmpty { display: grid; place-items: center; aspect-ratio: 1; border: 2px dashed var(--pd-jelly); border-radius: var(--pd-r-xs); color: var(--pd-ink-2); font-size: var(--pd-fs-ui); font-weight: 700; }
+.posterBig { font-family: var(--pd-f-display); font-size: var(--pd-fs-ad); line-height: 1; letter-spacing: -0.02em; }
+.posterFoot { font-size: var(--pd-fs-tiny); color: var(--pd-ink-2); border-top: 2px dotted var(--pd-jelly); padding-top: 10px; }
+@media (min-width: 720px) {
+  .adWide { grid-template-columns: minmax(0, 640px) minmax(240px, 340px); justify-content: space-around; align-items: center; gap: 32px; padding: 32px 36px; }
+}
+@media (min-width: 1024px) {
+  .adWide { max-width: none; }
+  .adWide h2 { font-size: var(--pd-fs-d-section); }
+  .adWide ul { font-size: var(--pd-fs-body); line-height: 1.8; }
+}
+@media (prefers-reduced-motion: reduce) { .poster { transform: none; } }
