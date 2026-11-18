@@ -6,7 +6,7 @@
 -- ─────────────────────────────────────────────────────────────
 begin;
 create extension if not exists pgtap with schema extensions;
-select plan(137);
+select plan(139);
 
 -- ── 준비(관리자 권한) ───────────────────────────────────────
 -- 사용자: A·B·D 구글 연결(회원), C 익명, E 이메일 가입(구글 연결 없음 → 회원 아님)
@@ -359,6 +359,13 @@ insert into public.round_results (round_id, board, rank, entry_id, votes, role) 
   ((select id from public.rounds where month = '2000-06-01' and seq = 1), 'dog', 3, '00000000-0000-0000-0000-00000000f005', 100, null);
 set local role postgres;
 select is(public.get_featured_at('2000-06-10 12:00+09') -> 'debut' -> 0 ->> 'pet_name', '보리', '데뷔 1위가 숨겨지면 다음 순위를 표지에 올린다');
+-- 데뷔 항목에만 사진 전부(순서대로, #16). 센터 등 다른 항목은 photos 가 없다.
+insert into public.entry_photos (entry_id, position, path, thumb_path) values
+  ('00000000-0000-0000-0000-00000000f002', 1, 't/b1.webp', 't/b1t.webp'),
+  ('00000000-0000-0000-0000-00000000f002', 0, 't/b0.webp', 't/b0t.webp');
+select is(public.get_featured_at('2000-06-10 12:00+09') -> 'debut' -> 0 -> 'photos',
+          '[{"path": "t/b0.webp", "thumb_path": "t/b0t.webp"}, {"path": "t/b1.webp", "thumb_path": "t/b1t.webp"}]'::jsonb, '데뷔는 사진을 순서대로 모두 싣는다');
+select ok(not (public.get_featured_at('2000-06-10 12:00+09') -> 'center' -> 0 ? 'photos'), '센터 항목에는 사진 목록을 싣지 않는다');
 select is(public.get_featured_at('2000-06-10 12:00+09') -> 'center' -> 0 ->> 'pet_name', '두부', '센터는 가장 최근 확정된 주간 1위');
 select is((select array_agg(x ->> 'pet_name' order by x ->> 'pet_name') from jsonb_array_elements(public.get_featured_at('2000-06-10 12:00+09') -> 'finalists') x),
           array['두부', '짱구'], '데뷔조 후보는 이번 달 주간 1·2위');

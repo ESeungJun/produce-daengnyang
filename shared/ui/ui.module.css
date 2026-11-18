@@ -61,6 +61,7 @@
   margin: 0 0 6px;
 }
 .toc ul { list-style: none; margin: 0; padding: 0; }
+.tocLead { margin: 0 0 12px; font-size: var(--pd-fs-ui); line-height: 1.6; color: var(--pd-ink); max-width: 56ch; }
 .toc li + li { border-top: 2px dotted var(--pd-jelly); }
 .toc a {
   display: flex;
@@ -72,29 +73,6 @@
 }
 .toc b { font-size: var(--pd-fs-body); }
 .toc span { font-size: var(--pd-fs-small); color: var(--pd-ink-2); text-align: right; }
-
-/* 맨 아래 제호 */
-.close {
-  padding: 34px 0 30px;
-  font-family: var(--pd-f-display);
-  font-size: var(--pd-fs-close);
-  line-height: 0.92;
-  letter-spacing: -0.03em;
-  color: var(--pd-pink);
-  margin: 0;
-}
-.close small {
-  display: block;
-  font-family: var(--pd-f-body);
-  font-size: var(--pd-fs-tiny);
-  color: var(--pd-ink-2);
-  letter-spacing: 0;
-  margin-top: 10px;
-}
-@media (min-width: 1024px) {
-  .close { font-size: var(--pd-fs-d-close); padding: 72px 0 48px; }
-  .mobileBreak { display: none; }
-}
 
 /* 탭(강아지·고양이): 선택은 잉크 알약 */
 .tabs { display: flex; gap: 6px; }

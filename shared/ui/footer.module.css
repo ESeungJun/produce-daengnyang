@@ -1,0 +1,28 @@
+/* 사이트 푸터(#16). 화면 폭 전체 띠, 안쪽은 .page 와 같은 폭·여백 */
+.foot { margin-top: 56px; background: var(--pd-paper-2); color: var(--pd-ink); }
+.inner {
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: 32px max(var(--pd-gutter), env(safe-area-inset-right, 0px)) calc(28px + env(safe-area-inset-bottom, 0px)) max(var(--pd-gutter), env(safe-area-inset-left, 0px));
+  display: grid;
+  gap: 24px;
+}
+.name { font-family: var(--pd-f-display); font-weight: 400; font-size: var(--pd-fs-logo); }
+.name em { font-style: normal; color: var(--pd-pink-text); }
+.about p { margin: 6px 0 0; font-size: var(--pd-fs-ui); line-height: 1.6; max-width: 40ch; }
+.links { display: grid; grid-template-columns: 1fr 1fr; gap: 20px 16px; }
+.links > div { display: flex; flex-direction: column; align-items: flex-start; min-width: 0; }
+.links h2 { margin: 0 0 4px; font-size: var(--pd-fs-tiny); font-weight: 700; letter-spacing: 0.06em; color: var(--pd-ink-2); }
+.links a { display: inline-flex; align-items: center; min-height: 44px; color: inherit; text-decoration: none; font-size: var(--pd-fs-ui); }
+.links a:hover { text-decoration: underline; text-underline-offset: 3px; }
+.links > div > span { font-size: var(--pd-fs-ui); min-height: 44px; display: inline-flex; align-items: center; color: var(--pd-ink-2); }
+.mail { user-select: all; overflow-wrap: anywhere; }
+.links .note { min-height: 0; font-size: var(--pd-fs-tiny); color: var(--pd-ink-2); }
+.legal { margin: 0; padding-top: 16px; border-top: 2px dotted var(--pd-jelly); font-size: var(--pd-fs-tiny); line-height: 1.6; color: var(--pd-ink-2); }
+@media (min-width: 720px) {
+  .links { grid-template-columns: repeat(3, auto); justify-content: start; column-gap: 56px; }
+}
+@media (min-width: 1024px) {
+  .inner { padding-left: 48px; padding-right: 48px; padding-top: 44px; grid-template-columns: minmax(0, 1fr) auto; column-gap: 48px; }
+  .legal { grid-column: 1 / -1; }
+}

@@ -33,12 +33,6 @@ export function untilLabel(ms: number): string {
   return h ? `${h}시간 ${min % 60}분` : `${min}분`;
 }
 
-/** 그달 1일("2026-11-01") → "2026 11월호" */
-export function issueLabel(month: string): string {
-  const [y, m] = month.split("-").map(Number);
-  return `${y} ${m}월호`;
-}
-
 /** 라운드 이름: 주간 3라운드 → "3라운드", 결선 → "결선" */
 export function roundName(kind: "weekly" | "final", seq: number): string {
   return kind === "final" ? "결선" : `${seq}라운드`;

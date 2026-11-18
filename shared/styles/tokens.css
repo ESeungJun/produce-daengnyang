@@ -4,7 +4,7 @@
  * 위치: shared/styles/tokens.css (2026-11-18 #1에서 docs/design/ 에서 옮김) · 문서: docs/design/DESIGN_SYSTEM.md · 견본: 디자인 시스템 Artifact · 확정 시안: .work/mockups/시안_확정_V2A.html
  * 값을 바꾸면 이 파일 → DESIGN_SYSTEM.md → 견본 페이지 순서로 같이 고친다. 화면 코드는 여기 변수만 쓴다.
  *
- * 색 규칙 한 줄: 틀은 종이·잉크·회색, 분홍(--pd-pink)은 픽 버튼·남은 픽·데뷔 표 수 판·정렬 밑줄·맨 아래 제호에만.
+ * 색 규칙 한 줄: 틀은 종이·잉크·회색, 분홍(--pd-pink)은 픽 버튼·남은 픽·데뷔 표 수 판·정렬 밑줄에만.
  */
 
 :root {
@@ -29,14 +29,19 @@
   --pd-band-accent: #FFFFFF; /* 마감 띠 숫자 */
   --pd-up: #2E7D32;          /* ▲ 순위 오름. 종이 4.7:1 */
   --pd-on-photo: #FFFFFF;    /* 사진·그늘 위 글자(제호·이름). 라이트·다크 같음 */
+  /* SNS 앱 타일 색(#16). 각 앱의 브랜드 색이라 다크 모드에서도 그대로 둔다 */
+  --pd-sns-instagram: linear-gradient(45deg, #F58529 0%, #DD2A7B 50%, #8134AF 80%, #515BD4 100%);
+  --pd-sns-youtube: #FF0000;
+  --pd-sns-threads: #FFFFFF;
+  --pd-sns-threads-glyph: #000000;
+  --pd-sns-glyph: #FFFFFF;
+  --pd-fs-d-rail: clamp(40px, 3.6vw, 64px); /* 세로 배너 이름(#16) */
   --pd-shade: 0 0 0;         /* 사진 위 글자 그림자·그늘, 시트 그림자의 RGB. rgb(var(--pd-shade) / .3) 처럼 쓴다 */
 
   /* ── 글자 ── */
   --pd-f-display: var(--font-display, "Black Han Sans"), "Apple SD Gothic Neo", system-ui, sans-serif; /* 제호·제목·숫자 */
   --pd-f-body: var(--font-body, "Gowun Dodum"), "Apple SD Gothic Neo", "Malgun Gothic", system-ui, sans-serif;
-  --pd-fs-cover: 58px;       /* 표지 제호 */
   --pd-fs-star: 52px;        /* 표지 이름 */
-  --pd-fs-close: 44px;       /* 맨 아래 제호 */
   --pd-fs-page: 38px;        /* 게시판 제목(글 상세 이름 40) */
   --pd-fs-section: 32px;     /* 섹션 제목 */
   --pd-fs-rank: 30px;        /* 차트 순위 숫자 */
@@ -59,8 +64,6 @@
   --pd-fs-d-card: 36px;
   --pd-fs-d-section: 52px;
   --pd-fs-d-star: 84px;
-  --pd-fs-d-cover: 120px;
-  --pd-fs-d-close: 150px;
 
   /* ── 모서리 ── */
   --pd-r-pill: 999px;        /* 버튼·탭·칩(입력칸은 r-sm) */
@@ -79,6 +82,7 @@
   --pd-press: .88;           /* 픽 버튼 눌림 배율 */
   --pd-hover-tilt: -6deg;    /* 픽 버튼 호버 기울기 */
   --pd-dur: .15s;
+  --pd-fade-dur: .9s;          /* 데뷔 사진 자동 넘김 전환(#16). 넘기는 간격 4.5초는 PhotoFade interval */
   --pd-sheet-dur: .25s;
   --pd-toast: 2.4s;
   color-scheme: light;

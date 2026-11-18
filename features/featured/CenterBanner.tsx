@@ -34,7 +34,7 @@ export async function CenterBanner({ board }: { board?: Board }) {
                 <span>{BOARD_NAME[c.board]}</span>
               </Link>
               {sns ? (
-                <SnsLink className={s.bannerSns} entryId={c.entry_id} sns={sns} place="banner">
+                <SnsLink className={s.bannerSns} entryId={c.entry_id} sns={sns} place="banner" iconSize="sm">
                   <span className="sr-only">{c.pet_name} </span>
                   {SNS_NAME[sns.kind]}
                   <span aria-hidden="true"> ↗</span>

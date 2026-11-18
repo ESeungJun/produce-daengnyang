@@ -9,7 +9,6 @@ import { BOARD_NAME, count, roundName } from "@/shared/lib/format";
 import { photoUrl } from "@/shared/lib/supabase/env";
 import { createClient } from "@/shared/lib/supabase/server";
 import { TopBar, page } from "@/shared/ui/TopBar";
-import { Colophon } from "@/shared/ui/parts";
 import ui from "@/shared/ui/ui.module.css";
 import { LoginButton } from "@/features/auth/LoginButton";
 import { PicksLeft } from "@/features/picks/PicksLeft";
@@ -71,7 +70,6 @@ export async function HallPage() {
         ))
       )}
 
-      <Colophon issue="지난 1위 모음" />
     </div>
   );
 }

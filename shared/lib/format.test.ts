@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { countdown, deadlineLabel, firstSns, issueLabel, rankDelta, roundName, snsHandle, snsLinks, timeAgo, untilLabel } from "./format";
+import { countdown, deadlineLabel, firstSns, rankDelta, roundName, snsHandle, snsLinks, timeAgo, untilLabel } from "./format";
 
 describe("countdown", () => {
   it("하루 넘게 남으면 일수를 앞에", () => expect(countdown((2 * 86400 + 5 * 3600 + 3 * 60 + 9) * 1000)).toBe("2일 05:03:09"));
@@ -7,8 +7,7 @@ describe("countdown", () => {
   it("지나면 마감", () => expect(countdown(0)).toBe("마감"));
 });
 
-describe("issueLabel·roundName·deadlineLabel", () => {
-  it("호수", () => expect(issueLabel("2026-11-01")).toBe("2026 11월호"));
+describe("roundName·deadlineLabel", () => {
   it("라운드 이름", () => {
     expect(roundName("weekly", 3)).toBe("3라운드");
     expect(roundName("final", 0)).toBe("결선");

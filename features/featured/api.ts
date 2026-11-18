@@ -21,7 +21,15 @@ export type FeaturedCard = {
   instagram: string | null;
   threads: string | null;
   youtube: string | null;
+  /** 데뷔 항목에만: 사진 전부(순서대로). 메인 세로 배너·표지가 여러 장이면 자동으로 넘긴다(#16) */
+  photos?: { path: string; thumb_path: string | null }[];
 };
+
+/** 데뷔 카드에서 넘길 사진들. 목록이 없으면 대표 사진 한 장 */
+export function debutPhotos(c: FeaturedCard): string[] {
+  const list = (c.photos ?? []).map((p) => p.path).filter(Boolean);
+  return list.length ? list : c.path ? [c.path] : [];
+}
 
 export type Featured = { month: string; debut: FeaturedCard[]; center: FeaturedCard[]; finalists: FeaturedCard[] };
 

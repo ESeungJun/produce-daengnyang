@@ -11,6 +11,7 @@ import "./globals.css";
 import { createClient } from "@/shared/lib/supabase/server";
 import { GUEST, loadPicks } from "@/features/picks/api";
 import { SHARE_OG } from "@/features/share/meta";
+import { SiteFooter } from "@/shared/ui/SiteFooter";
 import { Providers } from "./Providers";
 
 const display = Black_Han_Sans({ weight: "400", subsets: ["latin"], preload: false, variable: "--font-display" });
@@ -42,7 +43,10 @@ export default async function RootLayout({ children }: Readonly<{ children: Reac
   return (
     <html lang="ko" className={`${display.variable} ${body.variable}`}>
       <body>
-        <Providers picks={picks}>{children}</Providers>
+        <Providers picks={picks}>
+          {children}
+          <SiteFooter />
+        </Providers>
       </body>
     </html>
   );
