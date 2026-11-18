@@ -12,7 +12,7 @@ import { memberId } from "@/features/auth/server";
 import { LoginButton } from "@/features/auth/LoginButton";
 import { SiteNav } from "@/features/entries/SiteNav";
 import { PicksLeft } from "@/features/picks/PicksLeft";
-import { BOARD_NAME, roundName, timeAgo } from "@/shared/lib/format";
+import { BOARD_NAME, roundName, timeAgo, type Board } from "@/shared/lib/format";
 import { createClient } from "@/shared/lib/supabase/server";
 import { photoUrl } from "@/shared/lib/supabase/env";
 import { TopBar, page } from "@/shared/ui/TopBar";
@@ -100,15 +100,27 @@ export async function AdminPage() {
       <ul className={s.list}>
         {(rounds ?? []).map((r) => {
           const title = `${Number(r.month.slice(5, 7))}월 ${roundName(r.kind, r.seq)}`;
+          const tops = (Array.isArray(r.tops) ? r.tops : []) as { board: Board; rank: number; pet_name: string }[];
+          const quiet = r.exposure_over; // DB result_exposure_over(결과 확정이 알림을 넣을지와 같은 기준)
           return (
             <li key={`r-${r.id}`} className={s.row}>
               <div className={s.body}>
                 <p className={s.what}>{title}</p>
                 <p className={s.meta}>
                   {r.finalized_at ? `${timeAgo(r.finalized_at)} 확정 · 결과 ${r.results}줄` : "아직 확정 전(다음 0시에 확정)"}
+                  {quiet ? " · 노출 끝남" : ""}
                 </p>
+                {tops.length ? (
+                  <p className={s.meta}>
+                    {(["dog", "cat"] as const)
+                      .map((b) => tops.filter((t) => t.board === b))
+                      .filter((list) => list.length)
+                      .map((list) => `${BOARD_NAME[list[0].board]} ${list.map((t) => `${t.rank}위 ${t.pet_name}`).join(" · ")}`)
+                      .join(" / ")}
+                  </p>
+                ) : null}
                 <div className={s.actions}>
-                  <RecalcButton roundId={r.id} title={title} finalized={!!r.finalized_at} />
+                  <RecalcButton roundId={r.id} title={title} finalized={!!r.finalized_at} quiet={quiet} />
                 </div>
               </div>
             </li>

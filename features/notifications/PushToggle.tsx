@@ -32,8 +32,8 @@ export function PushToggle() {
       hasPush: "PushManager" in window,
       hasNotification: "Notification" in window,
     });
-    if (!KEY || support === "unsupported") return void setTimeout(() => setState("hidden"), 0);
-    if (support === "ios-install") return void setTimeout(() => setState("ios-install"), 0);
+    // 아이폰·아이패드 설치 안내는 manifest(#8 PWA)가 생긴 뒤에 켠다. 지금은 홈 화면에 추가해도 앱처럼 열리지 않을 수 있다.
+    if (!KEY || support === "unsupported" || support === "ios-install") return void setTimeout(() => setState("hidden"), 0);
     if (Notification.permission === "denied") return void setTimeout(() => setState("denied"), 0);
     // 브라우저 구독이 있어도 내 계정 줄이 아니면(같은 기기의 다른 계정) 꺼짐으로 본다
     void (async () => {

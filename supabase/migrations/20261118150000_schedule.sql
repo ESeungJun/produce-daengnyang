@@ -3,6 +3,8 @@
 -- 1. finalize_round(round): 한 라운드의 결과를 picks 로 다시 세서 round_results(게시판마다 위 10등)에 쓰고 알림을 넣는다.
 --    동점은 그 표 수에 먼저 도달한 글(마지막 픽이 이른 글)이 위, 그것도 같으면 먼저 올린 글. 숨김·삭제 글과 0표 글은 빠진다.
 --    주간 1위 center · 2위 finalist, 결선 1위 debut. 다시 계산(관리자)이면 결과를 바꿔 쓰고, 새로 오른 (글, 역할)에만 알림을 더 넣는다.
+--    노출이 이미 끝난 라운드(주간은 다음 라운드가 끝남, 결선은 데뷔 달이 지남)를 다시 계산하면 결과만 바꾸고 알림은 넣지 않는다.
+--    1·2위에서 밀린 글 주인에게는 알림함에만 result_changed 정정 알림을 넣는다(메일·푸시 없음).
 -- 2. finalize_due_rounds(): 끝났는데 확정 안 된 라운드를 차례로 확정한다(예약 작업이 늦어도 밀린 것까지).
 -- 3. prepare_final(month): 주간 라운드마다 보여 줄 수 있는 위 2개를 결선 라운드로 복사한다(사진 줄도).
 --    결선 기간에는 매일 다시 불러, 그사이 지워졌거나 숨겨진 복사본 자리를 그 라운드 다음 순위가 이어받는다.
@@ -18,11 +20,21 @@ create extension if not exists pg_cron;
 create extension if not exists pg_net with schema extensions;
 
 -- ── 1. 한 라운드 확정 ────────────────────────────────────────
+-- 결과 노출이 끝났는지: 주간은 이 라운드 다음에 끝난 라운드가 있으면(센터·결선 진출 노출은 다음 라운드 동안), 결선은 데뷔 달(끝난 뒤 한 달)이 지났으면.
+-- finalize_round(알림을 넣을지)와 admin_rounds(관리자 시트 문구)가 같이 쓴다.
+create function public.result_exposure_over(r public.rounds) returns boolean
+language sql stable security definer set search_path = '' as $$
+  select case when r.kind = 'weekly'
+              then exists (select 1 from public.rounds o where o.ends_at > r.ends_at and o.ends_at <= now())
+              else now() >= r.ends_at + interval '1 month' end
+$$;
+
 create function public.finalize_round(p_round_id bigint) returns integer
 language plpgsql security definer set search_path = '' as $$
 declare
   r public.rounds;
   n integer;
+  quiet boolean;
 begin
   select * into r from public.rounds where id = p_round_id for update;
   if not found then
@@ -31,6 +43,8 @@ begin
   if r.ends_at > now() then
     raise exception using errcode = 'P0001', message = 'round_open';
   end if;
+
+  quiet := public.result_exposure_over(r);
 
   delete from public.round_results where round_id = r.id;
 
@@ -63,10 +77,23 @@ begin
                             'round_kind', r.kind, 'round_seq', r.seq, 'round_month', r.month, 'votes', rr.votes)
     from public.round_results rr
     join public.entries e on e.id = rr.entry_id
-   where rr.round_id = r.id and rr.role is not null
+   where rr.round_id = r.id and rr.role is not null and not quiet
      and not exists (select 1 from public.notifications x
                       where x.user_id = e.owner_id and x.kind = rr.role::text
                         and x.payload ->> 'entry_id' = e.id::text and x.payload ->> 'round_id' = r.id::text);
+
+  -- 정정: 이 라운드에서 역할 알림을 받았는데 지금 그 역할이 아닌 글 주인에게 알림함에만 한 번 알린다
+  insert into public.notifications (user_id, kind, payload)
+  select x.user_id, 'result_changed',
+         x.payload - 'votes' || jsonb_build_object('prev_role', x.kind)
+    from public.notifications x
+   where x.kind in ('center', 'finalist', 'debut') and x.payload ->> 'round_id' = r.id::text
+     and not exists (select 1 from public.round_results rr
+                      where rr.round_id = r.id and rr.entry_id::text = x.payload ->> 'entry_id' and rr.role::text = x.kind)
+     and not exists (select 1 from public.notifications y
+                      where y.user_id = x.user_id and y.kind = 'result_changed'
+                        and y.payload ->> 'entry_id' = x.payload ->> 'entry_id' and y.payload ->> 'round_id' = r.id::text
+                        and y.payload ->> 'prev_role' = x.kind);
 
   update public.rounds set finalized_at = coalesce(finalized_at, now()) where id = r.id;
   return n;
@@ -285,16 +312,20 @@ alter table public.admin_actions add constraint admin_actions_target_check check
 alter table public.admin_actions alter column target_id drop not null;
 alter table public.admin_actions add constraint admin_actions_target_id_check check (target = 'round' or target_id is not null);
 
--- 최근 끝난 라운드(관리자 화면 "라운드 결과"). 확정 시각과 결과 줄 수를 같이 준다.
+-- 최근 끝난 라운드(관리자 화면 "라운드 결과"). 확정 시각, 결과 줄 수, 게시판별 1·2위([{board, rank, pet_name}])를 같이 준다.
 create function public.admin_rounds(p_limit integer default 8) returns table (
-  id bigint, month date, kind public.round_kind, seq smallint, ends_at timestamptz, finalized_at timestamptz, results integer
+  id bigint, month date, kind public.round_kind, seq smallint, ends_at timestamptz, finalized_at timestamptz, results integer, tops jsonb, exposure_over boolean
 )
 language plpgsql stable security definer set search_path = '' as $$
 begin
   perform public.require_admin();
   return query
     select r.id, r.month, r.kind, r.seq, r.ends_at, r.finalized_at,
-           (select count(*)::int from public.round_results rr where rr.round_id = r.id)
+           (select count(*)::int from public.round_results rr where rr.round_id = r.id),
+           coalesce((select jsonb_agg(jsonb_build_object('board', rr.board, 'rank', rr.rank, 'pet_name', e.pet_name) order by rr.board, rr.rank)
+                       from public.round_results rr join public.entries e on e.id = rr.entry_id
+                      where rr.round_id = r.id and rr.rank <= 2), '[]'::jsonb),
+           public.result_exposure_over(r)
       from public.rounds r
      where r.ends_at <= now()
      order by r.ends_at desc
@@ -309,19 +340,29 @@ declare
   r public.rounds;
   n integer;
   copies integer := 0;
+  before text[];
+  after text[];
+  notified integer;
 begin
   select * into r from public.rounds where id = p_round_id;
   if not found then
     raise exception using errcode = 'P0001', message = 'not_found';
   end if;
+  select coalesce(array_agg(rr.entry_id::text || ':' || rr.role::text order by rr.entry_id::text || ':' || rr.role::text), '{}') into before
+    from public.round_results rr where rr.round_id = r.id and rr.role is not null and rr.entry_id is not null;
   n := public.finalize_round(r.id);   -- 아직 끝나지 않았으면 round_open 으로 멈춘다
+  select coalesce(array_agg(rr.entry_id::text || ':' || rr.role::text order by rr.entry_id::text || ':' || rr.role::text), '{}') into after
+    from public.round_results rr where rr.round_id = r.id and rr.role is not null;
+  -- 이번 트랜잭션에서 넣은 결과 알림(created_at 기본값 now() 는 트랜잭션 시작 시각이라 같다)
+  select count(*)::int into notified from public.notifications x
+   where x.kind in ('center', 'finalist', 'debut') and x.payload ->> 'round_id' = r.id::text and x.created_at = now();
   if r.kind = 'weekly' then
     copies := public.prepare_final(r.month);
   end if;
   perform public.kick_dispatch();
   insert into public.admin_actions (actor_id, action, target, target_id, detail)
-  values (uid, 'recalc', 'round', null, jsonb_build_object('round_id', r.id, 'results', n, 'final_copies', copies));
-  return jsonb_build_object('results', n, 'final_copies', copies);
+  values (uid, 'recalc', 'round', null, jsonb_build_object('round_id', r.id, 'results', n, 'final_copies', copies, 'changed', before <> after, 'notified', notified));
+  return jsonb_build_object('results', n, 'final_copies', copies, 'changed', before <> after, 'notified', notified);
 end $$;
 
 -- ── 8. 픽과 결과 확정의 차례 ─────────────────────────────────
@@ -396,7 +437,7 @@ end $function$;
 
 -- ── 실행 권한 ───────────────────────────────────────────────
 revoke execute on function
-  public.finalize_round(bigint), public.finalize_due_rounds(), public.prepare_final(date),
+  public.result_exposure_over(public.rounds), public.finalize_round(bigint), public.finalize_due_rounds(), public.prepare_final(date),
   public.kick_dispatch(), public.dispatch_token_ok(text), public.midnight_jobs(),
   public.dispatch_queue(integer), public.mark_dispatched(bigint[], text),
   public.admin_rounds(integer), public.admin_recalculate(bigint)

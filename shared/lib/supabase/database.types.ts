@@ -298,9 +298,9 @@ isOneToOne: false
                   ]
                 },"rounds": {
                   Row: {
-                    "ends_at": string,"finalized_at": string | null,"id": number,"kind": Database["public"]['Enums']["round_kind"],"month": string,"seq": number,"starts_at": string,"is_blind": boolean | null
+                    "ends_at": string,"finalized_at": string | null,"id": number,"kind": Database["public"]['Enums']["round_kind"],"month": string,"seq": number,"starts_at": string,"is_blind": boolean | null,"result_exposure_over": boolean | null
                   }
-                  ComputedFields: "is_blind"
+                  ComputedFields: "is_blind" | "result_exposure_over"
                   Insert: {
                     "ends_at": string,"finalized_at"?: string | null,"id"?: never,"kind": Database["public"]['Enums']["round_kind"],"month": string,"seq": number,"starts_at": string
                   }
@@ -371,7 +371,7 @@ isOneToOne: false
                            },
 "admin_rounds":
 { Args: { "p_limit"?: number }; Returns: {
-              "ends_at": string,"finalized_at": string,"id": number,"kind": Database["public"]['Enums']["round_kind"],"month": string,"results": number,"seq": number
+              "ends_at": string,"exposure_over": boolean,"finalized_at": string,"id": number,"kind": Database["public"]['Enums']["round_kind"],"month": string,"results": number,"seq": number,"tops": Json
             }[]
                            },
 "admin_set_hidden":
@@ -532,6 +532,9 @@ isOneToOne: false
                            },
 "require_member":
 { Args: Record<PropertyKey, never>; Returns: string
+                           },
+"result_exposure_over":
+{ Args: { "r": Omit<Database["public"]['Tables']["rounds"]['Row'], Database["public"]['Tables']["rounds"]['ComputedFields']> }; Returns: boolean
                            },
 "set_nickname":
 { Args: { "p_nickname": string }; Returns: Json

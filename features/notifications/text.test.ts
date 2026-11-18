@@ -27,4 +27,8 @@ describe("notificationView", () => {
     expect(notificationView({ kind: "center", payload: { pet_name: "두부", board: "dog", entry_id: id } }).text).toBe("‘두부’ 이번 주 센터 선정! 다음 라운드 동안 메인과 게시판 맨 위에 걸리고, 월말 데뷔 평가에도 올라가요");
     expect(notificationView({ kind: "finalist", payload: { pet_name: "콩이", board: "dog", entry_id: id } }).href).toBe(`/dog/${id}`);
   });
+  it("결과 정정 알림", () =>
+    expect(notificationView({ kind: "result_changed", payload: { pet_name: "두부", board: "dog", entry_id: id, prev_role: "center" } }).text).toBe(
+      "‘두부’ 결과가 다시 계산돼 순위가 바뀌었어요. 신고된 글이 빠지거나 표가 다시 세어졌어요",
+    ));
 });

@@ -2,7 +2,7 @@
 -- 자정 작업 묶음, 알림 발송 거리, 관리자 다시 계산. 모두 되돌린다.
 begin;
 create extension if not exists pgtap with schema extensions;
-select plan(42);
+select plan(46);
 
 -- ── 1. 달마다 라운드 4개 ────────────────────────────────────
 select public.ensure_month_rounds('2027-02-01');  -- 28일
@@ -26,11 +26,13 @@ select is((select string_agg((starts_at at time zone 'Asia/Seoul')::date::text |
              from public.rounds where month = '2027-01-01' and kind = 'weekly'),
           '2027-01-01~2027-01-08,2027-01-08~2027-01-15,2027-01-15~2027-01-22', '주간 라운드는 1·8·15일 시작, 7일씩 빈틈 없이');
 
--- ── 준비: 2030년 1월 라운드. 주간 셋은 이미 끝난 것으로, 결선은 아직 열린 것으로 옮긴다 ──
+-- ── 준비: 2030년 1월 라운드. 1주차는 방금(1분 전) 끝난 것으로, 2·3주차는 그보다 먼저 끝난 것으로(아직 확정 전), 결선은 열린 것으로 옮긴다.
+-- 1주차가 가장 최근에 끝난 라운드여야 "노출 중"이라 알림이 나간다(result_exposure_over: 뒤에 끝난 라운드가 있으면 노출 끝남).
 select public.ensure_month_rounds('2030-01-01');
-update public.rounds set starts_at = now() - interval '30 days' + (seq * interval '7 days'),
-                         ends_at = now() - interval '23 days' + (seq * interval '7 days') - interval '1 day'
- where month = '2030-01-01' and kind = 'weekly';
+update public.rounds set starts_at = now() - interval '8 days', ends_at = now() - interval '1 minute'
+ where month = '2030-01-01' and kind = 'weekly' and seq = 1;
+update public.rounds set starts_at = now() - interval '9 days', ends_at = now() - interval '2 minutes' - (seq * interval '1 second')
+ where month = '2030-01-01' and kind = 'weekly' and seq in (2, 3);
 update public.rounds set starts_at = now() - interval '1 hour', ends_at = now() + interval '5 days'
  where month = '2030-01-01' and kind = 'final';
 select set_config('t.w1', (select id::text from public.rounds where month = '2030-01-01' and kind = 'weekly' and seq = 1), true);
@@ -156,6 +158,20 @@ set local request.jwt.claims = '{"sub":"00000000-0000-0000-0000-00000000a7a0","r
 select is((public.admin_recalculate(current_setting('t.w1')::bigint) ->> 'results')::int, 3, '관리자 다시 계산(숨긴 보리 빠짐)');
 reset role;
 select is((select detail ->> 'round_id' from public.admin_actions where action = 'recalc' order by id desc limit 1), current_setting('t.w1'), '다시 계산은 처리 기록에 남는다');
+
+-- 정정 알림: 밀려난 글 주인에게 알림함에만(보낼 거리에는 없다)
+select ok((select count(*) from public.notifications where kind = 'result_changed' and user_id::text like '00000000-0000-0000-0000-00000000a7%') >= 1,
+          '1·2위에서 밀린 글 주인에게 정정 알림');
+select is((select count(*)::int from public.dispatch_queue() where kind = 'result_changed'), 0, '정정 알림은 메일·푸시로 보내지 않는다');
+
+-- 노출이 끝난 라운드(뒤 라운드가 이미 끝남)는 다시 계산해도 새 1·2위 알림을 넣지 않는다
+update public.rounds set ends_at = now() - interval '30 seconds' where id = current_setting('t.f')::bigint;
+select ok(public.result_exposure_over((select r from public.rounds r where id = current_setting('t.w1')::bigint)), '뒤 라운드가 끝났으면 노출 끝남');
+select set_config('t.before', (select count(*)::text from public.notifications where kind in ('center', 'finalist')), true);
+update public.entries set hidden_at = now() where id = '00000000-0000-0000-0000-00000000e703';
+select public.finalize_round(current_setting('t.w1')::bigint);
+select is((select count(*)::int from public.notifications where kind in ('center', 'finalist')), current_setting('t.before')::int,
+          '노출이 끝난 라운드는 결과만 바꾸고 알림은 넣지 않는다');
 
 select * from finish();
 rollback;
