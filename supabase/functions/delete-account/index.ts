@@ -3,7 +3,7 @@
  * 내 정보 화면의 "회원 탈퇴"가 부른다. Authorization: 탈퇴할 회원의 토큰.
  * 1. 토큰을 Auth 서버로 확인한다(익명은 거절. 익명 정리는 merge-anon·정리 작업이 맡는다).
  * 1-1. 최근 10분 안에 로그인한 토큰만 받는다(토큰 amr 시각). 아니면 403 reauth_required → 화면이 구글로 다시 확인받는다.
- *      휴대폰을 남이 잠깐 쓰는 사이 탈퇴되지 않게(리뷰 후속 #5). 화면의 features/me/rules.ts signedInWithin 과 같은 규칙.
+ *      휴대폰을 남이 잠깐 쓰는 사이 탈퇴되지 않게(리뷰 후속 #5). 규칙은 _shared/reauth.ts(화면과 함께 씀).
  * 2. Storage 의 내 폴더 파일 목록을 먼저 읽어 둔다. 목록을 못 읽으면 계정을 지우지 않는다(사진이 공개 버킷에 남지 않게).
  * 2-1. 오늘 준 픽을 지운다. 탈퇴 → 같은 구글 계정 재가입은 새 사용자 번호라 하루 한도가 새로 생기므로,
  *      오늘 픽을 남기면 같은 글에 표를 끝없이 줄 수 있다(보안 리뷰 #5). 지난 날짜 픽은 남긴다.
@@ -14,25 +14,12 @@
  * 이 함수만 service_role 키를 쓴다. 화면(브라우저)에는 그 키가 없다.
  */
 import { createClient } from "npm:@supabase/supabase-js@2.119.0";
+import { tokenSignedInWithin } from "../_shared/reauth.ts";
 
 const url = Deno.env.get("SUPABASE_URL")!;
 const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
 const admin = createClient(url, serviceKey, { auth: { persistSession: false, autoRefreshToken: false } });
 const BUCKET = "entry-photos";
-/** 탈퇴 전 다시 로그인해야 하는 간격(초). features/me/rules.ts REAUTH_SEC 와 같은 값 */
-const REAUTH_SEC = 600;
-
-/** 검증이 끝난 토큰의 amr 에서 가장 최근 구글(oauth) 로그인 시각(초). 없으면 0.
- *  비밀번호 항목은 세지 않는다: 토큰만 훔친 사람이 비밀번호를 정해 다시 로그인하는 길을 막는다(features/me/rules.ts signedInWithin 과 같은 규칙) */
-function lastSignIn(token: string): number {
-  try {
-    const b = token.split(".")[1].replace(/-/g, "+").replace(/_/g, "/");
-    const amr = JSON.parse(atob(b + "===".slice((b.length + 3) % 4))).amr;
-    return Array.isArray(amr) ? Math.max(0, ...amr.map((a) => (a?.method === "oauth" && typeof a?.timestamp === "number" ? a.timestamp : 0))) : 0;
-  } catch {
-    return 0;
-  }
-}
 
 // 같은 사이트 화면에서만 부른다. 허용 출처는 비밀값 ALLOWED_ORIGINS(쉼표 구분)로 둔다(merge-anon 과 같음).
 const allowed = (Deno.env.get("ALLOWED_ORIGINS") ?? "http://localhost:3104").split(",").map((s) => s.trim());
@@ -76,7 +63,7 @@ Deno.serve(async (req) => {
   const user = data.user;
   if (!user || user.is_anonymous) return json({ error: "signin_required" }, 401, origin);
   // 1-1. getUser 로 서명·만료를 확인한 토큰이라 내용(amr)을 믿고 읽는다
-  if (Date.now() / 1000 - lastSignIn(token) > REAUTH_SEC) return json({ error: "reauth_required" }, 403, origin);
+  if (!tokenSignedInWithin(token, Date.now() / 1000)) return json({ error: "reauth_required" }, 403, origin);
 
   // 2. 지울 사진 목록(못 읽으면 멈춘다)
   const files = await listMine(user.id);

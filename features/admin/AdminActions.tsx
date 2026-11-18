@@ -119,7 +119,7 @@ export function AdminActions({ target, targetId, hidden, deleted, authorId, auth
         subLabel="취소"
         onMain={async () => {
           setAskReauth(false);
-          await continueWithGoogle("/admin", { reauth: true }).catch(() => toast("구글 화면을 열지 못했어요. 잠시 뒤 다시 눌러 주세요"));
+          await continueWithGoogle("/admin", { reauth: true, fresh: true }).catch(() => toast("구글 화면을 열지 못했어요. 잠시 뒤 다시 눌러 주세요"));
         }}
         onClose={() => setAskReauth(false)}
       />
