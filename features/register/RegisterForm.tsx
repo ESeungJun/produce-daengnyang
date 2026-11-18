@@ -36,7 +36,8 @@ export type EditInitial = {
   photosLocked: boolean;
 };
 
-type Props = { mode: "create"; left: number } | { mode: "edit"; initial: EditInitial };
+/** resumeSubmit: 로그인하고 돌아온 길(?submit=1). 임시 저장을 불러온 뒤 한 번 바로 등록한다 */
+type Props = { mode: "create"; left: number; resumeSubmit?: boolean } | { mode: "edit"; initial: EditInitial };
 
 const SNS_HINT: Record<SnsKind, string> = { instagram: "@아이디", threads: "@아이디", youtube: "@핸들 또는 채널 주소" };
 const PHOTO_ERROR: Record<PhotoError["reason"], string> = {
@@ -158,6 +159,10 @@ export function RegisterForm(props: Props) {
 
   async function submit(e: React.FormEvent) {
     e.preventDefault();
+    await send();
+  }
+
+  async function send() {
     setTried(true);
     if (busy) return;
     if (!ok) {
@@ -166,7 +171,7 @@ export function RegisterForm(props: Props) {
       document.getElementById(first)?.focus();
       return;
     }
-    if (!edit && viewer !== "member") return openLogin("register"); // 쓰던 내용은 임시 저장에 남아 있다
+    if (!edit && viewer !== "member") return openLogin("submit"); // 쓰던 내용은 임시 저장에 남아 있고, 돌아오면 바로 등록한다
     setBusy("send");
     const uploaded: string[] = [];
     let sb: Awaited<ReturnType<typeof browserClient>> | null = null;
@@ -223,7 +228,7 @@ export function RegisterForm(props: Props) {
       setBusy(null);
       const msg = (err as Error).message;
       // 로그인이 풀렸으면 시트를 띄운다(등록은 임시 저장이 남아 있어 로그인 뒤 이어 쓴다)
-      if (msg === "signin_required") return openLogin("register");
+      if (msg === "signin_required") return openLogin(edit ? "register" : "submit");
       if (msg === "photos_locked" && edit) {
         // 고치는 사이 첫 픽을 받았다: 사진을 원래대로 돌리고 잠근다
         setLocked(true);
@@ -237,6 +242,21 @@ export function RegisterForm(props: Props) {
       );
     }
   }
+
+  // 3. 등록하다 로그인하러 갔다가 돌아왔으면 불러온 내용으로 한 번 바로 등록한다(다시 누르지 않게).
+  //    주소의 표시는 지운다(새로고침해도 두 번 올라가지 않게). 빠진 칸이 있으면(임시 저장이 막힌 브라우저 등) 오류만 보여 준다.
+  const resume = props.mode === "create" && !!props.resumeSubmit;
+  const resumed = useRef(false);
+  useEffect(() => {
+    if (!resume || !loaded || resumed.current || viewer !== "member") return;
+    resumed.current = true;
+    history.replaceState(history.state, "", location.pathname);
+    // 렌더 중 setState 금지라 한 박자 미룬다. 정리 함수로 지우지 않는다(다음 렌더가 먼저 오면 등록이 빠지므로. resumed 가 한 번만 보장)
+    setTimeout(() => {
+      if (!ok) toast("로그인했어요. 빠진 칸을 채우고 등록을 눌러 주세요");
+      void send();
+    }, 0);
+  });
 
   const cover = slots[0]?.url;
 
