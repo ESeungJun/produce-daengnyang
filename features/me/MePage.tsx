@@ -10,6 +10,7 @@ import { SiteNav } from "@/features/entries/SiteNav";
 import { PicksLeft } from "@/features/picks/PicksLeft";
 import Link from "next/link";
 import { Inbox } from "@/features/notifications/Inbox";
+import { PushToggle } from "@/features/notifications/PushToggle";
 import type { NotificationRow } from "@/features/notifications/text";
 import { AccountActions } from "./AccountActions";
 import { MyEntries } from "./MyEntries";
@@ -69,6 +70,7 @@ export async function MePage({ resumeLeave = false }: { resumeLeave?: boolean })
               알림 {unread ? <span>새 {unread}</span> : null}
             </h2>
             <div className={s.inbox}>
+              <PushToggle />
               <Inbox items={inbox} unread={unread} failed={!!notesError} />
             </div>
           </section>

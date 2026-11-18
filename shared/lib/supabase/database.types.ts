@@ -28,14 +28,14 @@ export type Database = {
           Tables: {
             "admin_actions": {
                   Row: {
-                    "action": string,"actor_id": string,"created_at": string,"detail": Json | null,"id": number,"target": string,"target_id": string
+                    "action": string,"actor_id": string,"created_at": string,"detail": Json | null,"id": number,"target": string,"target_id": string | null
                   }
                   ComputedFields: never
                   Insert: {
-                    "action": string,"actor_id": string,"created_at"?: string,"detail"?: Json | null,"id"?: never,"target": string,"target_id": string
+                    "action": string,"actor_id": string,"created_at"?: string,"detail"?: Json | null,"id"?: never,"target": string,"target_id"?: string | null
                   }
                   Update: {
-                    "action"?: string,"actor_id"?: string,"created_at"?: string,"detail"?: Json | null,"id"?: never,"target"?: string,"target_id"?: string
+                    "action"?: string,"actor_id"?: string,"created_at"?: string,"detail"?: Json | null,"id"?: never,"target"?: string,"target_id"?: string | null
                   }
                   Relationships: [
                     
@@ -298,9 +298,9 @@ isOneToOne: false
                   ]
                 },"rounds": {
                   Row: {
-                    "ends_at": string,"finalized_at": string | null,"id": number,"kind": Database["public"]['Enums']["round_kind"],"month": string,"seq": number,"starts_at": string,"is_blind": boolean | null
+                    "ends_at": string,"finalized_at": string | null,"id": number,"kind": Database["public"]['Enums']["round_kind"],"month": string,"seq": number,"starts_at": string,"is_blind": boolean | null,"result_exposure_over": boolean | null
                   }
-                  ComputedFields: "is_blind"
+                  ComputedFields: "is_blind" | "result_exposure_over"
                   Insert: {
                     "ends_at": string,"finalized_at"?: string | null,"id"?: never,"kind": Database["public"]['Enums']["round_kind"],"month": string,"seq": number,"starts_at": string
                   }
@@ -356,6 +356,9 @@ isOneToOne: false
 "admin_dismiss":
 { Args: { "p_target": Database["public"]['Enums']["report_target"],"p_target_id": string }; Returns: undefined
                            },
+"admin_recalculate":
+{ Args: { "p_round_id": number }; Returns: Json
+                           },
 "admin_recent_hidden":
 { Args: { "p_days"?: number }; Returns: {
               "author_name": string,"board": Database["public"]['Enums']["board_kind"],"body": string,"entry_id": string,"hidden_at": string,"pet_name": string,"target": Database["public"]['Enums']["report_target"],"target_id": string,"thumb_path": string
@@ -364,6 +367,11 @@ isOneToOne: false
 "admin_reports":
 { Args: { "p_limit"?: number }; Returns: {
               "author_id": string,"author_name": string,"board": Database["public"]['Enums']["board_kind"],"body": string,"deleted": boolean,"entry_id": string,"hidden": boolean,"last_at": string,"pet_name": string,"reasons": (string)[],"reports": number,"target": Database["public"]['Enums']["report_target"],"target_id": string,"thumb_path": string
+            }[]
+                           },
+"admin_rounds":
+{ Args: { "p_limit"?: number }; Returns: {
+              "ends_at": string,"exposure_over": boolean,"finalized_at": string,"id": number,"kind": Database["public"]['Enums']["round_kind"],"month": string,"results": number,"seq": number,"tops": Json
             }[]
                            },
 "admin_set_hidden":
@@ -429,6 +437,14 @@ isOneToOne: false
 "delete_today_picks":
 { Args: { "p_uid": string }; Returns: number
                            },
+"dispatch_queue":
+{ Args: { "p_limit"?: number }; Returns: {
+              "email": string,"id": number,"kind": string,"need_email": boolean,"need_push": boolean,"payload": Json,"user_id": string
+            }[]
+                           },
+"dispatch_token_ok":
+{ Args: { "p_token": string }; Returns: boolean
+                           },
 "ensure_month_rounds":
 { Args: { "p_month"?: string }; Returns: undefined
                            },
@@ -436,6 +452,12 @@ isOneToOne: false
 { Args: { "p_entry_id": string,"p_limit"?: number,"p_offset"?: number }; Returns: {
               "body": string,"created_at": string,"id": string,"is_entry_owner": boolean,"is_mine": boolean,"nickname": string,"total": number
             }[]
+                           },
+"finalize_due_rounds":
+{ Args: Record<PropertyKey, never>; Returns: number
+                           },
+"finalize_round":
+{ Args: { "p_round_id": number }; Returns: number
                            },
 "get_entry":
 { Args: { "p_entry_id": string }; Returns: Json
@@ -458,11 +480,20 @@ isOneToOne: false
 "is_blind":
 { Args: { "r": Omit<Database["public"]['Tables']["rounds"]['Row'], Database["public"]['Tables']["rounds"]['ComputedFields']> }; Returns: boolean
                            },
+"kick_dispatch":
+{ Args: Record<PropertyKey, never>; Returns: boolean
+                           },
 "kst_today":
 { Args: Record<PropertyKey, never>; Returns: string
                            },
+"mark_dispatched":
+{ Args: { "p_channel": string,"p_ids": (number)[] }; Returns: number
+                           },
 "merge_anon_picks":
 { Args: { "p_anon": string,"p_target": string }; Returns: number
+                           },
+"midnight_jobs":
+{ Args: Record<PropertyKey, never>; Returns: Json
                            },
 "my_entries":
 { Args: Record<PropertyKey, never>; Returns: Json
@@ -477,6 +508,9 @@ isOneToOne: false
                            },
 "photo_in_use":
 { Args: { "p_name": string }; Returns: boolean
+                           },
+"prepare_final":
+{ Args: { "p_month"?: string }; Returns: number
                            },
 "purge_bot_picks":
 { Args: { "p_uid": string }; Returns: number
@@ -498,6 +532,9 @@ isOneToOne: false
                            },
 "require_member":
 { Args: Record<PropertyKey, never>; Returns: string
+                           },
+"result_exposure_over":
+{ Args: { "r": Omit<Database["public"]['Tables']["rounds"]['Row'], Database["public"]['Tables']["rounds"]['ComputedFields']> }; Returns: boolean
                            },
 "set_nickname":
 { Args: { "p_nickname": string }; Returns: Json
