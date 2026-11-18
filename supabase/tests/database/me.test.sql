@@ -1,7 +1,7 @@
 -- 내 정보(#5): 닉네임 7일 쿨타임·탈퇴 때 준 픽 남기기 시험. 모두 되돌린다.
 begin;
 create extension if not exists pgtap with schema extensions;
-select plan(17);
+select plan(20);
 
 -- 준비: 회원 A(탈퇴할 사람)·B(글 주인), 열린 라운드, A 의 글 1·B 의 글 1, A 가 B 의 글에 픽
 insert into auth.users (id, email, is_anonymous) values
@@ -52,6 +52,16 @@ reset role;
 insert into public.picks (voter_id, entry_id, board, kst_date) values
   ('00000000-0000-0000-0000-0000000000e1', '00000000-0000-0000-0000-0000000002b1', 'dog', public.kst_today() - 1);
 select is(public.delete_today_picks('00000000-0000-0000-0000-0000000000e1'), 1, '오늘 픽 하나만 지운다');
+
+-- 3. 봇 정리: 화면에서는 못 부르고, 확정 안 된 라운드의 픽만 지운다
+set local role authenticated;
+select throws_ok($$ select public.purge_bot_picks('00000000-0000-0000-0000-0000000000e1') $$, '42501', null, '화면 역할은 봇 정리를 부를 수 없다');
+reset role;
+select is(public.purge_bot_picks('00000000-0000-0000-0000-0000000000e1'), 1, '확정 안 된 라운드의 지난 픽 1개를 지운다');
+insert into public.picks (voter_id, entry_id, board, kst_date) values
+  ('00000000-0000-0000-0000-0000000000e1', '00000000-0000-0000-0000-0000000002b1', 'dog', public.kst_today() - 1);
+update public.rounds set finalized_at = now() where id = (select round_id from public.entries where id = '00000000-0000-0000-0000-0000000002b1');
+select is(public.purge_bot_picks('00000000-0000-0000-0000-0000000000e1'), 0, '확정된 라운드의 픽은 남긴다');
 
 -- 계정 삭제: 내 글은 지워지고, 지난날 준 픽과 그 표 수는 남는다
 delete from auth.users where id = '00000000-0000-0000-0000-0000000000e1';

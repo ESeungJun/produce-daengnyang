@@ -205,8 +205,8 @@ export function RegisterForm(props: Props) {
         const r = await sb.rpc("create_entry", { p_board: board, ...fields, p_photos: photos });
         if (r.error) throw new Error(r.error.message);
         await clearDraft();
-        toast("등록했어요! 링크를 나눠 픽을 모아 보세요");
-        router.push(`/${board}/${r.data}`);
+        // 상세의 공유 띠(NewEntryBanner)가 안내하므로 토스트는 띄우지 않는다
+        router.push(`/${board}/${r.data}?new=1`);
       } else {
         const changed = !locked && JSON.stringify(photos) !== JSON.stringify(edit.photos);
         const r = await sb.rpc("update_entry", { p_entry_id: edit.id, ...fields, p_photos: changed ? photos : undefined });

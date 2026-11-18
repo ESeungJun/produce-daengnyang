@@ -10,12 +10,15 @@ import { useToast } from "@/shared/ui/Toast";
 import ui from "@/shared/ui/ui.module.css";
 import s from "./entries.module.css";
 
-export function CopyLink({ name }: { name: string }) {
+export function CopyLink({ name, primary = false, label = "공유하기" }: { name: string; primary?: boolean; label?: string }) {
   const toast = useToast();
   const [manual, setManual] = useState<string | null>(null);
 
   async function share() {
-    const url = window.location.href;
+    // 등록 직후 표시(?new=1)는 남에게 보낼 주소에서 뺀다
+    const u = new URL(window.location.href);
+    u.searchParams.delete("new");
+    const url = u.toString();
     const text = `${name} 픽해 주세요!`;
     if (typeof navigator.share === "function" && window.matchMedia("(pointer: coarse)").matches) {
       try {
@@ -35,8 +38,8 @@ export function CopyLink({ name }: { name: string }) {
 
   return (
     <>
-      <button type="button" className={ui.ghost} onClick={share}>
-        공유하기
+      <button type="button" className={primary ? ui.pill : ui.ghost} onClick={share}>
+        {label}
       </button>
       {manual ? (
         <label className={s.manual}>

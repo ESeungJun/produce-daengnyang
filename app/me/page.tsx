@@ -4,6 +4,10 @@ import { MePage } from "@/features/me/MePage";
 
 export const metadata: Metadata = { title: "내 정보", robots: { index: false } };
 
-export default function Page() {
-  return <MePage />;
+type Props = { searchParams: Promise<{ leave?: string }> };
+
+/** ?leave=1: 탈퇴 전 구글 확인을 마치고 돌아온 길(AccountActions) */
+export default async function Page({ searchParams }: Props) {
+  const { leave } = await searchParams;
+  return <MePage resumeLeave={leave === "1"} />;
 }

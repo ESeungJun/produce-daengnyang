@@ -4,7 +4,7 @@ import { notFound } from "next/navigation";
 import { isBoard } from "@/shared/lib/format";
 import { DetailPage, getEntry } from "@/features/entries/DetailPage";
 
-type Props = { params: Promise<{ board: string; id: string }> };
+type Props = { params: Promise<{ board: string; id: string }>; searchParams: Promise<{ new?: string }> };
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { board, id } = await params;
@@ -14,8 +14,9 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   return e ? { title: `${e.pet_name} 픽해 주세요`, description: e.bio ?? undefined } : {};
 }
 
-export default async function Page({ params }: Props) {
-  const { board, id } = await params;
+export default async function Page({ params, searchParams }: Props) {
+  const [{ board, id }, q] = await Promise.all([params, searchParams]);
   if (!isBoard(board)) notFound();
-  return <DetailPage board={board} id={id} />;
+  // ?new=1: 등록하고 바로 온 길(RegisterForm)
+  return <DetailPage board={board} id={id} fresh={q.new === "1"} />;
 }

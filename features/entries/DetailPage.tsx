@@ -22,13 +22,15 @@ import { VoteCount } from "@/features/picks/VoteCount";
 import { roundTitle } from "@/features/rounds/schedule";
 import { loadEntry } from "./api";
 import { CopyLink } from "./CopyLink";
+import { NewEntryBanner } from "./NewEntryBanner";
 import { PhotoPager } from "./PhotoPager";
 import { SiteNav } from "./SiteNav";
 import s from "./entries.module.css";
 
 export const getEntry = cache(async (id: string) => loadEntry(await createClient(), id));
 
-export async function DetailPage({ board, id }: { board: Board; id: string }) {
+/** fresh: 등록 직후(?new=1). 내 글일 때만 공유 띠를 띄운다 */
+export async function DetailPage({ board, id, fresh = false }: { board: Board; id: string; fresh?: boolean }) {
   void getFeatured().catch(() => null); // 위 센터 띠를 글과 같이 읽기 시작
   const e = await getEntry(id);
   if (e === "deleted") {
@@ -48,11 +50,13 @@ export async function DetailPage({ board, id }: { board: Board; id: string }) {
 
   const closed = e.is_mine ? "mine" : !e.round.open ? "ended" : undefined;
   const sns = snsLinks(e);
+  // 등록 직후면 첫 화면에서 보이게 맨 위(센터 띠 자리)에 공유 띠를 둔다
+  const showFresh = fresh && e.is_mine && e.round.open;
 
   return (
     <div className={page.page}>
       <TopBar back={{ href: `/${board}`, label: `${BOARD_NAME[board]} 연습생` }} nav={<SiteNav current={board} />} right={<PicksLeft board={board} />} login={<LoginButton />} />
-      <CenterBanner board={board} />
+      {showFresh ? <NewEntryBanner name={e.pet_name} /> : <CenterBanner board={board} />}
       <div className={s.detail}>
         <PhotoPager photos={e.photos} name={e.pet_name} />
         <div>
@@ -68,7 +72,7 @@ export async function DetailPage({ board, id }: { board: Board; id: string }) {
             <PickButton entryId={e.id} board={board} size="lg" pickedToday={e.picked_today} closed={closed} />
           </div>
           {e.bio ? <p className={s.bio}>{e.bio}</p> : null}
-          {closed === "mine" ? (
+          {closed === "mine" && !showFresh ? (
             <p className={s.notice}>
               내 아이 글이에요. 내 글에는 픽할 수 없어요. 공유해서 응원을 받아 보세요.
               {e.round.open && !e.hidden ? (

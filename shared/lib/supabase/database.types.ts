@@ -441,6 +441,9 @@ isOneToOne: false
 "photo_in_use":
 { Args: { "p_name": string }; Returns: boolean
                            },
+"purge_bot_picks":
+{ Args: { "p_uid": string }; Returns: number
+                           },
 "record_auth":
 { Args: { "p_detail": string,"p_kind": string }; Returns: undefined
                            },
