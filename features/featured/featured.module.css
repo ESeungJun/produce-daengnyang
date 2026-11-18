@@ -1,6 +1,6 @@
 /* 표지·센터 화보·폴라로이드. 원본: .work/mockups/v2a.css (휴대폰 .cover/.spread/.pola, 데스크톱 .dcover/.dspread) */
 
-/* ── 표지: 휴대폰은 옆으로 넘김, 데스크톱은 펼침면(왼쪽 큰 장 + 오른쪽 작은 장과 목차) ── */
+/* ── 표지: 휴대폰은 옆으로 넘김, 데스크톱은 펼침면(제호 띠 + 댕댕이·냥이 같은 크기 반반 + 목차 한 줄) ── */
 .coverWrap { display: flex; flex-direction: column; }
 .cover { position: relative; overflow: hidden; }
 .slides { display: flex; overflow-x: auto; scroll-snap-type: x mandatory; scrollbar-width: none; }
@@ -70,7 +70,7 @@
 .dots button { box-sizing: content-box; border: 0; padding: 8px; width: 8px; height: 8px; border-radius: 50%; background: var(--pd-jelly); background-clip: content-box; cursor: pointer; }
 .dots button[aria-current="true"] { background-color: var(--pd-pink); width: 22px; border-radius: 13px; }
 .act { display: flex; justify-content: center; gap: 8px; padding: 12px 16px 0; min-height: 50px; }
-.toc { margin: 28px var(--pd-gutter) 0; }
+.dmast { display: none; }
 
 /* 데뷔 전(첫 달): 사진 없이 글자 표지 */
 .blank { background: var(--pd-ink); height: 520px; position: relative; }
@@ -78,9 +78,9 @@
 .blank .lines p { margin: 10px 0 0; color: var(--pd-on-photo); opacity: 0.8; font-size: var(--pd-fs-ui); max-width: 30ch; }
 
 /* ── 센터 화보: 3:4 두 장 엇갈림 ── */
-/* 댕댕이·냥이 칸은 같은 높이·크기로 나란히 둔다(#13: 엇갈려 두면 냥이가 뒤처져 보임) */
 .spread { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; align-items: start; }
 .spread figure { margin: 0; position: relative; }
+.spread figure:nth-child(2) { margin-top: 28px; }
 .spread figure:nth-child(n + 3) { display: none; }
 .spread figure > a { display: block; color: inherit; }
 /* 이름이 흰 사진 위에서도 읽히게 아래쪽에 그늘(DESIGN_SYSTEM 4절) */
@@ -119,30 +119,42 @@
 .pola b { display: block; font-family: var(--pd-f-display); font-weight: 400; font-size: var(--pd-fs-name); }
 
 @media (min-width: 1024px) {
+  /* 펼침면(#13): 제호 띠 / 댕댕이·냥이 같은 크기 반반 / 목차 한 줄 */
   .coverWrap {
     display: grid;
-    grid-template-columns: 1.25fr 1fr;
-    grid-template-rows: auto 1fr;
-    gap: 18px 28px;
+    grid-template-columns: 1fr 1fr;
+    gap: 18px 24px;
   }
-  .cover { grid-row: 1 / span 2; display: contents; }
+  .dmast {
+    grid-column: 1 / -1;
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 16px;
+    margin: 14px 0 0;
+    font-family: var(--pd-f-display);
+    font-size: var(--pd-fs-d-cover);
+    line-height: 0.9;
+    letter-spacing: -0.04em;
+  }
+  .dmast small { font-family: var(--pd-f-body); font-size: var(--pd-fs-ui); font-weight: 700; letter-spacing: 0; color: var(--pd-ink-2); }
+  .cover { display: contents; }
   .slides { display: contents; }
   .slide { border-radius: 28px; }
-  .slide:first-child { grid-column: 1; grid-row: 1 / span 2; }
-  .slide:first-child img, .slide:first-child.blank { height: 640px; }
-  .slide:nth-child(2) { grid-column: 2; grid-row: 1; }
-  .slide:nth-child(2) img { height: 330px; }
-  .slide:nth-child(2) .mast, .slide:nth-child(2) .issue { display: none; }
-  .slide:first-child .mast { font-size: var(--pd-fs-d-cover); line-height: 0.86; letter-spacing: -0.04em; top: 22px; left: 28px; }
-  .slide:first-child .issue { top: 240px; left: 30px; }
-  .slide:first-child .lines { left: 12px; bottom: 28px; }
-  .slide:first-child .star { font-size: var(--pd-fs-d-star); }
+  .slide img { height: 540px; }
+  .blank { grid-column: 1 / -1; height: 540px; }
+  /* 사진 위 제호는 띠로 옮겼다. 첫 장의 h1 은 읽기 도구용으로 남기고 화면에서만 숨긴다 */
+  .slide:not(.blank) .mast { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+  .slide:not(.blank) .issue { display: none; }
+  .blank .mast { font-size: var(--pd-fs-d-cover); line-height: 0.86; letter-spacing: -0.04em; top: 22px; left: 28px; }
+  .lines { left: 12px; bottom: 28px; }
+  .star { font-size: var(--pd-fs-d-star); }
   .dots, .act { display: none; }
-  .toc { grid-column: 2; grid-row: 2; margin: 0; }
 
   .spread { grid-template-columns: repeat(4, 1fr); gap: 18px; }
   .spread img { border-radius: 20px; }
   .spread figure:nth-child(n + 3) { display: block; }
+  .spread figure:nth-child(even) { margin-top: 40px; }
   .spread figcaption b { font-size: var(--pd-fs-d-card); }
 
   .polas { flex-wrap: wrap; overflow: visible; margin: 0; padding: 10px 0 14px; }

@@ -1,8 +1,9 @@
 "use client";
 /**
- * 표지: 이달의 데뷔(강아지·고양이). 휴대폰은 옆으로 넘기고(점으로 위치), 데스크톱은 CSS 가 펼침면으로 놓는다.
- * 데스크톱 펼침면에서는 두 장이 나란히 놓여 SNS 버튼(.act)을 숨긴다(이름을 누르면 글로 간다).
- * 데뷔가 아직 없으면(서비스 첫 달) 사진 없는 글자 표지 한 장. 목차는 데스크톱에서 오른쪽 아래 칸에 들어가도록 같은 틀 안에 둔다.
+ * 표지: 이달의 데뷔(댕댕이·냥이). 휴대폰은 옆으로 넘기고(점으로 위치), 데스크톱은 CSS 가 펼침면으로 놓는다.
+ * 데스크톱 펼침면: 위에 제호 띠(.dmast), 그 아래 댕댕이·냥이 두 장을 같은 크기로 반반, 맨 아래 목차 한 줄(#13: 두 게시판을 동등하게).
+ * 두 장이 나란히 보이므로 SNS 버튼(.act)은 숨긴다(이름을 누르면 글로 간다).
+ * 데뷔가 아직 없으면(서비스 첫 달) 사진 없는 글자 표지 한 장.
  */
 import Link from "next/link";
 import { useRef, useState } from "react";
@@ -28,6 +29,13 @@ export function Cover({ issue, debutMonth, debut, toc }: Props) {
 
   return (
     <div className={s.coverWrap}>
+      {/* 데스크톱 제호 띠. 휴대폰은 사진 위 제호(h1)를 쓰고, 데스크톱은 h1 을 화면에서만 숨기고 이 띠를 보여 준다 */}
+      {debut.length > 0 ? (
+        <p className={s.dmast} aria-hidden="true">
+          <span>프로듀스 댕냥</span>
+          <small>{issue}</small>
+        </p>
+      ) : null}
       <div className={s.cover}>
         <div
           className={s.slides}
