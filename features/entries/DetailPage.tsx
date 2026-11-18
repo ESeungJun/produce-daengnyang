@@ -106,7 +106,8 @@ export async function DetailPage({ board, id, fresh = false }: { board: Board; i
               <SnsLink key={x.kind} className={ui.pill} entryId={e.id} sns={x} place="detail" />
             ))}
             <CopyLink name={e.pet_name} />
-            {e.is_mine ? null : <ReportButton target="entry" targetId={e.id} className={ui.ghost} />}
+            {/* 신고는 주요 행동(인스타·공유)과 같은 무게로 두지 않고 줄 끝의 작은 밑줄 글자로 둔다(#6 디자인 리뷰) */}
+            {e.is_mine ? null : <ReportButton target="entry" targetId={e.id} className={s.reportLink} />}
           </Impression>
           {comments ? <Comments entryId={e.id} petName={e.pet_name} initial={comments.items} total={comments.total} loadFailed={comments.failed} /> : null}
         </div>

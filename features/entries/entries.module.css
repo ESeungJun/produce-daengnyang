@@ -61,7 +61,23 @@
 .dtHead h1 { margin: 0; font-family: var(--pd-f-display); font-weight: 400; font-size: var(--pd-fs-name-lg); line-height: 1; overflow-wrap: anywhere; }
 .dtHead p { margin: 4px 0 0; font-size: var(--pd-fs-small); color: var(--pd-ink-2); font-variant-numeric: tabular-nums; }
 .bio { margin: 12px 0 0; font-size: var(--pd-fs-body); }
-.dtAct { display: flex; gap: 8px; padding-top: 12px; flex-wrap: wrap; }
+.dtAct { display: flex; gap: 8px; padding-top: 12px; flex-wrap: wrap; align-items: center; }
+/* 글 신고: 줄 끝의 작은 밑줄 글자. 누르는 칸은 44px */
+.reportLink {
+  margin-left: auto;
+  min-height: 44px;
+  min-width: 44px;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--pd-ink-2);
+  font: inherit;
+  font-size: var(--pd-fs-tiny);
+  text-align: right;
+  text-decoration: underline;
+  cursor: pointer;
+}
+.reportLink:disabled { cursor: default; text-decoration: none; }
 .notice { margin: 12px 0 0; padding: 10px 14px; border-radius: var(--pd-r-sm); background: var(--pd-paper-2); font-size: var(--pd-fs-small); color: var(--pd-ink-2); }
 .notice a { color: var(--pd-ink); font-weight: 700; text-underline-offset: 3px; }
 /* 등록 직후 공유 띠: 모집 공고 판과 같은 바탕(--pd-ad), 버튼은 잉크 알약 */
