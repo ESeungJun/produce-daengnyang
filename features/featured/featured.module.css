@@ -73,7 +73,7 @@
 .spread figcaption b { display: block; font-family: var(--pd-f-display); font-weight: 400; font-size: var(--pd-fs-card); color: var(--pd-on-photo); text-shadow: 0 1px 3px rgb(var(--pd-shade) / 0.6), 0 2px 0 rgb(var(--pd-shade) / 0.35); margin-top: 2px; }
 /* 센터 SNS 칸: 그늘 위 작은 알약. figcaption 이 클릭을 통과시키므로 이 칸만 다시 받는다. */
 .spread .sns { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 6px; pointer-events: auto; }
-.snsChip { position: relative; display: inline-flex; align-items: center; gap: 6px; min-height: 32px; padding: 0 12px 0 6px; border-radius: var(--pd-r-pill); background: rgb(var(--pd-shade) / 0.55); color: var(--pd-on-photo); font-size: var(--pd-fs-tiny); font-weight: 700; text-decoration: none; box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--pd-on-photo) 35%, transparent); }
+.snsChip { position: relative; display: inline-flex; align-items: center; justify-content: center; min-height: 32px; min-width: 32px; padding: 0 4px; border-radius: var(--pd-r-pill); background: rgb(var(--pd-shade) / 0.55); color: var(--pd-on-photo); font-size: var(--pd-fs-tiny); font-weight: 700; text-decoration: none; box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--pd-on-photo) 35%, transparent); }
 /* 보이는 알약은 32px, 누르는 칸은 위아래로 넓혀 44px(빗맞혀 사진 링크로 가지 않게) */
 .snsChip::before { content: ""; position: absolute; inset: -6px -2px; }
 .snsChip:hover { background: rgb(var(--pd-shade) / 0.75); }
@@ -177,3 +177,30 @@
   .railBlank > span:last-child { font-size: var(--pd-fs-ui); font-weight: 700; color: var(--pd-ink-2); }
 }
 .centerSns .railSnsBtn { min-width: 44px; min-height: 44px; }
+
+/* ── 데뷔 대각선 배너(#20, DebutDuo): 표지 아래 한 줄. 왼쪽 위 댕댕이 / 오른쪽 아래 냥이 ── */
+.duo { position: relative; height: 220px; margin: var(--pd-gutter) var(--pd-gutter) 0; border-radius: var(--pd-r-md); overflow: hidden; background: var(--pd-paper); }
+.duoHalf { position: absolute; inset: 0; display: block; color: var(--pd-on-photo); text-decoration: none; }
+.duoHalf img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; background: var(--pd-paper-2); }
+/* 두 반쪽 사이에 종이색 틈이 보이게 1%씩 띄운다 */
+.duoHalf[data-side="a"] { clip-path: polygon(0 0, 61% 0, 39% 100%, 0 100%); }
+.duoHalf[data-side="b"] { clip-path: polygon(62% 0, 100% 0, 100% 100%, 40% 100%); }
+.duoHalf[data-side="a"] img { object-position: 30% 35%; width: 62%; }
+.duoHalf[data-side="b"] img { left: 38%; width: 62%; object-position: 70% 35%; }
+.duoTag { position: absolute; display: flex; flex-direction: column; gap: 2px; }
+/* clip-path·overflow 때문에 바깥 outline 이 잘리므로 키보드 포커스는 사진 안쪽 분홍 테두리로 보여 준다 */
+.duoHalf:focus-visible { outline: none; }
+.duoHalf:focus-visible img { box-shadow: inset 0 0 0 4px var(--pd-pink); }
+.duoHalf:focus-visible::after { content: ""; position: absolute; inset: 0; box-shadow: inset 0 0 0 4px var(--pd-pink); pointer-events: none; }
+.duoHalf[data-side="a"] .duoTag, .duoHalf[data-side="solo"] .duoTag { left: 16px; bottom: 16px; }
+.duoHalf[data-side="b"] .duoTag { right: 16px; bottom: 16px; align-items: flex-end; }
+.duoTag small { font-size: var(--pd-fs-tiny); font-weight: 700; background: var(--pd-butter); color: var(--pd-on-butter); border-radius: var(--pd-r-pill); padding: 2px 10px; }
+.duoTag b { font-family: var(--pd-f-display); font-weight: 400; font-size: var(--pd-fs-d-card); line-height: 1.1; color: var(--pd-on-photo); text-shadow: 0 2px 10px rgb(var(--pd-shade) / 0.6); }
+@media (hover: hover) { .duoHalf:hover img { transform: scale(1.03); } .duoHalf img { transition: transform 0.4s ease; } }
+@media (prefers-reduced-motion: reduce) { .duoHalf img { transition: none; } }
+@media (min-width: 1024px) {
+  .duo { grid-column: 1 / -1; margin: 0; height: 300px; border-radius: var(--pd-r-xl); }
+  .duoTag b { font-size: var(--pd-fs-star); }
+  .duoHalf[data-side="a"] .duoTag { left: 28px; bottom: 24px; }
+  .duoHalf[data-side="b"] .duoTag { right: 28px; bottom: 24px; }
+}

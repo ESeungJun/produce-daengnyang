@@ -4,7 +4,7 @@
  * 위치: shared/styles/tokens.css (2026-11-18 #1에서 docs/design/ 에서 옮김) · 문서: docs/design/DESIGN_SYSTEM.md · 견본: 디자인 시스템 Artifact · 확정 시안: .work/mockups/시안_확정_V2A.html
  * 값을 바꾸면 이 파일 → DESIGN_SYSTEM.md → 견본 페이지 순서로 같이 고친다. 화면 코드는 여기 변수만 쓴다.
  *
- * 색 규칙 한 줄: 틀은 종이·잉크·회색, 분홍(--pd-pink)은 픽 버튼·남은 픽·데뷔 표 수 판·정렬 밑줄, 일정 달력의 지금 주차·마지막 주차 날짜(#20)에만.
+ * 색 규칙 한 줄: 틀은 종이·잉크·회색, 분홍(--pd-pink)은 픽 버튼·남은 픽·데뷔 표 수 판·정렬 밑줄, "어떻게 뽑나요?" 진행 막대의 지금·마지막 주차 윗선(#20)에만.
  */
 
 :root {
@@ -47,7 +47,7 @@
   --pd-fs-rank: 30px;        /* 차트 순위 숫자 */
   --pd-fs-number: 24px;      /* 마감 시계, 댓글 제목, 시트 제목 */
   --pd-fs-toc: 22px;         /* 목차 제목 */
-  --pd-fs-logo: 20px;        /* 윗줄 로고 */
+  --pd-fs-logo: 24px;        /* 윗줄 로고 */
   --pd-fs-body: 15px;
   --pd-fs-small: 13px;
   --pd-fs-tiny: 12px;        /* 표 수·날짜 */
@@ -59,7 +59,7 @@
   --pd-fs-ad: 34px;          /* 모집 공고 제목 */
   --pd-fs-name-lg: 40px;     /* 글 상세 이름 */
   /* 데스크톱(1024px~)에서만 바뀌는 크기(시안 .desk) */
-  --pd-fs-d-logo: 26px;
+  --pd-fs-d-logo: 32px;
   --pd-fs-d-board: 28px;     /* 차트 판 게시판 이름 */
   --pd-fs-d-card: 36px;
   --pd-fs-d-section: 52px;
