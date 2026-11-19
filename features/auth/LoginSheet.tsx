@@ -35,10 +35,11 @@ const LoginSheetContext = createContext<(reason: LoginReason) => void>(() => {})
 export function LoginSheetProvider({ children }: { children: React.ReactNode }) {
   const [reason, setReason] = useState<LoginReason | null>(null);
   const toast = useToast();
-  // "그냥 구경할게요"로 닫으면 적어 둔 댓글을 지운다(입력칸 글은 그대로라 다시 남기기를 누르면 된다).
-  // 나중에 다른 이유로 로그인했을 때 쓴 적 없는 것처럼 보이는 댓글이 저절로 올라가지 않게.
+  // "그냥 구경할게요"로 닫으면 적어 둔 댓글·하려던 픽을 지운다(입력칸 글은 그대로라 다시 남기기를 누르면 된다).
+  // 나중에 다른 이유로 로그인했을 때 닫아 버린 댓글·픽이 저절로 올라가지 않게(#9 QA 에서 픽이 저절로 나가는 것을 찾음).
   const close = useCallback(() => {
     clearPendingComment();
+    clearPendingPick();
     setReason(null);
   }, []);
   // 픽이 아닌 이유로 열면 예전에 적어 둔 "하려던 픽"을, 댓글이 아닌 이유로 열면 "쓰던 댓글"을 지운다(엉뚱한 것이 나중에 나가지 않게)
