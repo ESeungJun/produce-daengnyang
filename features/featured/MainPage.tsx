@@ -50,7 +50,7 @@ export async function MainPage() {
         <Cover
           debutMonth={debutMonth}
           debut={featured.debut}
-          below={<DebutDuo debut={featured.debut} debutMonth={debutMonth} />}
+          below={<DebutDuo debut={featured.debut} debutMonth={debutMonth} nextMonth={monthNo === 12 ? 1 : monthNo + 1} />}
         />
       </div>
 
