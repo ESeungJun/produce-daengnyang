@@ -6,7 +6,7 @@
 -- ─────────────────────────────────────────────────────────────
 begin;
 create extension if not exists pgtap with schema extensions;
-select plan(201);
+select plan(205);
 
 -- ── 준비(관리자 권한) ───────────────────────────────────────
 -- 사용자: A·B·D 구글 연결(회원), C 익명, E 이메일 가입(구글 연결 없음 → 회원 아님)
@@ -375,7 +375,7 @@ select is((select array_agg(x ->> 'pet_name' order by x ->> 'pet_name') from jso
 select ok(public.sns_open('00000000-0000-0000-0000-00000000f004'), '주간 2위는 SNS 공개');
 select ok(not public.sns_open('00000000-0000-0000-0000-00000000f005'), '주간 3위는 SNS 비공개');
 select ok(public.sns_open('00000000-0000-0000-0000-00000000f002'), '결선 글은 SNS 공개');
--- #17 데뷔 화보: 데뷔 판정은 메인과 같고(숨긴 1위 대신 2위), 주인만 화보 사진 0~10장
+-- #17 데뷔 화보: 데뷔 판정은 메인과 같고(숨긴 1위 대신 2위), 주인만 화보 칸 0~20(#31에서 10 → 20)
 select ok(public.is_debut('00000000-0000-0000-0000-00000000f002'), '결선 1위가 숨겨지면 2위가 데뷔');
 select ok(not public.is_debut('00000000-0000-0000-0000-00000000f001') and not public.is_debut('00000000-0000-0000-0000-00000000f004'), '숨긴 글·주간 글은 데뷔가 아니다');
 -- 화보 칸은 크기·형식(metadata)까지 본다(#31 보안 리뷰). 실제 올리기처럼 metadata 를 채운다
@@ -387,6 +387,10 @@ insert into storage.objects (bucket_id, name, metadata) values
   ('debut-media', '00000000-0000-0000-0000-0000000000d1/m2.gif', '{"size":900000,"mimetype":"video/mp4"}'),
   ('debut-media', '00000000-0000-0000-0000-0000000000d1/v1.mp4', '{"size":4000000,"mimetype":"video/mp4"}'),
   ('debut-media', '00000000-0000-0000-0000-0000000000d1/v2.mp4', '{"size":4000000,"mimetype":"text/html"}');
+-- 칸 수 시험용 서로 다른 사진 21장(#31 20칸)
+insert into storage.objects (bucket_id, name, metadata)
+  select 'entry-photos', '00000000-0000-0000-0000-0000000000d1/' || x || i || '.webp', '{"size":20000,"mimetype":"image/webp"}'
+    from generate_series(1, 21) i, (values ('n'), ('nt')) v(x);
 insert into storage.objects (bucket_id, name) values
   ('entry-photos', '00000000-0000-0000-0000-0000000000d1/o1.webp'), ('entry-photos', '00000000-0000-0000-0000-0000000000d1/o1t.webp');
 -- 주인 폴더에 있는 원래 투표 사진 한 장(화보에 다시 넣으면 안 되는 파일)
@@ -439,7 +443,23 @@ set local role postgres;
 update public.entries set source_entry_id = null where id = '00000000-0000-0000-0000-00000000f002';
 set local role authenticated;
 select throws_ok($$select public.set_debut_photos('00000000-0000-0000-0000-00000000f004', '[{"path":"00000000-0000-0000-0000-0000000000d1/g1.webp","thumb_path":"00000000-0000-0000-0000-0000000000d1/g1t.webp"}]')$$, 'P0001', 'not_debut', '데뷔가 아닌 글은 화보 사진을 못 단다');
-select throws_ok($$select public.set_debut_photos('00000000-0000-0000-0000-00000000f002', (select jsonb_agg(jsonb_build_object('path', '00000000-0000-0000-0000-0000000000d1/g1.webp', 'thumb_path', '00000000-0000-0000-0000-0000000000d1/g1t.webp')) from generate_series(1, 11)))$$, 'P0001', 'invalid_photo', '11장은 거절');
+-- 20칸 저장은 되돌림 지점 안에서 확인하고 되돌린다(뒤 시험은 화보 1칸 상태를 본다)
+savepoint gallery20;
+select lives_ok($$select public.set_debut_photos('00000000-0000-0000-0000-00000000f002', (select jsonb_agg(jsonb_build_object('path', '00000000-0000-0000-0000-0000000000d1/n' || i || '.webp', 'thumb_path', '00000000-0000-0000-0000-0000000000d1/nt' || i || '.webp') order by i) from generate_series(1, 20) i))$$, '서로 다른 사진 20칸은 저장된다(#31 20칸)');
+set local role postgres;
+select is((select count(*)::int from public.debut_photos where entry_id = '00000000-0000-0000-0000-00000000f002'), 20, '20칸이 모두 실린다');
+rollback to savepoint gallery20;
+select throws_ok($$select public.set_debut_photos('00000000-0000-0000-0000-00000000f002', (select jsonb_agg(jsonb_build_object('path', '00000000-0000-0000-0000-0000000000d1/n' || i || '.webp', 'thumb_path', '00000000-0000-0000-0000-0000000000d1/nt' || i || '.webp') order by i) from generate_series(1, 21) i))$$, 'P0001', 'invalid_photo', '서로 다른 사진이어도 21칸은 거절');
+-- 사진 올리기 한도: 데뷔한 글 주인만 120개, 나머지 회원은 60개(#31 보안 리뷰). 되돌림 지점 안에서 채우고 되돌린다
+savepoint photo_cap;
+set local role postgres;
+insert into storage.objects (bucket_id, name) select 'entry-photos', '00000000-0000-0000-0000-0000000000d1/cap' || i || '.webp' from generate_series(1, 30) i;
+insert into storage.objects (bucket_id, name) select 'entry-photos', '00000000-0000-0000-0000-0000000000a1/cap' || i || '.webp' from generate_series(1, 60) i;
+set local role authenticated;
+select ok(public.can_upload_photo('00000000-0000-0000-0000-0000000000d1/new.webp'), '데뷔한 글 주인은 사진이 60개를 넘어도 올린다(120개까지)');
+set local request.jwt.claims = '{"sub":"00000000-0000-0000-0000-0000000000a1","role":"authenticated","is_anonymous":false}';
+select ok(not public.can_upload_photo('00000000-0000-0000-0000-0000000000a1/new.webp'), '데뷔하지 않은 회원은 그대로 60개까지');
+rollback to savepoint photo_cap;
 select throws_ok($$select public.set_debut_photos('00000000-0000-0000-0000-00000000f002', '{"path":"x"}')$$, 'P0001', 'invalid_photo', '배열이 아니면 거절');
 select throws_ok($$select public.set_debut_photos('00000000-0000-0000-0000-00000000f002', '[{"path":"00000000-0000-0000-0000-0000000000d1/g1.webp","thumb_path":"00000000-0000-0000-0000-0000000000d1/g1.webp"}]')$$, 'P0001', 'invalid_photo', '같은 파일을 두 번 쓰면 거절');
 select throws_ok($$select public.set_debut_photos('00000000-0000-0000-0000-00000000f002', '[{"path":"00000000-0000-0000-0000-0000000000d1/o1.webp","thumb_path":"00000000-0000-0000-0000-0000000000d1/o1t.webp"}]')$$, 'P0001', 'invalid_photo', '원래 투표 사진은 화보에 다시 못 넣는다');

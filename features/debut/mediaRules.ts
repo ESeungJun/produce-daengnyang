@@ -1,6 +1,6 @@
 /**
  * 데뷔 화보 동영상·GIF 규칙(#31, 2026-11-19 사용자 결정). 화면(GalleryForm·media.ts)과 시험이 같이 쓴다.
- * DB check_gallery_set 의 한도와 같아야 한다: GIF 5MB, 동영상 20MB·2개, 화보 10칸(GALLERY_MAX).
+ * DB check_gallery_set 의 한도와 같아야 한다: GIF 5MB, 동영상 20MB·2개, 화보 20칸(GALLERY_MAX).
  */
 import type { GalleryKind } from "@/features/entries/api";
 
@@ -11,7 +11,8 @@ export const MEDIA_LIMIT = {
   videos: 2,
 } as const;
 
-export type MediaError = "not_media" | "not_image" | "too_big" | "unsupported" | "gif_too_big" | "gif_unreadable" | "video_too_big" | "video_too_long" | "video_unreadable" | "too_many_videos";
+export type MediaError =
+  "not_media" | "not_image" | "too_big" | "unsupported" | "gif_too_big" | "gif_unreadable" | "video_too_big" | "video_too_long" | "video_unreadable" | "too_many_videos";
 
 export const MEDIA_ERROR_TEXT: Record<MediaError, string> = {
   not_media: "사진·GIF·동영상(MP4·WebM·MOV)만 넣을 수 있어요",

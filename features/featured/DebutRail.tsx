@@ -20,6 +20,9 @@ export function railPhotos(paths: string[]): string[] {
   return paths.length > 1 ? [...paths.slice(1), paths[0]] : paths;
 }
 
+/** 메인 세로 배너에 쓰는 화보 장 수(화보가 10칸이던 때와 같은 상한) */
+const RAIL_MAX = 10;
+
 type Props = { board: Board; card?: FeaturedCard; debutMonth: string; variant?: "photos" | "gallery" };
 
 export function DebutRail({ board, card, debutMonth, variant = "photos" }: Props) {
@@ -37,7 +40,8 @@ export function DebutRail({ board, card, debutMonth, variant = "photos" }: Props
   }
   const sns = snsLinks(card);
   const gallery = variant === "gallery";
-  const shots = (card.gallery ?? []).map(railShot).filter(Boolean) as string[];
+  // 배너는 같은 자리에 겹쳐 그려 모두 바로 받으므로 앞쪽 RAIL_MAX 장만 쓴다(화보 20칸 원본을 메인에서 다 받지 않게, #31 코드 리뷰)
+  const shots = (card.gallery ?? []).map(railShot).filter(Boolean).slice(0, RAIL_MAX) as string[];
   const href = `/${card.board}/${card.entry_id}`;
   return (
     <aside className={s.rail} aria-label={gallery ? `${title} 화보` : title}>

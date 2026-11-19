@@ -61,7 +61,7 @@ export type EntryDetail = {
   photos: { path: string; thumb_path: string }[];
   /** 데뷔한 글(get_featured 와 같은 판정)이면 화보 상세를 그린다(#17) */
   debut: boolean;
-  /** 데뷔 화보(#17). 사진·GIF·동영상 0~10칸(#31, GIF·동영상의 thumb_path 는 첫 장면 그림)과 글 꼭지 0~4개가 주인이 정한 순서로 섞여 온다 */
+  /** 데뷔 화보(#17). 사진·GIF·동영상 0~20칸(#31, GIF·동영상의 thumb_path 는 첫 장면 그림)과 글 꼭지 0~4개가 주인이 정한 순서로 섞여 온다 */
   gallery: GalleryItem[];
   /** 주간 글인데 그 아이의 결선 복사본이 데뷔했으면 데뷔 화보로 가는 길(#24, 옛 공유 링크로 들어온 사람용). 아니면 null */
   debut_link?: { id: string; month: string } | null;
