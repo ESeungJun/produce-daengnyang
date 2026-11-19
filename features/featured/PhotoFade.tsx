@@ -6,6 +6,7 @@
  * 3. 마우스를 올리거나 키보드 초점이 들어오면 멈춘다. 세 바퀴를 돌면 첫 장에서 끝낸다
  *    (WCAG 2.2.2: 5초 넘게 저절로 바뀌는 것은 멈출 수 있거나 끝나야 한다. 세로 배너는 스크롤 내내 보여서).
  * 4. 사진은 모두 겹쳐 두고 지금 장만 불투명하게 한다(바꿀 때 깜빡이지 않게). 첫 장 말고는 읽기 도구에서 숨긴다.
+ * 5. stillWhen(미디어 쿼리)이 맞는 폭에서는 넘기지 않는다(1280 이상 메인 표지: 장 넘김과 두 겹으로 돌지 않게, #25).
  * 크기는 부모가 정한다(.fade 가 부모를 꽉 채움). 멈춤은 부모 링크(카드 전체)에 마우스·초점이 있을 때로 본다.
  */
 import { useEffect, useRef, useState } from "react";
@@ -14,7 +15,7 @@ import s from "./featured.module.css";
 
 const ROUNDS = 3;
 
-export function PhotoFade({ paths, alt, eager = false, interval = 4500 }: { paths: string[]; alt: string; eager?: boolean; interval?: number }) {
+export function PhotoFade({ paths, alt, eager = false, interval = 4500, stillWhen }: { paths: string[]; alt: string; eager?: boolean; interval?: number; stillWhen?: string }) {
   const ref = useRef<HTMLDivElement>(null);
   const [at, setAt] = useState(0);
   const n = paths.length;
@@ -24,6 +25,7 @@ export function PhotoFade({ paths, alt, eager = false, interval = 4500 }: { path
     const host = el?.parentElement;
     if (n < 2 || !el || !host) return;
     const reduce = window.matchMedia("(prefers-reduced-motion: reduce)");
+    const still = stillWhen ? window.matchMedia(stillWhen) : null;
     let seen = false;
     let held = false;
     let steps = 0;
@@ -43,6 +45,7 @@ export function PhotoFade({ paths, alt, eager = false, interval = 4500 }: { path
       if (reduce.matches) return setAt(0);
       timer = window.setInterval(() => {
         if (!seen || held || document.hidden) return;
+        if (still?.matches) return setAt(0);
         steps += 1;
         setAt(steps % n);
         if (steps >= n * ROUNDS) stop(); // 세 바퀴 → 첫 장에서 끝
@@ -59,7 +62,7 @@ export function PhotoFade({ paths, alt, eager = false, interval = 4500 }: { path
       host.removeEventListener("focusin", hold);
       host.removeEventListener("focusout", blur);
     };
-  }, [n, interval]);
+  }, [n, interval, stillWhen]);
 
   return (
     <div ref={ref} className={s.fade}>

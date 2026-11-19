@@ -1,33 +1,89 @@
 "use client";
 /**
- * 표지: 이달의 데뷔(댕댕이·냥이). 휴대폰은 옆으로 넘기고(점으로 위치), 1024px 이상은 두 장을 반반 펼친다.
- * 1024~1279px 은 장마다 아래에 SNS 아이콘 줄(.deskSns). 1280px 이상은 표지를 그대로 두고 양옆 세로 배너(DebutRail)를
- * 함께 띄운다(#16 사용자 의견: 가운데 배너 유지 + 양옆 활용). 그때 SNS 아이콘은 배너가 맡는다.
+ * 표지: 이달의 데뷔(댕댕이·냥이). 휴대폰은 옆으로 넘기고(점으로 위치), 1024~1279px 은 두 장을 반반 펼치고
+ * 장마다 아래에 SNS 아이콘 줄(.deskSns)을 둔다.
+ * 1280px 이상은 양옆 세로 배너(DebutRail, #16)가 두 아이를 이미 보여 주므로, 가운데는 잡지 표지 한 장으로 두고
+ * 두 아이를 천천히 번갈아 넘긴다(#25: 같은 두 아이가 한 화면에 세 번 나와 정신없다는 의견). SNS 아이콘은 배너가 맡는다.
+ * 시작 장은 방문자가 마지막으로 본 게시판 쪽 아이다(myBoard, #25 "내 쪽 먼저").
  * 사진·이름·표 수 어디를 눌러도 글 상세로 간다(#16). 사진이 여러 장이면 제자리에서 자동으로 넘긴다(PhotoFade).
  * 큰 제호("프로듀스 댕냥")는 #16 에서 뺐다. 사이트 이름은 윗줄 로고와 읽기 도구용 h1(MainPage)이 맡는다.
  * 데뷔가 아직 없으면(서비스 첫 달) 사진 없는 글자 표지 한 장.
  */
 import Link from "next/link";
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { BOARD_NAME, SNS_NAME, count, snsLinks } from "@/shared/lib/format";
 import { Impression } from "@/features/sns/Impression";
 import { SnsLink } from "@/features/sns/SnsLink";
 import { debutPhotos, type FeaturedCard } from "./api";
+import { coverStart, readMyBoard } from "./myBoard";
 import { PhotoFade } from "./PhotoFade";
 import s from "./featured.module.css";
 
 /** below: 표지 바로 아래 한 줄(메인은 데뷔 대각선 배너, #20) */
 type Props = { debutMonth: string; debut: FeaturedCard[]; below?: React.ReactNode };
 
+/** 1280 이상 표지가 다음 아이로 넘어가는 간격. 장 안의 사진 넘김(PhotoFade 4.5초)보다 느리게 */
+const TURN_MS = 8000;
+/** 저절로 넘기는 바퀴 수. 다 돌면 시작 장에서 멈춘다(WCAG 2.2.2, PhotoFade 와 같은 기준) */
+const TURN_ROUNDS = 3;
+
+/** 표지 i 번째 장으로 옮긴다. '움직임 줄이기'면 미끄러지지 않고 바로 */
+function turnTo(el: HTMLElement | null, i: number, smooth = true) {
+  el?.scrollTo({
+    left: el.clientWidth * i,
+    behavior: smooth && !window.matchMedia("(prefers-reduced-motion: reduce)").matches ? "smooth" : "auto",
+  });
+}
+
 export function Cover({ debutMonth, debut, below }: Props) {
   const slides = useRef<HTMLDivElement>(null);
   const [at, setAt] = useState(0);
   const sns = debut[at] ? snsLinks(debut[at]) : [];
-  const go = (i: number) =>
-    slides.current?.scrollTo({
-      left: slides.current.clientWidth * i,
-      behavior: window.matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth",
-    });
+  // 사람이 점을 눌러 고르면 그 장에 머문다(자동 넘김을 끝낸다)
+  const picked = useRef(false);
+  const go = (i: number) => {
+    picked.current = true;
+    turnTo(slides.current, i);
+  };
+  const n = debut.length;
+  const start = useRef(debut);
+
+  // 1. 처음 그릴 때 마지막으로 본 게시판 쪽 장으로 바로 옮긴다(휴대폰·1280 이상. 1024~1279 는 두 장이 다 보여 그대로)
+  useEffect(() => {
+    const i = coverStart(start.current, readMyBoard());
+    if (i > 0) {
+      turnTo(slides.current, i, false);
+      setAt(i);
+    }
+  }, []);
+
+  // 2. 1280 이상에서만 표지를 저절로 넘긴다. 휴대폰은 손으로 넘기고, 1024~1279 는 두 장이 나란히 다 보인다.
+  //    화면에 보일 때만, 마우스·키보드 초점이 표지에 있으면 멈추고, '움직임 줄이기'면 넘기지 않는다.
+  useEffect(() => {
+    const el = slides.current;
+    if (n < 2 || !el) return;
+    const wide = window.matchMedia("(min-width: 1280px)");
+    const reduce = window.matchMedia("(prefers-reduced-motion: reduce)");
+    let seen = false;
+    let steps = 0;
+    const io = new IntersectionObserver(([e]) => (seen = e.isIntersecting));
+    io.observe(el);
+    // 멈춤 판정은 점 줄까지 포함한 표지 전체(.cover)로 본다
+    const box = el.parentElement ?? el;
+    const timer = window.setInterval(() => {
+      if (picked.current) return window.clearInterval(timer);
+      const held = box.matches(":hover") || box.contains(document.activeElement);
+      if (!wide.matches || reduce.matches || !seen || held || document.hidden) return;
+      if (steps >= n * TURN_ROUNDS) return window.clearInterval(timer);
+      steps += 1;
+      const cur = Math.round(el.scrollLeft / el.clientWidth);
+      turnTo(el, (cur + 1) % n);
+    }, TURN_MS);
+    return () => {
+      window.clearInterval(timer);
+      io.disconnect();
+    };
+  }, [n]);
 
   return (
     <div className={s.coverWrap}>
@@ -49,8 +105,18 @@ export function Cover({ debutMonth, debut, below }: Props) {
           ) : (
             debut.map((d, i) => (
               <Link key={d.entry_id} className={s.slide} href={`/${d.board}/${d.entry_id}`} aria-label={`${debutMonth}월 데뷔 ${BOARD_NAME[d.board]} ${d.pet_name}, ${count(d.votes)}표`}>
-                <PhotoFade paths={debutPhotos(d)} alt="" eager={i === 0} />
+                {/* 시작 장이 기억에 따라 바뀌어 두 장 모두 먼저 받는다(많아야 두 장). 1280 이상은 장 넘김만 돌고 장 안 사진은 멈춘다 */}
+                <PhotoFade paths={debutPhotos(d)} alt="" eager stillWhen="(min-width: 1280px)" />
                 <span className={s.scrim} />
+                {/* 1280 이상 잡지 표지 윗줄(표지 이름 + 몇 번째 장). 사이트 이름은 바로 위 로고가 맡아 넣지 않는다(#16). 그 밖의 폭은 숨김 */}
+                <span className={s.mast} aria-hidden="true">
+                  <b>이달의 커버 스타</b>
+                  {n > 1 ? (
+                    <span>
+                      {i + 1} / {n}
+                    </span>
+                  ) : null}
+                </span>
                 <span className={s.lines} aria-hidden="true">
                   <span className={s.kick}>
                     {debutMonth}월 데뷔 · {BOARD_NAME[d.board]}
