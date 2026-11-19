@@ -12,7 +12,7 @@ const PHOTO = path.join(__dirname, "..", "supabase", "seed-photos", "dog1.webp")
 // 달의 마지막 주(결선 주간)에는 열린 주간 라운드가 없다. 그 주에는 실패 대신 이유를 남기고 건너뛴다.
 test.beforeEach(() => needWeeklyRound((cond, why) => test.skip(cond, why)));
 
-/** 게시판에서 아직 픽하지 않은 글의 픽 버튼(위에서 n번째) */
+/** 아직 픽하지 않은 글의 픽 버튼들(오늘 픽 완료·내 글 버튼은 이름이 달라 빠진다) */
 const pickButtons = (page: Page) => page.getByRole("button", { name: "댕댕이 픽하기" });
 
 test("손님 첫 1픽 → 두 번째 픽에 로그인 시트(닫으면 그 픽은 버림) → 구글 연결 뒤 같은 사람으로 3픽까지", async ({ page, context, baseURL }) => {
@@ -147,10 +147,11 @@ test("가림 기간: 마감 24시간 전부터 순위·표 수를 가리고 섞�
     await page.goto("/dog");
     await expect(page.getByText("마감 전 24시간은 순위를 가려요")).toBeVisible();
     await expect(page.getByRole("link", { name: "섞어 보기" })).toBeVisible();
-    // 상세에서도 표 수 대신 가림
+    // 상세에서도 표 수는 "??표", 조회수는 숨김
     const target = openEntries(round.id, "dog")[0];
-    const res = await page.request.get(`/dog/${target.id}`);
-    expect(await res.text()).not.toMatch(/조회 \d/);
+    await page.goto(`/dog/${target.id}`);
+    await expect(page.getByText(/\?\?표/).first()).toBeVisible();
+    await expect(page.getByText(/조회 \d/)).toHaveCount(0);
   } finally {
     sql(`update public.rounds set ends_at = ${lit(ends)} where id = ${Number(round.id)}`);
   }
