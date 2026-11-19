@@ -1,11 +1,11 @@
 "use client";
 /**
  * 표지: 이달의 데뷔(댕댕이·냥이). 휴대폰은 옆으로 넘기고(점으로 위치), 1024~1279px 은 두 장을 반반 펼친다.
- * SNS 는 모든 폭에서 장 안 이름 옆 앱 아이콘이다(#26 사용자 의견. 전에는 휴대폰 표지 아래·1024 펼침면 장 아래 줄에 따로 있었다).
+ * SNS 는 모든 폭에서 장 안 이름 밑(표 수 옆) 작은 앱 아이콘이다(#26 사용자 의견. 전에는 휴대폰 표지 아래·1024 펼침면 장 아래 줄에 따로 있었다).
  * 1280px 이상은 양옆 세로 배너(DebutRail, #16)가 두 아이를 이미 보여 주므로, 가운데는 잡지 표지 한 장으로 두고
  * 두 아이를 천천히 번갈아 넘긴다(#25: 같은 두 아이가 한 화면에 세 번 나와 정신없다는 의견).
  * 시작 장은 방문자가 마지막으로 본 게시판 쪽 아이다(myBoard, #25 "내 쪽 먼저").
- * 사진·이름·표 수 어디를 눌러도 글 상세로 가고, 이름 옆 SNS 아이콘만 그 SNS 새 창으로 간다(#16, #26). 사진이 여러 장이면 제자리에서 자동으로 넘긴다(PhotoFade).
+ * 사진·이름·표 수 어디를 눌러도 글 상세로 가고, 이름 밑 SNS 아이콘만 그 SNS 새 창으로 간다(#16, #26). 사진이 여러 장이면 제자리에서 자동으로 넘긴다(PhotoFade).
  * 큰 제호("프로듀스 댕냥")는 #16 에서 뺐다. 사이트 이름은 윗줄 로고와 읽기 도구용 h1(MainPage)이 맡는다.
  * 데뷔가 아직 없으면(서비스 첫 달) 사진 없는 글자 표지 한 장.
  */
@@ -121,27 +121,28 @@ export function Cover({ debutMonth, debut, below }: Props) {
                       ) : null}
                     </span>
                   </Link>
-                  {/* 글줄은 누름을 아래 사진 링크로 흘려보내고(pointer-events: none), 이름 옆 SNS 아이콘만 다시 받는다(#26) */}
+                  {/* 글줄은 누름을 아래 사진 링크로 흘려보내고(pointer-events: none), 이름 밑 SNS 아이콘만 다시 받는다(#26) */}
                   <div className={s.lines}>
                     <span className={s.kick} aria-hidden="true">
                       {debutMonth}월 데뷔 · {BOARD_NAME[d.board]}
                     </span>
-                    <div className={s.starRow}>
-                      <span className={s.star} aria-hidden="true">
-                        {d.pet_name}
+                    <span className={s.star} aria-hidden="true">
+                      {d.pet_name}
+                    </span>
+                    {/* 이름 밑 한 줄: 표 수 + SNS 아이콘. 이름 옆에 두면 사진을 너무 가려 밑으로 내렸다(#26 사용자 의견) */}
+                    <div className={s.capRow}>
+                      <span className={s.cap} aria-hidden="true">
+                        {count(d.votes)}표로 데뷔
                       </span>
                       {/* 노출은 이 장이 실제로 보일 때만 센다(넘김 틀 밖 장은 잘려 안 보이므로 세지 않는다) */}
                       {list.length ? (
                         <Impression className={s.coverSns} ids={[d.entry_id]} place="cover">
                           {list.map((x) => (
-                            <SnsLink key={x.kind} className={s.coverSnsBtn} entryId={d.entry_id} sns={x} place="cover" iconOnly iconSize="lg" label={`${d.pet_name} ${SNS_NAME[x.kind]} ${x.handle}, 새 창`} />
+                            <SnsLink key={x.kind} className={s.coverSnsBtn} entryId={d.entry_id} sns={x} place="cover" iconOnly label={`${d.pet_name} ${SNS_NAME[x.kind]} ${x.handle}, 새 창`} />
                           ))}
                         </Impression>
                       ) : null}
                     </div>
-                    <span className={s.cap} aria-hidden="true">
-                      {count(d.votes)}표로 데뷔
-                    </span>
                   </div>
                 </div>
               );
