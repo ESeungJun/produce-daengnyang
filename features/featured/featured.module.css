@@ -197,6 +197,10 @@
     overflow-wrap: anywhere;
   }
   .railSns { display: flex; flex-wrap: wrap; justify-content: center; align-items: center; gap: 4px 10px; }
+  .railSns { margin: 0; }
+  .railMore { display: inline-flex; align-items: center; min-height: 44px; font-size: var(--pd-fs-ui); font-weight: 700; color: var(--pd-ink); text-decoration: underline; text-decoration-color: var(--pd-pink); text-underline-offset: 4px; }
+  /* 화보 사진이 없는 한쪽 보기 오른쪽 배너: 표지와 같은 사진을 얼굴 쪽으로 당겨 다른 구도로(#26) */
+  .railCard[data-zoom="true"] .fade img { transform: scale(1.6); transform-origin: 50% 30%; }
   .railSnsCap { flex: 1 0 100%; text-align: center; font-size: var(--pd-fs-tiny); font-weight: 700; color: var(--pd-ink-2); }
   /* 아이콘 타일 40px + 둘레 2px 로 누르는 칸 44px */
   @media (hover: hover) { .railSnsBtn:hover { transform: translateY(-1px); } }

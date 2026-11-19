@@ -6,7 +6,7 @@
 -- ─────────────────────────────────────────────────────────────
 begin;
 create extension if not exists pgtap with schema extensions;
-select plan(162);
+select plan(164);
 
 -- ── 준비(관리자 권한) ───────────────────────────────────────
 -- 사용자: A·B·D 구글 연결(회원), C 익명, E 이메일 가입(구글 연결 없음 → 회원 아님)
@@ -406,6 +406,8 @@ set local role anon;
 select throws_ok($$select public.set_debut_photos('00000000-0000-0000-0000-00000000f002', '[]')$$, '42501', null, '손님 역할은 실행 권한이 없다');
 set local role postgres;
 select is(jsonb_array_length(public.get_featured_at('2000-06-10 12:00+09') -> 'debut' -> 0 -> 'photos'), 3, '메인 데뷔 배너는 원래 사진 3장만 넘긴다(화보 사진은 화보 상세에서만, #23)');
+select is(jsonb_array_length(public.get_featured_at('2000-06-10 12:00+09') -> 'debut' -> 0 -> 'gallery'), 1, '데뷔 항목에 화보 사진은 gallery 로 따로 싣는다(#26)');
+select ok(not (public.get_featured_at('2000-06-10 12:00+09') -> 'center' -> 0 ? 'gallery'), '센터 항목에는 gallery 를 싣지 않는다');
 set local role authenticated;
 set local request.jwt.claims = '{"sub":"00000000-0000-0000-0000-0000000000d1","role":"authenticated","is_anonymous":false}';
 -- 숨긴 1위(f001, role=debut)가 아니라 데뷔를 이어받은 2위(f002, role 없음)에 화보 링크가 붙어야 한다(#23)

@@ -48,6 +48,8 @@
 @media (min-width: 1024px) {
   .tabs { display: none; }
   .boards { grid-template-columns: 1fr 1fr; gap: 28px; margin-top: 24px; }
+  /* 메인 한쪽 보기(#26): 한 게시판 차트를 넓게 */
+  .boards[data-single] { grid-template-columns: 1fr; margin-top: 16px; }
   .boardPanel[data-active] { display: block; background: var(--pd-paper-2); border-radius: var(--pd-r-xl); padding: 20px 22px; }
   .boardTitle {
     display: flex;
