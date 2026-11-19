@@ -40,10 +40,14 @@ export function sql<T = Record<string, unknown>>(q: string): T[] {
   const [cmd, pre] = supabaseCmd();
   const out = execFileSync(cmd, [...pre, "db", "query", "-o", "json", q], { encoding: "utf8", stdio: ["ignore", "pipe", "pipe"] });
   // insert·update·delete(returning 없음)는 JSON 대신 "DELETE 0" 같은 명령 결과만 낸다
-  if (/^\s*(INSERT|UPDATE|DELETE|CREATE|ALTER|DROP|TRUNCATE)\b[^{]*$/.test(out)) return [];
-  const start = out.indexOf("{"); // 앞에 안내 줄이 붙는 환경이 있어 첫 { 부터 읽는다
+  if (/^\s*(INSERT|UPDATE|DELETE|CREATE|ALTER|DROP|TRUNCATE)\b[^[{]*$/.test(out)) return [];
+  // 출력 모양이 환경마다 다르다: CI 는 결과 배열 그대로([...]), AI 도구 안에서 돌면 { rows: [...], warning } 로 감싼다
+  const start = out.search(/[[{]/);
   try {
-    return (JSON.parse(out.slice(start)) as { rows?: T[] }).rows ?? [];
+    const v = JSON.parse(out.slice(start)) as T[] | { rows?: T[] };
+    if (Array.isArray(v)) return v;
+    if (Array.isArray(v.rows)) return v.rows;
+    throw new Error("rows 없음");
   } catch {
     throw new Error(`supabase db query 출력을 읽지 못했어요:\n${out.slice(0, 500)}`);
   }
