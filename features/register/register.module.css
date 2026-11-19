@@ -60,6 +60,7 @@
   font-weight: 700;
   cursor: pointer;
   position: relative;
+  flex-shrink: 0;
 }
 /* 누르는 칸은 44px(보이는 원은 32px, DESIGN_SYSTEM #4 누르는 칸 규칙) */
 .photoAct button::before { content: ""; position: absolute; inset: -6px; }
@@ -104,3 +105,7 @@
 .closed { padding: 20px; border-radius: var(--pd-r-lg); background: var(--pd-paper-2); display: grid; gap: 6px; max-width: 620px; margin-bottom: 24px; }
 .closed p { margin: 0; color: var(--pd-ink-2); }
 .closed .closedTitle { font-weight: 700; color: var(--pd-ink); font-size: var(--pd-fs-body); }
+
+/* 데뷔 화보 사진 올리기(#17): 10장이라 휴대폰에서는 두 칸으로 넓혀 ← → ✕ 세 버튼이 겹치지 않게 */
+@media (max-width: 479px) { .photos[data-wide] { grid-template-columns: repeat(2, 1fr); } }
+.formActs { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }

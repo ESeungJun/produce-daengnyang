@@ -2,29 +2,12 @@
 // 마이그레이션을 바꾸면 다시 만든다: Supabase MCP generate_typescript_types 또는
 // npx supabase@3.2.0 gen types typescript --project-id szqxjeegveouzjorkvbj > shared/lib/supabase/database.types.ts
 
+
 export type Json = string | number | boolean | null | { [key: string]: Json | undefined } | Json[]
 
 export type Database = {
   
-  "graphql_public": {
-          Tables: {
-            [_ in never]: never
-          }
-          Views: {
-            [_ in never]: never
-          }
-          Functions: {
-            "graphql":
-{ Args: { "extensions"?: Json,"operationName"?: string,"query"?: string,"variables"?: Json }; Returns: Json
-                           }
-          }
-          Enums: {
-            [_ in never]: never
-          }
-          CompositeTypes: {
-            [_ in never]: never
-          }
-        },"public": {
+  "public": {
           Tables: {
             "admin_actions": {
                   Row: {
@@ -82,6 +65,26 @@ export type Database = {
                   Relationships: [
                     {
       foreignKeyName: "comments_entry_id_fkey"
+      columns: ["entry_id"]
+isOneToOne: false
+      referencedRelation: "entries"
+      referencedColumns: ["id"]
+    }
+                  ]
+                },"debut_photos": {
+                  Row: {
+                    "created_at": string,"entry_id": string,"path": string,"position": number,"thumb_path": string
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "created_at"?: string,"entry_id": string,"path": string,"position": number,"thumb_path": string
+                  }
+                  Update: {
+                    "created_at"?: string,"entry_id"?: string,"path"?: string,"position"?: number,"thumb_path"?: string
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "debut_photos_entry_id_fkey"
       columns: ["entry_id"]
 isOneToOne: false
       referencedRelation: "entries"
@@ -400,6 +403,9 @@ isOneToOne: false
 "check_entry_fields":
 { Args: { "p_bio": string,"p_instagram": string,"p_pet_name": string,"p_threads": string,"p_youtube": string }; Returns: undefined
                            },
+"check_photo_set":
+{ Args: { "p_max": number,"p_min": number,"p_owner": string,"p_photos": Json }; Returns: undefined
+                           },
 "check_photos":
 { Args: { "p_owner": string,"p_photos": Json }; Returns: undefined
                            },
@@ -483,6 +489,9 @@ isOneToOne: false
 "is_blind":
 { Args: { "r": Omit<Database["public"]['Tables']["rounds"]['Row'], Database["public"]['Tables']["rounds"]['ComputedFields']> }; Returns: boolean
                            },
+"is_debut":
+{ Args: { "p_entry_id": string }; Returns: boolean
+                           },
 "kick_dispatch":
 { Args: Record<PropertyKey, never>; Returns: boolean
                            },
@@ -539,11 +548,17 @@ isOneToOne: false
 "result_exposure_over":
 { Args: { "r": Omit<Database["public"]['Tables']["rounds"]['Row'], Database["public"]['Tables']["rounds"]['ComputedFields']> }; Returns: boolean
                            },
+"set_debut_photos":
+{ Args: { "p_entry_id": string,"p_photos": Json }; Returns: Json
+                           },
 "set_nickname":
 { Args: { "p_nickname": string }; Returns: Json
                            },
 "snapshot_ranks":
 { Args: Record<PropertyKey, never>; Returns: number
+                           },
+"sns_open":
+{ Args: { "p_entry_id": string }; Returns: boolean
                            },
 "update_entry":
 { Args: { "p_bio": string,"p_entry_id": string,"p_instagram": string,"p_pet_name": string,"p_photos"?: Json,"p_threads": string,"p_youtube": string }; Returns: Json
@@ -667,11 +682,7 @@ export type CompositeTypes<
   : never
 
 export const Constants = {
-  "graphql_public": {
-          Enums: {
-            
-          }
-        },"public": {
+  "public": {
           Enums: {
             "board_kind": ["dog", "cat"],"report_target": ["entry", "comment"],"result_role": ["center", "finalist", "debut"],"round_kind": ["weekly", "final"]
           }

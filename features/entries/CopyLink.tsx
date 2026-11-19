@@ -19,6 +19,7 @@ export function CopyLink({
   place,
   primary = false,
   label = "공유하기",
+  text: shareText,
 }: {
   entryId: string;
   name: string;
@@ -26,6 +27,8 @@ export function CopyLink({
   place: "detail" | "register";
   primary?: boolean;
   label?: string;
+  /** 공유 문구(기본 "{이름} 픽해 주세요!"). 데뷔 화보는 축하 문구를 넘긴다(#17) */
+  text?: string;
 }) {
   const toast = useToast();
   const [manual, setManual] = useState<string | null>(null);
@@ -33,7 +36,7 @@ export function CopyLink({
   async function share() {
     // 등록 직후 표시(?new=1)는 빼고 공유 표시(ref=share)를 붙인다
     const url = shareUrl(window.location.href);
-    const text = `${name} 픽해 주세요!`;
+    const text = shareText ?? `${name} 픽해 주세요!`;
     if (typeof navigator.share === "function" && window.matchMedia("(pointer: coarse)").matches) {
       try {
         await navigator.share({ title: text, text, url });

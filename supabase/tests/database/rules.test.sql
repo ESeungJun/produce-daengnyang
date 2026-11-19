@@ -6,7 +6,7 @@
 -- ─────────────────────────────────────────────────────────────
 begin;
 create extension if not exists pgtap with schema extensions;
-select plan(144);
+select plan(161);
 
 -- ── 준비(관리자 권한) ───────────────────────────────────────
 -- 사용자: A·B·D 구글 연결(회원), C 익명, E 이메일 가입(구글 연결 없음 → 회원 아님)
@@ -375,6 +375,42 @@ select is((select array_agg(x ->> 'pet_name' order by x ->> 'pet_name') from jso
 select ok(public.sns_open('00000000-0000-0000-0000-00000000f004'), '주간 2위는 SNS 공개');
 select ok(not public.sns_open('00000000-0000-0000-0000-00000000f005'), '주간 3위는 SNS 비공개');
 select ok(public.sns_open('00000000-0000-0000-0000-00000000f002'), '결선 글은 SNS 공개');
+-- #17 데뷔 화보: 데뷔 판정은 메인과 같고(숨긴 1위 대신 2위), 주인만 화보 사진 0~10장
+select ok(public.is_debut('00000000-0000-0000-0000-00000000f002'), '결선 1위가 숨겨지면 2위가 데뷔');
+select ok(not public.is_debut('00000000-0000-0000-0000-00000000f001') and not public.is_debut('00000000-0000-0000-0000-00000000f004'), '숨긴 글·주간 글은 데뷔가 아니다');
+insert into storage.objects (bucket_id, name) values
+  ('entry-photos', '00000000-0000-0000-0000-0000000000d1/g1.webp'), ('entry-photos', '00000000-0000-0000-0000-0000000000d1/g1t.webp'),
+  ('entry-photos', '00000000-0000-0000-0000-0000000000d1/o1.webp'), ('entry-photos', '00000000-0000-0000-0000-0000000000d1/o1t.webp');
+-- 주인 폴더에 있는 원래 투표 사진 한 장(화보에 다시 넣으면 안 되는 파일)
+insert into public.entry_photos (entry_id, position, path, thumb_path) values
+  ('00000000-0000-0000-0000-00000000f002', 2, '00000000-0000-0000-0000-0000000000d1/o1.webp', '00000000-0000-0000-0000-0000000000d1/o1t.webp');
+set local role authenticated;
+set local request.jwt.claims = '{"sub":"00000000-0000-0000-0000-0000000000d1","role":"authenticated","is_anonymous":false}';
+select lives_ok($$select public.set_debut_photos('00000000-0000-0000-0000-00000000f002', '[{"path":"00000000-0000-0000-0000-0000000000d1/g1.webp","thumb_path":"00000000-0000-0000-0000-0000000000d1/g1t.webp"}]')$$, '데뷔 주인은 화보 사진을 더한다');
+select is(jsonb_array_length(public.get_entry('00000000-0000-0000-0000-00000000f002') -> 'gallery'), 1, '상세에 화보 사진이 붙는다');
+select throws_ok($$select public.set_debut_photos('00000000-0000-0000-0000-00000000f004', '[{"path":"00000000-0000-0000-0000-0000000000d1/g1.webp","thumb_path":"00000000-0000-0000-0000-0000000000d1/g1t.webp"}]')$$, 'P0001', 'not_debut', '데뷔가 아닌 글은 화보 사진을 못 단다');
+select throws_ok($$select public.set_debut_photos('00000000-0000-0000-0000-00000000f002', (select jsonb_agg(jsonb_build_object('path', '00000000-0000-0000-0000-0000000000d1/g1.webp', 'thumb_path', '00000000-0000-0000-0000-0000000000d1/g1t.webp')) from generate_series(1, 11)))$$, 'P0001', 'invalid_photo', '11장은 거절');
+select throws_ok($$select public.set_debut_photos('00000000-0000-0000-0000-00000000f002', '{"path":"x"}')$$, 'P0001', 'invalid_photo', '배열이 아니면 거절');
+select throws_ok($$select public.set_debut_photos('00000000-0000-0000-0000-00000000f002', '[{"path":"00000000-0000-0000-0000-0000000000d1/g1.webp","thumb_path":"00000000-0000-0000-0000-0000000000d1/g1.webp"}]')$$, 'P0001', 'invalid_photo', '같은 파일을 두 번 쓰면 거절');
+select throws_ok($$select public.set_debut_photos('00000000-0000-0000-0000-00000000f002', '[{"path":"00000000-0000-0000-0000-0000000000d1/o1.webp","thumb_path":"00000000-0000-0000-0000-0000000000d1/o1t.webp"}]')$$, 'P0001', 'invalid_photo', '원래 투표 사진은 화보에 다시 못 넣는다');
+select ok(public.photo_in_use('00000000-0000-0000-0000-0000000000d1/g1.webp'), '화보에 붙은 파일은 Storage 에서 못 지운다(쓰는 중)');
+set local role postgres;
+select throws_ok($$select public.check_photos('00000000-0000-0000-0000-0000000000d1', (select jsonb_agg(jsonb_build_object('path', '00000000-0000-0000-0000-0000000000d1/p' || i || '.webp', 'thumb_path', '00000000-0000-0000-0000-0000000000d1/t' || i || '.webp')) from generate_series(1, 4) i))$$, 'P0001', 'invalid_photo', '등록 사진은 그대로 3장까지(4장 거절)');
+set local role authenticated;
+select throws_ok($$select public.set_debut_photos('00000000-0000-0000-0000-00000000f002', '[{"path":"00000000-0000-0000-0000-0000000000a1/p1.webp","thumb_path":"00000000-0000-0000-0000-0000000000a1/t1.webp"}]')$$, 'P0001', 'invalid_photo', '남의 폴더 파일은 화보에 못 넣는다');
+set local request.jwt.claims = '{"sub":"00000000-0000-0000-0000-0000000000a1","role":"authenticated","is_anonymous":false}';
+select throws_ok($$select public.set_debut_photos('00000000-0000-0000-0000-00000000f002', '[]')$$, 'P0001', 'not_owner', '주인이 아니면 못 바꾼다');
+set local request.jwt.claims = '{"sub":"00000000-0000-0000-0000-0000000000c1","role":"authenticated","is_anonymous":true}';
+select throws_ok($$select public.set_debut_photos('00000000-0000-0000-0000-00000000f002', '[]')$$, 'P0001', 'signin_required', '익명 사용자는 못 바꾼다');
+set local role anon;
+select throws_ok($$select public.set_debut_photos('00000000-0000-0000-0000-00000000f002', '[]')$$, '42501', null, '손님 역할은 실행 권한이 없다');
+set local role postgres;
+select is(jsonb_array_length(public.get_featured_at('2000-06-10 12:00+09') -> 'debut' -> 0 -> 'photos'), 4, '메인 데뷔 사진(원래 3장)에 화보 사진이 뒤에 붙는다');
+set local role authenticated;
+set local request.jwt.claims = '{"sub":"00000000-0000-0000-0000-0000000000d1","role":"authenticated","is_anonymous":false}';
+select is(public.set_debut_photos('00000000-0000-0000-0000-00000000f002', '[]') -> 'removed',
+          '["00000000-0000-0000-0000-0000000000d1/g1.webp", "00000000-0000-0000-0000-0000000000d1/g1t.webp"]'::jsonb, '화보에서 뺀 파일을 지울 목록으로 돌려준다');
+set local role postgres;
 select is(public.get_featured_at('2000-07-10 12:00+09') - 'month' - 'center', '{"debut": [], "finalists": []}'::jsonb, '지난달 결선·이번 달 후보가 없으면 빈 목록');
 update public.entries set hidden_at = now() where id = '00000000-0000-0000-0000-00000000f003';
 select is((select array_agg(x ->> 'pet_name' order by x ->> 'pet_name') from jsonb_array_elements(public.get_featured_at('2000-06-10 12:00+09') -> 'finalists') x),
