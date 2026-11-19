@@ -1,13 +1,13 @@
 "use client";
 /**
- * 윗줄 "오늘 남은 픽": 얼굴 3개, 쓴 칸은 흐리게.
+ * 윗줄 "오늘 남은 픽": 발도장 3개(#29), 쓴 칸은 흐리게.
  * - 회원: 게시판마다 3칸.
  * - 손님·익명: "로그인 전 픽" 1칸만 쓸 수 있고 나머지 2칸은 잠김. 누르면 로그인 시트가 뜬다(휴대폰에서 로그인으로 가는 길).
  * board 를 주지 않으면 마지막으로 보던 게시판(픽하거나 탭을 바꾼 곳)을 따른다.
  */
 import { useLoginSheet } from "@/features/auth/LoginSheet";
 import { BOARD_NAME, type Board } from "@/shared/lib/format";
-import { Face } from "./Face";
+import { Paw } from "./Paw";
 import { usePicks } from "./PicksProvider";
 import s from "./picks.module.css";
 
@@ -19,7 +19,7 @@ export function PicksLeft({ board }: { board?: Board }) {
   const faces = (states: string[]) =>
     states.map((st, i) => (
       <i key={i} data-state={st} aria-hidden="true">
-        <Face board={b} />
+        <Paw />
       </i>
     ));
 
