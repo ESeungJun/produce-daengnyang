@@ -30,3 +30,10 @@ describe("debutMail (#27 데뷔 확정 메일)", () => {
     expect(debutMail("debut", null, SITE)).toBeNull();
   });
 });
+
+describe("debutMail 제목 머리글", () => {
+  it("이름의 줄바꿈은 공백으로(머리글 끼워 넣기 막기)", () => {
+    const m = debutMail("debut", { entry_id: ID, pet_name: "보리\r\nBcc: x@y", board: "dog" }, SITE)!;
+    expect(m.subject).not.toMatch(/[\r\n]/);
+  });
+});

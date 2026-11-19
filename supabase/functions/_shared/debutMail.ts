@@ -40,7 +40,8 @@ export function debutMail(kind: string, payload: unknown, site: string): DebutMa
   const p = (payload && typeof payload === "object" ? payload : {}) as Payload;
   const board = p.board === "dog" || p.board === "cat" ? p.board : null;
   if (!board || !p.entry_id || !/^[0-9a-f-]{36}$/i.test(p.entry_id)) return null;
-  const name = p.pet_name?.trim() || "우리 아이";
+  // 제목 머리글에 들어가므로 줄바꿈·제어 문자는 공백으로
+  const name = p.pet_name?.replace(/[\u0000-\u001f\u007f]+/g, " ").trim() || "우리 아이";
   const upload = `${site}/${board}/${p.entry_id}/gallery`;
   const detail = `${site}/${board}/${p.entry_id}`;
   const guide = `${site}/mail/debut-guide.jpg`;
