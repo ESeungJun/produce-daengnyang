@@ -19,6 +19,7 @@
 import { createClient } from "npm:@supabase/supabase-js@2.119.0";
 import webpush from "npm:web-push@3.6.7";
 import nodemailer from "npm:nodemailer@6.9.16";
+import { debutMail } from "../_shared/debutMail.ts";
 import { noticeView } from "../_shared/notice.ts";
 
 const url = Deno.env.get("SUPABASE_URL")!;
@@ -75,13 +76,15 @@ function gmail(): Mailer {
 async function sendMail(mailer: Mailer, r: Row): Promise<MailResult> {
   const { text, href } = noticeView(r.kind, r.payload);
   const link = `${SITE_URL}${href ?? "/me"}`;
+  // 데뷔는 화보 사진 요청 + 노출 가이드 본문(#27), 나머지는 한 줄 본문
+  const debut = debutMail(r.kind, r.payload, SITE_URL);
   try {
     await mailer.sendMail({
       from: { name: MAIL_FROM_NAME, address: GMAIL_USER },
       to: r.email!,
-      subject: text,
-      html: mailHtml(text, link),
-      text: `${text}\n\n${link}`,
+      subject: debut?.subject ?? text,
+      html: debut?.html ?? mailHtml(text, link),
+      text: debut?.text ?? `${text}\n\n${link}`,
     });
     return "sent";
   } catch (e) {
