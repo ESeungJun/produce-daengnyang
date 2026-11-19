@@ -24,7 +24,9 @@ export function instaNameSize(name: string): number {
   return n <= 3 ? 220 : n <= 5 ? 180 : n <= 8 ? 130 : n <= 12 ? 96 : 72;
 }
 
-const C = { ink: "#141414", white: "#FFFFFF", butter: "#FFE58A", pink: "#E0457B", shade: "rgba(0,0,0," };
+// 색은 사이트 토큰(shared/styles/tokens.css)과 같은 값만 쓴다. 강조색은 분홍 하나(#30: 노랑을 쓰고 있었다).
+// pinkOnShade: 사진 위 어두운 그늘에서 읽히는 분홍 글자 = 다크 테마 --pd-pink-text
+const C = { white: "#FFFFFF", pink: "#D62A66", pinkText: "#C2255F", pinkOnShade: "#FF6FA0", shade: "rgba(0,0,0," };
 
 type Insta = { format: InstaFormat; petName: string; kick: string; votes: string; photo: string | null | undefined; host: string };
 
@@ -53,14 +55,14 @@ export async function instaImage({ format, petName, kick, votes, photo, host }: 
             <div style={{ position: "absolute", left: 0, right: 0, bottom: 0, height: f.height * 0.55, display: "flex", background: `linear-gradient(${C.shade}0), ${C.shade}0.35) 40%, ${C.shade}0.72))` }} />
             <div style={{ position: "absolute", left: 72, right: 72, top: format === "story" ? 220 : 64, display: "flex", justifyContent: "space-between", alignItems: "center" }}>
               <div style={{ display: "flex", fontFamily: "display", fontSize: 48, color: C.white }}>
-                프로듀스&nbsp;<span style={{ color: C.butter }}>댕냥</span>
+                프로듀스&nbsp;<span style={{ color: C.pinkOnShade }}>댕냥</span>
               </div>
               <div style={{ display: "flex", fontFamily: "body", fontSize: 32, color: C.white, opacity: 0.9 }}>데뷔 화보</div>
             </div>
             <div style={{ position: "absolute", left: 72, right: 72, bottom: f.bottom, display: "flex", flexDirection: "column", alignItems: "flex-start" }}>
-              <div style={{ display: "flex", fontFamily: "display", fontSize: 40, color: C.ink, background: C.butter, borderRadius: 999, padding: "10px 28px" }}>{kick}</div>
+              <div style={{ display: "flex", fontFamily: "display", fontSize: 40, color: C.white, background: C.pink, borderRadius: 999, padding: "10px 28px" }}>{kick}</div>
               <div style={{ display: "flex", fontFamily: "display", fontSize: instaNameSize(petName), lineHeight: 1.05, color: C.white, marginTop: 18, letterSpacing: -3 }}>{petName}</div>
-              <div style={{ display: "flex", fontFamily: "body", fontSize: 38, color: C.white, background: C.pink, borderRadius: 14, padding: "10px 22px", marginTop: 18 }}>{votes}</div>
+              <div style={{ display: "flex", fontFamily: "body", fontSize: 38, color: C.pinkText, background: C.white, borderRadius: 14, padding: "10px 22px", marginTop: 18 }}>{votes}</div>
               <div style={{ display: "flex", fontFamily: "body", fontSize: 30, color: C.white, opacity: 0.85, marginTop: 36 }}>{host}</div>
             </div>
           </div>
