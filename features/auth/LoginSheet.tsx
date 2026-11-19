@@ -14,7 +14,7 @@ import { clearPendingComment, clearPendingPick, hrefWithPendingComment, inAppBro
 import { trackAuth } from "./track";
 
 /** submit: 등록 폼을 다 쓰고 "등록하기"를 눌렀을 때. 로그인하고 돌아오면 쓴 내용으로 바로 등록한다(/register?submit=1) */
-export type LoginReason = "pick" | "register" | "submit" | "comment" | "report" | "login" | "ip";
+export type LoginReason = "pick" | "register" | "submit" | "comment" | "report" | "login" | "ip" | "gallery";
 
 const TEXT: Record<LoginReason, [string, string]> = {
   // 로그인 없이 하는 첫 1픽을 쓴 뒤(두 번째 픽)에 뜬다
@@ -25,6 +25,8 @@ const TEXT: Record<LoginReason, [string, string]> = {
   submit: ["로그인하면 바로 등록돼요", "쓴 내용과 사진은 이 기기에 그대로 있어요. 구글 계정으로 로그인하고 돌아오면 다시 누르지 않아도 등록돼요."],
   login: ["구글 계정으로 로그인해요", "로그인하면 댕댕이·냥이 게시판마다 하루 3픽, 연습생 등록과 응원 댓글을 할 수 있어요."],
   comment: ["댓글은 로그인 후에 남길 수 있어요", "쓰던 댓글은 그대로 남아 있어요. 로그인하면 바로 올라가요. 픽을 안 해도 댓글은 달 수 있어요."],
+  // 데뷔 화보 사진을 저장하려는데 로그인이 풀렸을 때(#17). 보던 화보 사진 올리기 화면으로 돌아온다
+  gallery: ["로그인하고 다시 저장해 주세요", "로그인이 풀렸어요. 구글 계정으로 로그인하고 돌아오면 사진을 다시 골라 저장해 주세요."],
   report: ["신고는 로그인 후에 할 수 있어요", "같은 사람이 여러 번 신고하지 못하게 구글 계정으로 받아요. 로그인하고 돌아와 신고를 다시 눌러 주세요."],
 };
 
@@ -43,7 +45,7 @@ export function LoginSheetProvider({ children }: { children: React.ReactNode }) 
   const open = useCallback((r: LoginReason) => {
     if (r !== "pick" && r !== "ip") clearPendingPick();
     if (r !== "comment") clearPendingComment();
-    trackAuth("sheet", r === "submit" ? "register" : r === "report" ? "login" : r); // DB 허용 목록은 그대로(등록·로그인으로 센다)
+    trackAuth("sheet", r === "submit" ? "register" : r === "report" || r === "gallery" ? "login" : r); // DB 허용 목록은 그대로(등록·로그인으로 센다)
     setReason(r);
   }, []);
   const [title, body] = TEXT[reason ?? "pick"];

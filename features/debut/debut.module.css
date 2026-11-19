@@ -1,0 +1,88 @@
+/* 데뷔 화보 상세(#17): 잡지 표지 → 인용 → 사진 벽 → 흐르는 띠. 색·글자는 토큰만 쓴다. */
+.debut { position: relative; }
+
+/* ── 표지: 화면을 꽉 채우는 첫 사진 + 아래 큰 이름 ── */
+.cover { position: relative; height: min(78vh, 720px); min-height: 440px; overflow: hidden; background: var(--pd-paper-2); border-radius: var(--pd-r-lg); }
+.cover img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; animation: coverIn 1.4s cubic-bezier(.2, .7, .2, 1) both; }
+.scrim { position: absolute; inset: auto 0 0 0; height: 60%; background: linear-gradient(transparent, rgb(var(--pd-shade) / 0.65)); }
+.coverText { position: absolute; left: var(--pd-gutter); right: var(--pd-gutter); bottom: 28px; display: flex; flex-direction: column; align-items: flex-start; gap: 6px; color: var(--pd-on-photo); }
+/* 메인 표지 .kick 과 같은 알약 */
+.kick { font-family: var(--pd-f-display); font-size: var(--pd-fs-ui); background: var(--pd-butter); color: var(--pd-on-butter); border-radius: var(--pd-r-pill); padding: 4px 10px; }
+.coverText h1 { margin: 0; font-family: var(--pd-f-display); font-weight: 400; font-size: var(--pd-fs-star); line-height: 0.95; overflow-wrap: anywhere; max-width: 100%; letter-spacing: -0.02em; text-shadow: 0 4px 24px rgb(var(--pd-shade) / 0.45); animation: nameIn 0.9s 0.3s cubic-bezier(.2, .7, .2, 1) both; }
+.coverText p { margin: 0; font-size: var(--pd-fs-body); font-weight: 700; background: var(--pd-pink); color: var(--pd-on-pink); border-radius: var(--pd-r-xs); padding: 4px 10px; }
+@keyframes coverIn { from { transform: scale(1.12); opacity: 0.4; } to { transform: none; opacity: 1; } }
+@keyframes nameIn { from { transform: translateY(24px); opacity: 0; } to { transform: none; opacity: 1; } }
+
+/* ── 소개 인용·SNS·공유·주인 안내 ── */
+.intro { padding: 28px var(--pd-gutter) 0; display: flex; flex-direction: column; gap: 18px; }
+.intro blockquote { margin: 0; padding-left: 16px; border-left: 4px solid var(--pd-ink); }
+.intro blockquote p { margin: 0; font-family: var(--pd-f-display); font-size: var(--pd-fs-number); line-height: 1.4; color: var(--pd-ink); text-wrap: balance; }
+.act { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; }
+.snsBtn { display: inline-flex; width: 44px; height: 44px; align-items: center; justify-content: center; border-radius: var(--pd-r-xs); }
+.owner { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 10px; padding: 14px; border-radius: var(--pd-r-sm); box-shadow: inset 0 0 0 1px var(--pd-jelly-2); font-size: var(--pd-fs-ui); color: var(--pd-ink-2); line-height: 1.6; }
+.owner p { margin: 0; flex: 1 1 220px; }
+.owner b { color: var(--pd-ink); }
+/* 지금 오디션으로 가는 길(손님 다음 갈 곳) */
+.next { margin: var(--pd-gap-section) var(--pd-gutter) 0; display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 10px; font-size: var(--pd-fs-ui); color: var(--pd-ink-2); }
+
+/* ── 사진 벽: 휴대폰 2열·넓으면 3열 엇갈림, 들어올 때 차례로 펼쳐짐(--i) ── */
+.wallSec { padding: var(--pd-gap-section) var(--pd-gutter) 0; }
+.wallSec h2 { margin: 0 0 14px; font-family: var(--pd-f-display); font-weight: 400; font-size: var(--pd-fs-section); color: var(--pd-ink); }
+.wallSec h2 small { font-family: var(--pd-f-body); font-size: var(--pd-fs-small); color: var(--pd-ink-2); }
+/* 격자라 보이는 순서와 읽는 순서가 같다. 첫 장은 두 칸을 차지해 잡지처럼 크게 */
+.wall { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+.wall li { min-width: 0; animation: wallIn 0.7s calc(0.5s + min(var(--i), 5) * 0.08s) cubic-bezier(.2, .7, .2, 1) both; }
+.wall li:first-child { grid-column: span 2; }
+.wall img { display: block; width: 100%; aspect-ratio: 4 / 5; object-fit: cover; border-radius: var(--pd-r-md); background: var(--pd-paper-2); }
+.wall li:first-child img { aspect-ratio: 4 / 3; }
+@keyframes wallIn { from { transform: translateY(30px) scale(0.96); opacity: 0; } to { transform: none; opacity: 1; } }
+
+/* ── 천천히 흐르는 사진 띠: 같은 목록 두 번 → -50% 이동이면 이음매 없이 돈다 ── */
+.strip { margin: var(--pd-gap-section) 0 0; overflow: hidden; }
+/* 간격을 gap 이 아니라 사진마다 오른쪽 여백으로 줘야 두 벌 폭이 정확히 같아 -50% 이음매가 안 튄다 */
+.stripTrack { display: flex; width: max-content; animation: drift 60s linear 3; }
+.stripTrack img { margin-right: 10px; height: 120px; width: auto; aspect-ratio: 4 / 5; object-fit: cover; border-radius: var(--pd-r-sm); background: var(--pd-paper-2); }
+@keyframes drift { to { transform: translateX(-50%); } }
+@media (hover: hover) { .strip:hover .stripTrack { animation-play-state: paused; } }
+
+.comments { padding: var(--pd-gap-section) var(--pd-gutter) 40px; }
+
+/* ── 꽃가루: 위에서 한 번 쏟아지고 사라짐 ── */
+.confetti { position: fixed; inset: 0; z-index: 30; pointer-events: none; overflow: hidden; }
+.confetti i { position: absolute; top: -20px; left: var(--x); width: 9px; height: 13px; background: var(--pd-pink); transform: rotate(var(--r)); opacity: 0; animation: fall 2.4s var(--d) cubic-bezier(.25, .6, .4, 1) forwards; }
+.confetti i[data-c="1"] { background: var(--pd-butter); box-shadow: inset 0 0 0 1px var(--pd-jelly); }
+.confetti i[data-c="2"] { background: var(--pd-ink); }
+.confetti i[data-c="3"] { background: var(--pd-ink-2); }
+.confetti i[data-w="1"] { width: 5px; height: 18px; }
+.confetti i[data-w="2"] { width: 10px; height: 10px; border-radius: 50%; }
+@keyframes fall {
+  0% { opacity: 1; transform: translateY(0) rotate(var(--r)); }
+  85% { opacity: 1; }
+  100% { opacity: 0; transform: translateY(105vh) rotate(calc(var(--r) + 540deg)); }
+}
+
+@media (min-width: 720px) {
+  .wall { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px; }
+  .wall li:first-child { grid-row: span 2; }
+  .wall li:first-child img { aspect-ratio: auto; height: 100%; }
+  .stripTrack img { height: 160px; }
+}
+@media (min-width: 1024px) {
+  .cover { border-radius: var(--pd-r-xl); margin-top: 8px; }
+  .coverText { left: 40px; bottom: 40px; }
+  .coverText h1 { font-size: var(--pd-fs-d-star); }
+  .intro { padding: 40px 0 8px; flex-direction: row; flex-wrap: wrap; align-items: center; justify-content: space-between; }
+  .intro blockquote { flex: 1 1 520px; }
+  .owner { flex: 1 0 100%; }
+  .wallSec { padding: 32px 0 0; }
+  .comments { padding: 16px 0 56px; }
+  .next { margin-inline: 0; }
+}
+
+/* 움직임 줄이기: 꽃가루·흐름·펼침 없이 사진만 */
+@media (prefers-reduced-motion: reduce) {
+  .confetti { display: none; }
+  .cover img, .coverText h1, .wall li { animation: none; }
+  /* 같은 사진이 사진 벽에 다 있으니 흐르는 띠는 통째로 숨긴다 */
+  .strip { display: none; }
+}

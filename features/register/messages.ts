@@ -12,7 +12,15 @@ export const ENTRY_ERROR_TEXT: Record<string, string> = {
   not_owner: "내 글만 고칠 수 있어요",
   not_found: "글을 찾지 못했어요. 지워졌을 수 있어요",
   signin_required: "구글로 로그인한 회원만 올릴 수 있어요",
+  not_debut: "데뷔한 글에만 화보 사진을 올릴 수 있어요",
 };
+
+/** 사진을 줄이지 못했을 때 문구(photo.ts 의 PhotoError). 등록 폼·데뷔 화보 사진 올리기가 같이 쓴다 */
+export const PHOTO_ERROR_TEXT = {
+  not_image: "이 사진은 열 수 없어요. JPG·PNG 로 다시 골라 주세요",
+  too_big: "사진이 너무 커요. 다른 사진을 골라 주세요",
+  unsupported: "이 브라우저에서는 사진을 줄일 수 없어요. 최신 크롬·사파리에서 올려 주세요",
+} as const;
 
 export function entryErrorText(message: string | undefined): string {
   return (message && ENTRY_ERROR_TEXT[message]) || "저장하지 못했어요. 잠시 뒤 다시 눌러 주세요";

@@ -19,7 +19,7 @@ import { usePicks } from "@/features/picks/PicksProvider";
 import { PickButton } from "@/features/picks/PickButton";
 import { clearDraft, loadDraftPhotos, loadDraftText, saveDraftPhotos, saveDraftText } from "./draft";
 import { BIO_MAX, NAME_MAX, PHOTO_MAX, charLen, normalizeSns } from "./fields";
-import { entryErrorText } from "./messages";
+import { PHOTO_ERROR_TEXT, entryErrorText } from "./messages";
 import { PhotoError, photoExt, processPhoto, type ProcessedPhoto } from "./photo";
 import s from "./register.module.css";
 
@@ -40,11 +40,7 @@ export type EditInitial = {
 type Props = { mode: "create"; left: number; resumeSubmit?: boolean } | { mode: "edit"; initial: EditInitial };
 
 const SNS_HINT: Record<SnsKind, string> = { instagram: "@아이디", threads: "@아이디", youtube: "@핸들 또는 채널 주소" };
-const PHOTO_ERROR: Record<PhotoError["reason"], string> = {
-  not_image: "이 사진은 열 수 없어요. JPG·PNG 로 다시 골라 주세요",
-  too_big: "사진이 너무 커요. 다른 사진을 골라 주세요",
-  unsupported: "이 브라우저에서는 사진을 줄일 수 없어요. 최신 크롬·사파리에서 올려 주세요",
-};
+const PHOTO_ERROR: Record<PhotoError["reason"], string> = PHOTO_ERROR_TEXT;
 
 const newKey = () => Math.random().toString(36).slice(2);
 const fileName = () => crypto.randomUUID().replace(/-/g, "");

@@ -30,6 +30,7 @@ import { ShareVisit } from "@/features/share/ShareVisit";
 import { PhotoPager } from "./PhotoPager";
 import { SiteNav } from "./SiteNav";
 import { countView } from "./views";
+import { DebutDetail } from "@/features/debut/DebutDetail";
 import s from "./entries.module.css";
 
 export const getEntry = cache(async (id: string) => loadEntry(await createClient(), id));
@@ -61,6 +62,9 @@ export async function DetailPage({ board, id, fresh = false }: { board: Board; i
   }
   // 숨긴 글은 주인에게만 보이고 댓글도 받지 않는다(add_comment 가 막는다)
   const comments = e.hidden ? null : await commentsP;
+
+  // 데뷔한 글은 화보 상세(#17). 숨긴 글(주인만 봄)은 숨김 안내가 있는 일반 상세로 둔다
+  if (e.debut && !e.hidden) return <DebutDetail e={e} board={board} comments={comments} />;
 
   const closed = e.is_mine ? "mine" : !e.round.open ? "ended" : undefined;
   // SNS 는 데뷔 후보부터(#21). 주인 화면에도 같은 규칙으로 보여 줘서 남이 보는 모습과 같게 한다
