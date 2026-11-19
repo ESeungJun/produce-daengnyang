@@ -6,7 +6,7 @@
 -- ─────────────────────────────────────────────────────────────
 begin;
 create extension if not exists pgtap with schema extensions;
-select plan(166);
+select plan(169);
 
 -- ── 준비(관리자 권한) ───────────────────────────────────────
 -- 사용자: A·B·D 구글 연결(회원), C 익명, E 이메일 가입(구글 연결 없음 → 회원 아님)
@@ -388,6 +388,15 @@ set local role authenticated;
 set local request.jwt.claims = '{"sub":"00000000-0000-0000-0000-0000000000d1","role":"authenticated","is_anonymous":false}';
 select lives_ok($$select public.set_debut_photos('00000000-0000-0000-0000-00000000f002', '[{"path":"00000000-0000-0000-0000-0000000000d1/g1.webp","thumb_path":"00000000-0000-0000-0000-0000000000d1/g1t.webp"}]')$$, '데뷔 주인은 화보 사진을 더한다');
 select is(jsonb_array_length(public.get_entry('00000000-0000-0000-0000-00000000f002') -> 'gallery'), 1, '상세에 화보 사진이 붙는다');
+-- #24 옛 링크: 주간 글(f005)의 결선 복사본(f002)이 데뷔하면 주간 글 상세에 데뷔 글로 가는 띠
+set local role postgres;
+update public.entries set source_entry_id = '00000000-0000-0000-0000-00000000f005' where id = '00000000-0000-0000-0000-00000000f002';
+set local role authenticated;
+select is(public.get_entry('00000000-0000-0000-0000-00000000f005') -> 'debut_link' ->> 'id', '00000000-0000-0000-0000-00000000f002', '옛 주간 글에 데뷔한 복사본 링크가 붙는다(#24)');
+select ok(public.get_entry('00000000-0000-0000-0000-00000000f002') -> 'debut_link' = 'null'::jsonb, '데뷔 글 자신에는 띠가 없다(#24)');
+set local role postgres;
+update public.entries set source_entry_id = null where id = '00000000-0000-0000-0000-00000000f002';
+set local role authenticated;
 select throws_ok($$select public.set_debut_photos('00000000-0000-0000-0000-00000000f004', '[{"path":"00000000-0000-0000-0000-0000000000d1/g1.webp","thumb_path":"00000000-0000-0000-0000-0000000000d1/g1t.webp"}]')$$, 'P0001', 'not_debut', '데뷔가 아닌 글은 화보 사진을 못 단다');
 select throws_ok($$select public.set_debut_photos('00000000-0000-0000-0000-00000000f002', (select jsonb_agg(jsonb_build_object('path', '00000000-0000-0000-0000-0000000000d1/g1.webp', 'thumb_path', '00000000-0000-0000-0000-0000000000d1/g1t.webp')) from generate_series(1, 11)))$$, 'P0001', 'invalid_photo', '11장은 거절');
 select throws_ok($$select public.set_debut_photos('00000000-0000-0000-0000-00000000f002', '{"path":"x"}')$$, 'P0001', 'invalid_photo', '배열이 아니면 거절');
@@ -442,6 +451,7 @@ select is(public.record_sns(array['00000000-0000-0000-0000-00000000f004']::uuid[
 select is(public.record_sns(array['00000000-0000-0000-0000-00000000f004']::uuid[], 'share_visit', 'detail', 'visitor-cccc'), 0, '같은 사람의 공유 방문은 하루 한 번');
 select is(public.record_sns(array['00000000-0000-0000-0000-00000000f004']::uuid[], 'share_insta_story', 'detail', 'visitor-cccc'), 1, '인스타 스토리 이미지 공유를 남긴다(#18)');
 select is(public.record_sns(array['00000000-0000-0000-0000-00000000f004']::uuid[], 'share_insta_save', 'detail', 'visitor-cccc'), 1, '인스타 이미지 저장을 남긴다(#18)');
+select is(public.record_sns(array['00000000-0000-0000-0000-00000000f004']::uuid[], 'share_insta_save', 'debut', 'visitor-cccc'), 1, '데뷔 화보 자리는 따로 센다(#24)');
 select is(public.record_sns(array['00000000-0000-0000-0000-00000000f004']::uuid[], 'share_copy', 'hall', 'visitor-aaaa'), 0, '모르는 자리는 버린다');
 reset role;
 update public.sns_daily set n = 200000 where kst_date = public.kst_today();

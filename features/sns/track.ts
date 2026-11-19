@@ -8,7 +8,8 @@ import { browserVisitorKey } from "@/shared/lib/visitor";
 import type { SnsKind } from "@/shared/lib/format";
 
 /** cover 표지 · center 센터 화보 · banner 위 센터 띠 · detail 글 상세 · register 등록 직후 띠 (DB check 와 같아야 한다) */
-export type SnsPlace = "cover" | "center" | "banner" | "detail" | "register";
+/** 기록 자리. debut = 데뷔 화보 상세(#24, 일반 상세 detail 과 나눠 센다) */
+export type SnsPlace = "cover" | "center" | "banner" | "detail" | "register" | "debut";
 /** 공유 기록(#15): 공유 창 · 문구 복사 · 직접 고르는 칸 · 공유 주소로 들어온 방문. #18 인스타 이미지: 스토리·피드 공유창 · 저장 */
 export type ShareKind = "share_sheet" | "share_copy" | "share_manual" | "share_visit" | "share_insta_story" | "share_insta_feed" | "share_insta_save";
 
