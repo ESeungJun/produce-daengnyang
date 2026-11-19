@@ -14,3 +14,10 @@
 
 ## America's Favorite Pet (나쁜 예)
 - 피할 점: 유료 표를 권하는 화면, "지금 이기고 있어요" 식의 조급함 유도. 순위는 실제 표 그대로.
+
+## 매거진 웹 화보 (#31, 2026-11-19 조사, 가져올 점)
+- 본 곳: Vogue "Dogue"(https://www.vogue.com/article/dogue-2026-competition-winner), Kinfolk(https://www.kinfolk.com/stories/balming-tiger/), i-D(https://i-d.co/article/mia-goth-interview-the-odyssey/), Apartamento(https://www.apartamentomagazine.com/stories/a-conversation-with-jeremy-liebman/), Monocle, Photo Vogue, Magnum "Magnum Dogs", Four&Sons, Bon Appétit, New Yorker Photo Booth.
+- 무엇이 좋은가: 사진 한 장 → 짝 → 글 → 큰 인용 → 화면 가득 사진 순으로 리듬이 바뀐다. 본문 단은 640~720px 로 좁고 사진은 그보다 넓다. 제목 위 작은 꼭지 줄(연재명·분야·날짜), 제목 아래 이탤릭·가벼운 덱 한두 줄.
+- 가져온 점: 휴대폰 표지는 이름을 사진 아래 흰 지면에, 연재 꼭지 줄 "데뷔 화보 · 2026.10 · 댕댕이", 소개를 덱으로, 첫 문단을 키운 리드 문단(Kinfolk), 끝 표시 ■. 번호 꼭지(01 소개)는 써 봤다가 사진 칸 번호와 겹쳐 뺐다.
+- 나중에 가져올 점: Vogue Dogue 의 주인 Q&A(굵은 질문 + 보통 답), 기사 끝 같은 연재 목록("지난 데뷔"), 크레딧 줄 "글·사진 ○○ 보호자 @아이디".
+- 피할 점: 휴대폰에서 사진 위 큰 제목(Apartamento 휴대폰에서 "conversati / on" 처럼 끊김), 사진마다 같은 캡션 되풀이, 큰 인용을 여러 번·장식 따옴표 그림, 드롭캡(열어 본 웹 매거진 모두 쓰지 않음).

@@ -12,7 +12,10 @@ export const ENTRY_ERROR_TEXT: Record<string, string> = {
   not_owner: "내 글만 고칠 수 있어요",
   not_found: "글을 찾지 못했어요. 지워졌을 수 있어요",
   signin_required: "구글로 로그인한 회원만 올릴 수 있어요",
-  not_debut: "데뷔한 글에만 화보 사진을 올릴 수 있어요",
+  not_debut: "데뷔한 글에만 화보를 올릴 수 있어요",
+  invalid_note: "글은 종류마다 하나씩, 본문 1~600자·제목 40자까지 적을 수 있어요",
+  banned_word: "쓸 수 없는 말이 있어요. 띄어쓰기를 빼고 읽으면 욕이 되는 말(예: 한 병 신나게)도 막혀요. 고쳐서 다시 저장해 주세요",
+  note_hidden: "보이지 않는 특수 글자가 섞여 있어요. 복사해 붙인 부분을 지우고 다시 써 주세요",
 };
 
 /** 사진을 줄이지 못했을 때 문구(photo.ts 의 PhotoError). 등록 폼·데뷔 화보 사진 올리기가 같이 쓴다 */

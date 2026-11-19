@@ -1,9 +1,11 @@
 /**
- * 데뷔 화보 상세(#17). 데뷔한 글(get_entry.debut)은 일반 상세 대신 잡지 화보처럼 보여 준다.
- * 순서: 꽉 찬 표지(첫 사진 + 큰 이름 + 데뷔 표 수) → 소개 인용 + SNS·공유 + 인스타에 올리기(#18) → 사진 벽(원래 사진 + 화보 사진) → 천천히 흐르는 사진 띠 → 응원 댓글.
- * 들어올 때 꽃가루가 한 번 터진다(Confetti, 같은 글은 세션에 한 번). 사진 벽은 눌러서 크게 본다(PhotoWall, #24).
+ * 데뷔 화보 상세(#17). 데뷔한 글(get_entry.debut)은 일반 상세 대신 잡지 화보로 보여 준다.
+ * 순서: 좌우로 넘기는 잡지 한 권(Magazine: 표지 → 차례 → 사진·글 쪽 → 뒷표지, #31 "진짜 매거진을 넘겨 보듯")
+ *       → SNS·공유 + 인스타에 올리기(#18) + 주인 안내 → 천천히 흐르는 사진 띠 → 응원 댓글.
+ * 이름(h1)·소개 덱·표 수는 잡지 표지에, "다음 데뷔는 지금 오디션에서" 길은 뒷표지에 있다.
+ * 들어올 때 꽃가루가 한 번 터진다(Confetti, 같은 글은 세션에 한 번). 사진은 눌러서 크게 본다(Magazine, #24).
  * 공유·SNS·인스타 기록은 자리 debut 로 남겨 일반 상세(detail)와 나눠 센다(#24). '움직임 줄이기'면 꽃가루·흐름 없이 사진만(CSS).
- * 주인에게는 "화보 올리기"(사진·GIF·동영상 최대 10칸, #31, /<게시판>/<글>/gallery) 길을 둔다. 숨긴 글은 이 화면을 쓰지 않는다(DetailPage 가 거른다).
+ * 주인에게는 "화보 올리기"(사진·GIF·동영상 최대 10칸과 글 꼭지, #31, /<게시판>/<글>/gallery) 길을 둔다. 숨긴 글은 이 화면을 쓰지 않는다(DetailPage 가 거른다).
  * 부르는 곳: features/entries/DetailPage.
  */
 import Link from "next/link";
@@ -16,14 +18,14 @@ import { Comments } from "@/features/comments/Comments";
 import type { loadComments } from "@/features/comments/api";
 import { ReportButton } from "@/features/comments/ReportButton";
 import { CopyLink } from "@/features/entries/CopyLink";
-import type { EntryDetail } from "@/features/entries/api";
+import { isNote, type EntryDetail } from "@/features/entries/api";
 import { SiteNav } from "@/features/entries/SiteNav";
 import { Impression } from "@/features/sns/Impression";
 import { SnsLink } from "@/features/sns/SnsLink";
 import { ShareVisit } from "@/features/share/ShareVisit";
 import { Confetti } from "./Confetti";
 import { InstaShare } from "./InstaShare";
-import { PhotoWall } from "./PhotoWall";
+import { Magazine } from "./Magazine";
 import { GALLERY_MAX } from "./limits";
 import d from "@/features/entries/entries.module.css";
 import s from "./debut.module.css";
@@ -38,12 +40,15 @@ type Props = {
 const debutMonthOf = (month: string) => Number(month.slice(5, 7));
 
 export function DebutDetail({ e, board, comments }: Props) {
-  const all = [...e.photos, ...e.gallery];
+  // 사진·GIF·동영상 칸(표지·띠·컷 수)과, 글 꼭지까지 섞인 지면 순서(벽)
+  const shots = e.gallery.filter((g) => !isNote(g));
+  const all = [...e.photos, ...shots];
   const sns = e.sns_open ? snsLinks(e) : [];
   const m = debutMonthOf(e.round.month);
   // 흐르는 띠는 끊김 없이 돌도록 같은 목록을 두 번 잇는다(띠 전체가 읽기 도구에서 숨김). 세 바퀴(3분) 돌고 멈춘다
   // 넓은 화면에서도 띠 끝이 비지 않게 한 벌을 8장 이상으로 채운다(사진이 적으면 되풀이)
-  const strip = Array.from({ length: Math.ceil(8 / all.length) }, () => all).flat();
+  // 칸이 하나도 없으면(이론상 원래 사진이 늘 있지만) 띠를 그리지 않는다(8/0 = Infinity 길이 배열 방지)
+  const strip = all.length ? Array.from({ length: Math.ceil(8 / all.length) }, () => all).flat() : [];
 
   return (
     <div className={`${page.page} ${s.debut}`}>
@@ -51,24 +56,20 @@ export function DebutDetail({ e, board, comments }: Props) {
       <ShareVisit entryId={e.id} place="debut" />
       <Confetti entryId={e.id} />
 
-      <header className={s.cover}>
-        <img src={photoUrl(all[0]?.path) ?? undefined} alt={`${e.pet_name} 데뷔 화보 표지`} fetchPriority="high" decoding="async" />
-        <span className={s.scrim} aria-hidden="true" />
-        <div className={s.coverText}>
-          <span className={s.kick}>
-            {m}월 데뷔 · {BOARD_NAME[board]}
-          </span>
-          <h1>{e.pet_name}</h1>
-          <p>{e.pick_count !== null ? `${count(e.pick_count)}표로 데뷔` : "데뷔 평가 통과"}</p>
-        </div>
-      </header>
+      <Magazine
+        items={[...e.photos, ...e.gallery]}
+        name={e.pet_name}
+        bio={e.bio}
+        board={board}
+        boardName={BOARD_NAME[board]}
+        issue={`${e.round.month.slice(0, 4)}.${e.round.month.slice(5, 7)}`}
+        month={m}
+        votes={e.pick_count !== null ? `${count(e.pick_count)}표로 데뷔` : "데뷔 평가 통과"}
+        editHref={e.is_mine ? `/${board}/${e.id}/gallery` : undefined}
+      />
 
-      <section className={s.intro}>
-        {e.bio ? (
-          <blockquote>
-            <p>{e.bio}</p>
-          </blockquote>
-        ) : null}
+      {/* 뒷표지의 "SNS·공유" 길이 오는 자리 */}
+      <section className={s.intro} id="debut-share">
         <Impression className={s.act} ids={sns.length ? [e.id] : []} place="debut">
           {sns.map((x) => (
             <SnsLink key={x.kind} className={s.snsBtn} entryId={e.id} sns={x} place="debut" iconSize="lg" label={`${e.pet_name} ${SNS_NAME[x.kind]} ${x.handle}, 새 창`} />
@@ -81,7 +82,7 @@ export function DebutDetail({ e, board, comments }: Props) {
         {e.is_mine ? (
           <div className={s.owner}>
             <p>
-              <b>데뷔를 축하해요!</b> 화보에 사진·GIF·동영상을 {GALLERY_MAX}칸까지 더 올릴 수 있어요({e.gallery.length}/{GALLERY_MAX}).
+              <b>데뷔를 축하해요!</b> 화보에 사진·GIF·동영상을 {GALLERY_MAX}칸까지, 소개·소감 같은 글도 함께 올릴 수 있어요({shots.length}/{GALLERY_MAX}).
             </p>
             <Link className={ui.pill} href={`/${board}/${e.id}/gallery`}>
               화보 올리기
@@ -90,30 +91,18 @@ export function DebutDetail({ e, board, comments }: Props) {
         ) : null}
       </section>
 
-      <section className={s.wallSec} aria-labelledby="debut-wall">
-        <h2 id="debut-wall">
-          {e.pet_name} 화보 <small>{all.length}컷</small>
-        </h2>
-        <PhotoWall photos={all} name={e.pet_name} />
-      </section>
-
-      <div className={s.strip} aria-hidden="true">
-        <div className={s.stripTrack}>
-          {[...strip, ...strip].map((p, i) => (
-            <img key={`${p.path}-${i}`} src={photoUrl(p.thumb_path) ?? undefined} alt="" loading="lazy" decoding="async" />
-          ))}
+      {strip.length ? (
+        <div className={s.strip} aria-hidden="true">
+          <div className={s.stripTrack}>
+            {[...strip, ...strip].map((p, i) => (
+              <img key={`${p.path}-${i}`} src={photoUrl(p.thumb_path) ?? undefined} alt="" loading="lazy" decoding="async" />
+            ))}
+          </div>
         </div>
-      </div>
+      ) : null}
 
-      {/* 데뷔 화보는 다음 달 내내 메인에서 손님이 가장 많이 들어오는 곳이라, 지금 오디션으로 가는 길을 둔다 */}
-      <p className={s.next}>
-        <span>다음 데뷔는 지금 오디션에서 뽑아요.</span>
-        <Link className={ui.pill} href={`/${board}`}>
-          {BOARD_NAME[board]} 연습생 픽하러 가기
-        </Link>
-      </p>
-
-      <div className={s.comments}>
+      {/* 뒷표지의 "응원 댓글 쓰기" 길이 오는 자리 */}
+      <div className={s.comments} id="debut-cheer">
         {comments ? <Comments entryId={e.id} petName={e.pet_name} initial={comments.items} total={comments.total} loadFailed={comments.failed} /> : null}
       </div>
     </div>

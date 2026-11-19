@@ -7,7 +7,7 @@ import { createClient } from "@supabase/supabase-js";
 import type { Database } from "@/shared/lib/supabase/database.types";
 import { supabaseEnv } from "@/shared/lib/supabase/env";
 import { BOARD_NAME, count, isBoard } from "@/shared/lib/format";
-import { loadEntry } from "@/features/entries/api";
+import { isNote, loadEntry } from "@/features/entries/api";
 import { instaImage, isInstaFormat } from "@/features/share/insta";
 
 const SITE = process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3104";
@@ -25,7 +25,7 @@ export async function GET(_req: Request, { params }: { params: Promise<{ board: 
     petName: e.pet_name,
     kick: `${month}월 데뷔 · ${BOARD_NAME[board]}`,
     votes: e.pick_count !== null ? `${count(e.pick_count)}표로 데뷔` : "데뷔 평가 통과",
-    photo: [...e.photos, ...e.gallery][0]?.path,
+    photo: [...e.photos, ...e.gallery.filter((g) => !isNote(g))][0]?.path,
     host: new URL(SITE).host,
   });
 }

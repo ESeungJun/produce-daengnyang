@@ -73,14 +73,14 @@ isOneToOne: false
                   ]
                 },"debut_photos": {
                   Row: {
-                    "created_at": string,"entry_id": string,"kind": string,"path": string,"position": number,"thumb_path": string
+                    "body": string | null,"created_at": string,"entry_id": string,"kind": string,"note_kind": string | null,"path": string | null,"position": number,"thumb_path": string | null,"title": string | null
                   }
                   ComputedFields: never
                   Insert: {
-                    "created_at"?: string,"entry_id": string,"kind"?: string,"path": string,"position": number,"thumb_path": string
+                    "body"?: string | null,"created_at"?: string,"entry_id": string,"kind"?: string,"note_kind"?: string | null,"path"?: string | null,"position": number,"thumb_path"?: string | null,"title"?: string | null
                   }
                   Update: {
-                    "created_at"?: string,"entry_id"?: string,"kind"?: string,"path"?: string,"position"?: number,"thumb_path"?: string
+                    "body"?: string | null,"created_at"?: string,"entry_id"?: string,"kind"?: string,"note_kind"?: string | null,"path"?: string | null,"position"?: number,"thumb_path"?: string | null,"title"?: string | null
                   }
                   Relationships: [
                     {
@@ -403,17 +403,26 @@ isOneToOne: false
 "cast_pick":
 { Args: { "p_entry_id": string }; Returns: Json
                            },
+"check_debut_notes":
+{ Args: { "p_entry_id": string,"p_photos": Json }; Returns: undefined
+                           },
 "check_entry_fields":
 { Args: { "p_bio": string,"p_instagram": string,"p_pet_name": string,"p_threads": string,"p_youtube": string }; Returns: undefined
                            },
 "check_gallery_set":
 { Args: { "p_items": Json,"p_owner": string }; Returns: undefined
                            },
+"check_note":
+{ Args: { "item": Json }; Returns: undefined
+                           },
 "check_photo_set":
 { Args: { "p_max": number,"p_min": number,"p_owner": string,"p_photos": Json }; Returns: undefined
                            },
 "check_photos":
 { Args: { "p_owner": string,"p_photos": Json }; Returns: undefined
+                           },
+"clean_gallery":
+{ Args: { "p_items": Json }; Returns: Json
                            },
 "client_ip_hash":
 { Args: Record<PropertyKey, never>; Returns: string

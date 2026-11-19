@@ -27,9 +27,7 @@ test("손님 첫 1픽 → 두 번째 픽에 로그인 시트(닫으면 그 픽�
   await page.getByRole("button", { name: "그냥 구경할게요" }).click();
 
   // 3. 구글 로그인은 시험에서 못 거치므로, 익명 사용자에 구글 연결을 붙인다(앱의 linkIdentity 와 같은 결과: 같은 uid)
-  const uid = sql<{ id: string }>(
-    `select id from auth.users where is_anonymous and created_at > now() - interval '5 minutes' order by created_at desc limit 1`,
-  )[0]?.id;
+  const uid = sql<{ id: string }>(`select id from auth.users where is_anonymous and created_at > now() - interval '5 minutes' order by created_at desc limit 1`)[0]?.id;
   expect(uid, "첫 픽에서 익명 사용자가 생겨야 해요").toBeTruthy();
   linkGoogle(uid!);
   await refreshSession(context, baseURL!);
@@ -60,9 +58,7 @@ test("로그인 시트에서 닫지 않고 로그인하면 하려던 픽이 이�
   await pickButtons(page).first().click();
   await expect(page.getByRole("dialog", { name: "픽을 더 하려면 로그인해 주세요" })).toBeVisible();
   // "구글로 계속하기"를 누른 것과 같다: 시트를 닫지 않은 채 같은 사용자에 구글이 붙고 세션을 새로 받아 돌아온다
-  const uid = sql<{ id: string }>(
-    `select id from auth.users where is_anonymous and created_at > now() - interval '5 minutes' order by created_at desc limit 1`,
-  )[0]?.id;
+  const uid = sql<{ id: string }>(`select id from auth.users where is_anonymous and created_at > now() - interval '5 minutes' order by created_at desc limit 1`)[0]?.id;
   expect(uid, "첫 픽에서 익명 사용자가 생겨야 해요").toBeTruthy();
   linkGoogle(uid!);
   await refreshSession(context, baseURL!);
@@ -157,7 +153,7 @@ test("가림 기간: 마감 24시간 전부터 순위·표 수를 가리고 섞�
   }
 });
 
-test("데뷔 화보: 주인이 사진을 더하면 화보 벽에 늘고, 빼고 저장하면 줄어든다", async ({ page, context, baseURL }) => {
+test("데뷔 화보: 주인이 사진을 더하면 잡지 칸이 늘고, 빼고 저장하면 줄어든다", async ({ page, context, baseURL }) => {
   const debut = sql<{ id: string; board: string; owner_id: string }>(
     "select e.id, e.board, e.owner_id from public.entries e where public.is_debut(e.id) order by e.board desc limit 1",
   )[0];
@@ -166,9 +162,10 @@ test("데뷔 화보: 주인이 사진을 더하면 화보 벽에 늘고, 빼고 
   // 시험 동안만 데뷔 글 주인을 시험 회원으로 바꾼다(시드 주인은 로그인할 수 없어서)
   sql(`update public.entries set owner_id = ${lit(uid)} where id = ${lit(debut.id)}`);
   try {
-    const wall = () => page.getByRole("heading", { level: 2, name: /화보/ });
+    // 잡지의 사진 칸 이름표("… 화보 i/n …")에서 전체 칸 수 n 을 읽는다(차례 쪽은 쪽이 적으면 없어서 쓰지 않는다)
+    const total = async () => Number((await page.locator("[data-mag] [data-cell]").first().getAttribute("aria-label"))!.match(/\d+\/(\d+)/)![1]);
     await page.goto(`/${debut.board}/${debut.id}`);
-    const before = Number((await wall().textContent())!.match(/(\d+)컷/)![1]);
+    const before = await total();
 
     await page.getByRole("link", { name: "화보 올리기" }).click();
     await page.waitForURL(/\/gallery$/);
@@ -177,7 +174,7 @@ test("데뷔 화보: 주인이 사진을 더하면 화보 벽에 늘고, 빼고 
     await page.getByRole("button", { name: "화보 저장" }).click();
     await expect(page.getByText("화보를 저장했어요")).toBeVisible();
     await page.goto(`/${debut.board}/${debut.id}`);
-    await expect(wall()).toContainText(`${before + 1}컷`);
+    await expect.poll(total).toBe(before + 1);
 
     // 다시 빼고 저장하면 원래대로
     await page.goto(`/${debut.board}/${debut.id}/gallery`);
@@ -185,7 +182,7 @@ test("데뷔 화보: 주인이 사진을 더하면 화보 벽에 늘고, 빼고 
     await page.getByRole("button", { name: "화보 저장" }).click();
     await expect(page.getByText("화보를 저장했어요")).toBeVisible();
     await page.goto(`/${debut.board}/${debut.id}`);
-    await expect(wall()).toContainText(`${before}컷`);
+    await expect.poll(total).toBe(before);
   } finally {
     sql(`delete from public.debut_photos where entry_id = ${lit(debut.id)}`);
     sql(`update public.entries set owner_id = ${lit(debut.owner_id)} where id = ${lit(debut.id)}`);
