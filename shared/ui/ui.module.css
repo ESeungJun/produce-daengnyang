@@ -93,6 +93,7 @@
 }
 .tabs button[aria-selected="true"],
 .tabs button[aria-checked="true"],
+.tabs button[aria-pressed="true"],
 .tabs a[aria-current="page"] { background: var(--pd-ink); color: var(--pd-paper); }
 
 /* 정렬: 선택은 분홍 밑줄 */

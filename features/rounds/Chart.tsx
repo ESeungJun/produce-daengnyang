@@ -14,13 +14,27 @@ import type { BoardEntry } from "@/features/entries/api";
 import ui from "@/shared/ui/ui.module.css";
 import s from "./rounds.module.css";
 
-export function Chart({ lists }: { lists: Record<Board, BoardEntry[]> }) {
-  const [tab, setTab] = useState<Board>("dog");
+/** only: 메인 한쪽 보기(#26)면 그 게시판 차트 하나만(탭 없이 넓게) */
+export function Chart({ lists, only }: { lists: Record<Board, BoardEntry[]>; only?: Board }) {
+  const [tab, setTab] = useState<Board>(only ?? "dog");
   const { setFocusBoard } = usePicks();
   const choose = (b: Board) => {
     setTab(b);
     setFocusBoard(b);
   };
+  if (only) {
+    return (
+      <div className={s.boards} data-single="">
+        <section className={s.boardPanel} data-active aria-labelledby={`chart-title-${only}`}>
+          <h3 className={s.boardTitle} id={`chart-title-${only}`}>
+            {BOARD_NAME[only]}
+            <Link href={`/${only}`}>전체 보기</Link>
+          </h3>
+          <ChartList board={only} items={lists[only]} />
+        </section>
+      </div>
+    );
+  }
   return (
     <>
       <div className={`${ui.tabs} ${s.tabs}`} role="tablist" aria-label="게시판">
