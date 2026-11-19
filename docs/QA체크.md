@@ -128,7 +128,7 @@ P0 실패 없음.
 | 3 | 움직임 줄이기면 꽃가루·흐름·펼침 없음 | `prefers-reduced-motion` CSS 확인 | ✅ |
 | 4 | 데뷔가 아닌 글은 기존 상세 그대로 | `e.debut` 거짓이면 기존 분기, 캡처 비교 | ✅ |
 | 5 | 데뷔 주인만 화보 사진 0~10장, 남·데뷔 아닌 글은 거절 | pgTAP(not_owner·not_debut·invalid_photo) | ✅ |
-| 6 | 화보 사진이 메인 데뷔 사진 뒤에 붙음 | pgTAP `get_featured_at` | ✅ |
+| 6 | 메인 데뷔 배너는 원래 사진만 넘기고 화보 사진은 싣지 않음(#23에서 바꿈), 내 글 화보 링크는 `is_debut` 기준 | pgTAP `get_featured_at`·`my_entries`, 로컬 전후 캡처 | ✅ |
 | 7 | 뺀 화보 파일만 지울 목록으로 돌려줌 | pgTAP `removed` | ✅ |
 | 8 | 로그인 전 /gallery 는 로그인 안내 | 캡처 8 | ✅ |
 | 9 | 화보 파일은 Storage 에서 직접 못 지움, 다른 글 투표 사진·11장·중복·배열 아님·익명·손님 역할 거절, 등록은 그대로 3장까지 | pgTAP | ✅ |
