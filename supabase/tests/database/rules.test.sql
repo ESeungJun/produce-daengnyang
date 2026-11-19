@@ -6,7 +6,7 @@
 -- ─────────────────────────────────────────────────────────────
 begin;
 create extension if not exists pgtap with schema extensions;
-select plan(161);
+select plan(162);
 
 -- ── 준비(관리자 권한) ───────────────────────────────────────
 -- 사용자: A·B·D 구글 연결(회원), C 익명, E 이메일 가입(구글 연결 없음 → 회원 아님)
@@ -405,9 +405,12 @@ select throws_ok($$select public.set_debut_photos('00000000-0000-0000-0000-00000
 set local role anon;
 select throws_ok($$select public.set_debut_photos('00000000-0000-0000-0000-00000000f002', '[]')$$, '42501', null, '손님 역할은 실행 권한이 없다');
 set local role postgres;
-select is(jsonb_array_length(public.get_featured_at('2000-06-10 12:00+09') -> 'debut' -> 0 -> 'photos'), 4, '메인 데뷔 사진(원래 3장)에 화보 사진이 뒤에 붙는다');
+select is(jsonb_array_length(public.get_featured_at('2000-06-10 12:00+09') -> 'debut' -> 0 -> 'photos'), 3, '메인 데뷔 배너는 원래 사진 3장만 넘긴다(화보 사진은 화보 상세에서만, #23)');
 set local role authenticated;
 set local request.jwt.claims = '{"sub":"00000000-0000-0000-0000-0000000000d1","role":"authenticated","is_anonymous":false}';
+-- 숨긴 1위(f001, role=debut)가 아니라 데뷔를 이어받은 2위(f002, role 없음)에 화보 링크가 붙어야 한다(#23)
+select is((select array_agg(x ->> 'id') from jsonb_array_elements(public.my_entries()) x where (x ->> 'debut')::boolean),
+          array['00000000-0000-0000-0000-00000000f002'], '내 글 목록의 debut 는 is_debut 와 같다(숨긴 role=debut 글은 아님)');
 select is(public.set_debut_photos('00000000-0000-0000-0000-00000000f002', '[]') -> 'removed',
           '["00000000-0000-0000-0000-0000000000d1/g1.webp", "00000000-0000-0000-0000-0000000000d1/g1t.webp"]'::jsonb, '화보에서 뺀 파일을 지울 목록으로 돌려준다');
 set local role postgres;

@@ -22,7 +22,7 @@ describe("parseDbTime: DB 시각 글자", () => {
 
 describe("entryState: 내 글 상태", () => {
   const base: MyEntry = {
-    id: "x", board: "dog", pet_name: "보리", thumb_path: null, pick_count: 3, view_count: 10, hidden: false,
+    id: "x", board: "dog", pet_name: "보리", thumb_path: null, pick_count: 3, view_count: 10, hidden: false, debut: false,
     created_at: "2026-11-18T00:00:00Z", round: { id: 1, kind: "weekly", seq: 3, month: "2026-11-01", open: true }, result: null,
   };
   it("열린 라운드는 투표 중·고칠 수 있음", () => expect(entryState(base)).toEqual({ label: "투표 중", tone: "live", editable: true }));

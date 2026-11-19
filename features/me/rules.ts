@@ -37,6 +37,8 @@ export type MyEntry = {
   view_count: number | null;
   hidden: boolean;
   created_at: string;
+  /** 화보 사진을 올릴 수 있는 데뷔 글인지(DB is_debut: 숨기지 않은 글 중 결선 게시판별 1등, #23) */
+  debut: boolean;
   round: { id: number; kind: "weekly" | "final"; seq: number; month: string; open: boolean };
   result: { rank: number; role: "center" | "finalist" | "debut" | null } | null;
 };
