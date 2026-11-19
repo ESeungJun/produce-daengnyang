@@ -5,15 +5,12 @@
  */
 import path from "node:path";
 import { expect, test, type Page } from "@playwright/test";
-import { linkGoogle, lit, openEntries, openRound, refreshSession, signInMember, sql } from "./support";
+import { linkGoogle, lit, needWeeklyRound, openEntries, openRound, refreshSession, signInMember, sql } from "./support";
 
 const PHOTO = path.join(__dirname, "..", "supabase", "seed-photos", "dog1.webp");
 
 // 달의 마지막 주(결선 주간)에는 열린 주간 라운드가 없다. 그 주에는 실패 대신 이유를 남기고 건너뛴다.
-test.beforeEach(() => {
-  const r = openRound();
-  test.skip(!r || r.kind !== "weekly", "열린 주간 라운드가 없어요(결선 주간이거나 seed.sql 을 다시 채워야 해요)");
-});
+test.beforeEach(() => needWeeklyRound((cond, why) => test.skip(cond, why)));
 
 /** 게시판에서 아직 픽하지 않은 글의 픽 버튼(위에서 n번째) */
 const pickButtons = (page: Page) => page.getByRole("button", { name: "댕댕이 픽하기" });

@@ -6,14 +6,11 @@
  */
 import path from "node:path";
 import { expect, test } from "@playwright/test";
-import { lit, memberToken, openEntries, openRound, putPhoto, rpcAs, sql } from "./support";
+import { lit, memberToken, needWeeklyRound, openEntries, openRound, putPhoto, rpcAs, sql } from "./support";
 
 const SEED = path.join(__dirname, "..", "supabase", "seed-photos");
 
-test.beforeEach(() => {
-  const r = openRound();
-  test.skip(!r || r.kind !== "weekly", "열린 주간 라운드가 없어요(결선 주간이거나 seed.sql 을 다시 채워야 해요)");
-});
+test.beforeEach(() => needWeeklyRound((cond, why) => test.skip(cond, why)));
 
 test("동시에 6번 픽해도 하루 3픽만 들어간다", async () => {
   const { uid, token } = await memberToken();

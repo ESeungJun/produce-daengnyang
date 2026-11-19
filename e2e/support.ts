@@ -32,15 +32,29 @@ export function localEnv(): LocalEnv {
   return env;
 }
 
-/** 로컬 DB 에 SQL 을 돌린다. select 면 결과 줄, 아니면 빈 배열 */
+/**
+ * 로컬 DB 에 SQL 을 돌린다. 결과 줄(없으면 빈 배열)을 돌려준다.
+ * 출력을 못 읽으면 조용히 빈 배열로 두지 않고 출력과 함께 멈춘다(빈 결과가 "라운드 없음 → 건너뜀"으로 보여 CI 가 아무것도 안 돌고 통과한 적이 있다).
+ */
 export function sql<T = Record<string, unknown>>(q: string): T[] {
   const [cmd, pre] = supabaseCmd();
   const out = execFileSync(cmd, [...pre, "db", "query", "-o", "json", q], { encoding: "utf8", stdio: ["ignore", "pipe", "pipe"] });
+  // insert·update·delete(returning 없음)는 JSON 대신 "DELETE 0" 같은 명령 결과만 낸다
+  if (/^\s*(INSERT|UPDATE|DELETE|CREATE|ALTER|DROP|TRUNCATE)\b[^{]*$/.test(out)) return [];
+  const start = out.indexOf("{"); // 앞에 안내 줄이 붙는 환경이 있어 첫 { 부터 읽는다
   try {
-    return (JSON.parse(out) as { rows?: T[] }).rows ?? [];
+    return (JSON.parse(out.slice(start)) as { rows?: T[] }).rows ?? [];
   } catch {
-    return [];
+    throw new Error(`supabase db query 출력을 읽지 못했어요:\n${out.slice(0, 500)}`);
   }
+}
+
+/** 열린 주간 라운드가 없으면 건너뛴다. CI 는 그날 만든 빈 DB 라 늘 있어야 하므로, 없으면 건너뛰지 않고 실패한다 */
+export function needWeeklyRound(skip: (cond: boolean, why: string) => void) {
+  const r = openRound();
+  const why = "열린 주간 라운드가 없어요(결선 주간이거나 seed.sql 을 다시 채워야 해요)";
+  if (process.env.CI && (!r || r.kind !== "weekly") && new Date().getUTCDate() < 21) throw new Error(why);
+  skip(!r || r.kind !== "weekly", why);
 }
 
 /** SQL 글자 값 따옴표(시험이 만든 값만 넣는다) */
