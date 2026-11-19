@@ -29,7 +29,7 @@ export function InstaShare({ entryId, board, name }: { entryId: string; board: s
       if (phone && typeof navigator.canShare === "function" && navigator.canShare({ files: [file] })) {
         try {
           await navigator.share({ files: [file] });
-          trackSns([entryId], format === "story" ? "share_insta_story" : "share_insta_feed", "detail");
+          trackSns([entryId], format === "story" ? "share_insta_story" : "share_insta_feed", "debut");
           setNote("");
         } catch (err) {
           // 공유창을 닫았으면 조용히 끝낸다
@@ -46,7 +46,7 @@ export function InstaShare({ entryId, board, name }: { entryId: string; board: s
       a.click();
       a.remove();
       setTimeout(() => URL.revokeObjectURL(href), 10_000);
-      trackSns([entryId], "share_insta_save", "detail");
+      trackSns([entryId], "share_insta_save", "debut");
       setNote(`${LABEL[format]} 이미지를 저장했어요. 휴대폰 인스타 앱에서 올려 주세요`);
     } catch {
       setNote("이미지를 만들지 못했어요. 잠시 뒤 다시 눌러 주세요");

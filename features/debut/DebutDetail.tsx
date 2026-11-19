@@ -1,7 +1,8 @@
 /**
  * 데뷔 화보 상세(#17). 데뷔한 글(get_entry.debut)은 일반 상세 대신 잡지 화보처럼 보여 준다.
  * 순서: 꽉 찬 표지(첫 사진 + 큰 이름 + 데뷔 표 수) → 소개 인용 + SNS·공유 + 인스타에 올리기(#18) → 사진 벽(원래 사진 + 화보 사진) → 천천히 흐르는 사진 띠 → 응원 댓글.
- * 들어올 때 꽃가루가 한 번 터진다(Confetti). '움직임 줄이기'면 꽃가루·흐름 없이 사진만(CSS).
+ * 들어올 때 꽃가루가 한 번 터진다(Confetti, 같은 글은 세션에 한 번). 사진 벽은 눌러서 크게 본다(PhotoWall, #24).
+ * 공유·SNS·인스타 기록은 자리 debut 로 남겨 일반 상세(detail)와 나눠 센다(#24). '움직임 줄이기'면 꽃가루·흐름 없이 사진만(CSS).
  * 주인에게는 "화보 사진 올리기"(최대 10장, /<게시판>/<글>/gallery) 길을 둔다. 숨긴 글은 이 화면을 쓰지 않는다(DetailPage 가 거른다).
  * 부르는 곳: features/entries/DetailPage.
  */
@@ -22,6 +23,7 @@ import { SnsLink } from "@/features/sns/SnsLink";
 import { ShareVisit } from "@/features/share/ShareVisit";
 import { Confetti } from "./Confetti";
 import { InstaShare } from "./InstaShare";
+import { PhotoWall } from "./PhotoWall";
 import { GALLERY_MAX } from "./limits";
 import d from "@/features/entries/entries.module.css";
 import s from "./debut.module.css";
@@ -46,8 +48,8 @@ export function DebutDetail({ e, board, comments }: Props) {
   return (
     <div className={`${page.page} ${s.debut}`}>
       <TopBar back={{ href: `/${board}`, label: `${BOARD_NAME[board]} 연습생` }} nav={<SiteNav current={board} />} login={<LoginButton />} />
-      <ShareVisit entryId={e.id} />
-      <Confetti />
+      <ShareVisit entryId={e.id} place="debut" />
+      <Confetti entryId={e.id} />
 
       <header className={s.cover}>
         <img src={photoUrl(all[0]?.path) ?? undefined} alt={`${e.pet_name} 데뷔 화보 표지`} fetchPriority="high" decoding="async" />
@@ -67,11 +69,11 @@ export function DebutDetail({ e, board, comments }: Props) {
             <p>{e.bio}</p>
           </blockquote>
         ) : null}
-        <Impression className={s.act} ids={sns.length ? [e.id] : []} place="detail">
+        <Impression className={s.act} ids={sns.length ? [e.id] : []} place="debut">
           {sns.map((x) => (
-            <SnsLink key={x.kind} className={s.snsBtn} entryId={e.id} sns={x} place="detail" iconSize="lg" label={`${e.pet_name} ${SNS_NAME[x.kind]} ${x.handle}, 새 창`} />
+            <SnsLink key={x.kind} className={s.snsBtn} entryId={e.id} sns={x} place="debut" iconSize="lg" label={`${e.pet_name} ${SNS_NAME[x.kind]} ${x.handle}, 새 창`} />
           ))}
-          <CopyLink entryId={e.id} name={e.pet_name} place="detail" text={`${e.pet_name} ${m}월 데뷔했어요! 화보 보러 오세요`} />
+          <CopyLink entryId={e.id} name={e.pet_name} place="debut" text={`${e.pet_name} ${m}월 데뷔했어요! 화보 보러 오세요`} />
           {e.is_mine ? null : <ReportButton target="entry" targetId={e.id} className={d.reportLink} />}
         </Impression>
         {/* 인스타 이미지 올리기(#18): 누구나(주인이 자랑하고, 팬이 퍼뜨린다) */}
@@ -92,13 +94,7 @@ export function DebutDetail({ e, board, comments }: Props) {
         <h2 id="debut-wall">
           {e.pet_name} 화보 <small>{all.length}장</small>
         </h2>
-        <ul className={s.wall}>
-          {all.map((p, i) => (
-            <li key={p.path} style={{ "--i": i } as React.CSSProperties}>
-              <img src={photoUrl(i === 0 ? p.path : p.thumb_path) ?? undefined} alt={`${e.pet_name} 화보 ${i + 1}/${all.length}`} loading={i < 2 ? "eager" : "lazy"} decoding="async" />
-            </li>
-          ))}
-        </ul>
+        <PhotoWall photos={all} name={e.pet_name} />
       </section>
 
       <div className={s.strip} aria-hidden="true">

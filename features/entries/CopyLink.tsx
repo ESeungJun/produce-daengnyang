@@ -23,8 +23,8 @@ export function CopyLink({
 }: {
   entryId: string;
   name: string;
-  /** 기록 자리: 글 상세(detail) · 등록 직후 띠(register) */
-  place: "detail" | "register";
+  /** 기록 자리: 글 상세(detail) · 등록 직후 띠(register) · 데뷔 화보(debut) */
+  place: "detail" | "register" | "debut";
   primary?: boolean;
   label?: string;
   /** 공유 문구(기본 "{이름} 픽해 주세요!"). 데뷔 화보는 축하 문구를 넘긴다(#17) */

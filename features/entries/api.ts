@@ -54,6 +54,8 @@ export type EntryDetail = {
   debut: boolean;
   /** 데뷔 뒤 주인이 더한 화보 사진(0~10장) */
   gallery: { path: string; thumb_path: string }[];
+  /** 주간 글인데 그 아이의 결선 복사본이 데뷔했으면 데뷔 화보로 가는 길(#24, 옛 공유 링크로 들어온 사람용). 아니면 null */
+  debut_link?: { id: string; month: string } | null;
 };
 
 /** 없으면 null, 지워진 글이면 "deleted". 숨김 글은 주인에게만 온다(다른 사람에게는 null). */

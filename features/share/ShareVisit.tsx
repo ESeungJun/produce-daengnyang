@@ -5,15 +5,15 @@
  * 같은 사람·날·글은 DB 가 한 번만 센다. 미리보기를 가져가는 메신저 봇은 스크립트를 돌리지 않아 세지 않는다.
  */
 import { useEffect } from "react";
-import { trackSns } from "@/features/sns/track";
+import { trackSns, type SnsPlace } from "@/features/sns/track";
 import { takeShareRef } from "./link";
 
-export function ShareVisit({ entryId }: { entryId: string }) {
+export function ShareVisit({ entryId, place = "detail" }: { entryId: string; place?: SnsPlace }) {
   useEffect(() => {
     const { shared, clean } = takeShareRef(location.href);
     if (!shared) return;
-    trackSns([entryId], "share_visit", "detail");
+    trackSns([entryId], "share_visit", place);
     history.replaceState(history.state, "", clean);
-  }, [entryId]);
+  }, [entryId, place]);
   return null;
 }

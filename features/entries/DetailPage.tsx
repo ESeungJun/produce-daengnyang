@@ -78,6 +78,15 @@ export async function DetailPage({ board, id, fresh = false }: { board: Board; i
       <ShareVisit entryId={e.id} />
       {/* 글 상세에서는 센터 띠를 두지 않는다(#20 사용자 의견: 보던 아이에 집중) */}
       {showFresh ? <NewEntryBanner entryId={e.id} name={e.pet_name} /> : null}
+      {/* 옛 주간 글 주소(공유 링크)로 들어와도 이 아이가 데뷔했으면 화보로 가는 띠를 맨 위에 둔다(#24) */}
+      {e.debut_link ? (
+        <Link className={s.debutBand} href={`/${board}/${e.debut_link.id}`}>
+          <span>
+            <b>{e.pet_name}</b>, {Number(e.debut_link.month.slice(5, 7))}월에 데뷔했어요!
+          </span>
+          <span className={s.debutBandGo}>데뷔 화보 보기 →</span>
+        </Link>
+      ) : null}
       <div className={s.detail}>
         <PhotoPager photos={e.photos} name={e.pet_name} />
         <div>
