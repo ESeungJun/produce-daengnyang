@@ -1,11 +1,11 @@
 /**
  * 데뷔 화보 상세(#17). 데뷔한 글(get_entry.debut)은 일반 상세 대신 잡지 화보로 보여 준다.
- * 순서: 좌우로 넘기는 잡지 한 권(Magazine: 표지 → 차례 → 사진·글 쪽 → 뒷표지, #31 "진짜 매거진을 넘겨 보듯")
+ * 순서: 패션 매거진 웹 화보(Magazine: 꽉 찬 표지 → 사진 지면·글 꼭지 → 맺음, #31)
  *       → SNS·공유 + 인스타에 올리기(#18) + 주인 안내 → 천천히 흐르는 사진 띠 → 응원 댓글.
- * 이름(h1)·소개 덱·표 수는 잡지 표지에, "다음 데뷔는 지금 오디션에서" 길은 뒷표지에 있다.
+ * 이름(h1)·소개 덱·표 수는 잡지 표지에, "다음 데뷔는 지금 오디션에서" 길은 화보 맺음에 있다.
  * 들어올 때 꽃가루가 한 번 터진다(Confetti, 같은 글은 세션에 한 번). 사진은 눌러서 크게 본다(Magazine, #24).
  * 공유·SNS·인스타 기록은 자리 debut 로 남겨 일반 상세(detail)와 나눠 센다(#24). '움직임 줄이기'면 꽃가루·흐름 없이 사진만(CSS).
- * 주인에게는 "화보 올리기"(사진·GIF·동영상 최대 10칸과 글 꼭지, #31, /<게시판>/<글>/gallery) 길을 둔다. 숨긴 글은 이 화면을 쓰지 않는다(DetailPage 가 거른다).
+ * 주인에게는 "화보 올리기"(사진·GIF·동영상 최대 20칸과 글 꼭지, #31, /<게시판>/<글>/gallery) 길을 둔다. 숨긴 글은 이 화면을 쓰지 않는다(DetailPage 가 거른다).
  * 부르는 곳: features/entries/DetailPage.
  */
 import Link from "next/link";
@@ -68,7 +68,7 @@ export function DebutDetail({ e, board, comments }: Props) {
         editHref={e.is_mine ? `/${board}/${e.id}/gallery` : undefined}
       />
 
-      {/* 뒷표지의 "SNS·공유" 길이 오는 자리 */}
+      {/* 화보 맺음의 "SNS·공유" 길이 오는 자리 */}
       <section className={s.intro} id="debut-share">
         <Impression className={s.act} ids={sns.length ? [e.id] : []} place="debut">
           {sns.map((x) => (
@@ -101,7 +101,7 @@ export function DebutDetail({ e, board, comments }: Props) {
         </div>
       ) : null}
 
-      {/* 뒷표지의 "응원 댓글 쓰기" 길이 오는 자리 */}
+      {/* 화보 맺음의 "응원 댓글 쓰기" 길이 오는 자리 */}
       <div className={s.comments} id="debut-cheer">
         {comments ? <Comments entryId={e.id} petName={e.pet_name} initial={comments.items} total={comments.total} loadFailed={comments.failed} /> : null}
       </div>

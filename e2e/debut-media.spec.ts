@@ -64,7 +64,7 @@ test("화보에 GIF·동영상을 올리면 벽에서 움직이고, 15초 넘는
   }
 });
 
-test("화보 폼에서 글 꼭지를 쓰면 잡지 쪽 사이에 기사로 나오고, 빈 글은 저장을 막는다. 잡지는 단추·키보드·차례로 넘긴다", async ({ page, context, baseURL }) => {
+test("화보 폼에서 글 꼭지를 쓰면 화보 지면 사이에 기사로 나오고, 빈 글은 저장을 막는다. 화보는 표지부터 맺음까지 아래로 스크롤해 읽는다", async ({ page, context, baseURL }) => {
   const debut = findDebut();
   test.skip(!debut, "데뷔한 글이 없어요");
   const uid = await signInMember(context, baseURL!);
@@ -108,41 +108,30 @@ test("화보 폼에서 글 꼭지를 쓰면 잡지 쪽 사이에 기사로 나�
     // 5. 지면: 소개 글 → 사진 묶음 → 소감 글 순서, 꼭지 이름과 제목
     await page.goto(`/${debut.board}/${debut.id}`);
     const wall = page.locator("[data-mag]");
-    // 쪽 순서: 글 쪽은 꼭지 종류(이어지는 쪽은 빼고), 사진 쪽은 칸 종류
+    // 지면 순서: 글 지면은 꼭지 종류, 사진 지면은 칸 종류
     const order = await wall.locator("[data-page]").evaluateAll((els) =>
       els.flatMap((e) => {
         const el = e as HTMLElement;
-        // 짧은 글은 뒤 사진 한 칸과 한 쪽에 실리므로 글 다음에 그 칸도 센다
+        // 짧은 글은 뒤 사진 한 칸과 한 지면에 실리므로 글 다음에 그 칸도 센다
         const kinds = [...el.querySelectorAll<HTMLElement>("[data-kind]")].map((c) => c.dataset.kind!);
-        if (el.dataset.note) return el.dataset.part === "0" ? [el.dataset.note, ...kinds] : [];
-        return kinds;
+        return el.dataset.note ? [el.dataset.note, ...kinds] : kinds;
       }),
     );
     // 투표 사진들이 앞에 오고, 그 뒤로 소개 → GIF → 소감
     expect(order.slice(-3)).toEqual(["intro", "gif", "feeling"]);
     await expect(wall.getByRole("heading", { name: /소개.*산책 반장/ })).toBeAttached();
 
-    // 6. 잡지 넘기기: 표지에서 시작해 다음 쪽 단추·화살표 키로 넘기고, 차례를 누르면 그 쪽으로 간다
-    const where = wall.locator("p[aria-live]");
-    await expect(where).toContainText("표지");
-    await expect(wall.getByRole("button", { name: "이전 쪽" })).toBeDisabled();
-    await wall.getByRole("button", { name: "다음 쪽" }).click();
-    await expect(where).toContainText(/^2(–3)?쪽/);
-    // 안쪽이 두 쪽 이하면 차례가 없으므로(magazinePages) 그때는 다음 쪽 단추로 찾아간다
+    // 6. 웹 화보 읽기: 표지 → 지면 → 맺음이 위에서 아래로 쌓이고, 책 장치(넘김 단추·차례·쪽 번호)는 없다
+    await expect(wall.getByRole("button", { name: "다음 쪽" })).toHaveCount(0);
+    await expect(wall.locator('[data-type="toc"]')).toHaveCount(0);
+    const types = await wall.locator("[data-page]").evaluateAll((els) => els.map((e) => (e as HTMLElement).dataset.type));
+    expect([types[0], types.at(-1)]).toEqual(["cover", "back"]);
+    const tops = await wall.locator("[data-page]").evaluateAll((els) => els.map((e) => e.getBoundingClientRect().top));
+    expect(tops[1]!).toBeGreaterThan(tops[0]!);
+    expect(tops.at(-1)!).toBeGreaterThan(tops[1]!);
     const feeling = wall.getByText("간식은 제가 살게요.");
-    if (await wall.locator('[data-type="toc"]').count()) await wall.getByRole("button", { name: /쪽: 데뷔 소감/ }).click();
-    else
-      for (let i = 0; i < 8 && !(await feeling.evaluate((el) => el.getBoundingClientRect().left < window.innerWidth)); i++) {
-        await wall.getByRole("button", { name: "다음 쪽" }).click();
-        await page.waitForTimeout(400);
-      }
+    await feeling.scrollIntoViewIfNeeded();
     await expect(feeling).toBeInViewport();
-    await wall.locator("[tabindex='0']").focus();
-    await page.keyboard.press("End");
-    await expect(where).toContainText("뒷표지");
-    await expect(wall.getByRole("button", { name: "다음 쪽" })).toBeDisabled();
-    await page.keyboard.press("ArrowLeft");
-    await expect(where).not.toContainText("뒷표지");
   } finally {
     sql(`delete from public.debut_photos where entry_id = ${lit(debut.id)}`);
     sql(`update public.entries set owner_id = ${lit(debut.owner_id)} where id = ${lit(debut.id)}`);

@@ -49,6 +49,8 @@ const securityHeaders = [
 
 const nextConfig: NextConfig = {
   poweredByHeader: false,
+  // 같은 와이파이의 휴대폰으로 개발 서버를 볼 때만: DEV_LAN_HOST=192.168.x.x 로 띄우면 그 주소의 개발용 스크립트 요청을 허용한다(Next 16 은 기본으로 막음)
+  ...(dev && process.env.DEV_LAN_HOST ? { allowedDevOrigins: [process.env.DEV_LAN_HOST] } : {}),
   async headers() {
     return [{ source: "/:path*", headers: securityHeaders }];
   },
