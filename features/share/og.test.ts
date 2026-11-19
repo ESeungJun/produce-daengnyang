@@ -12,3 +12,16 @@ describe("nameSize: 공유 그림 이름 글자 크기", () => {
     expect(nameSize("🐶🐱🐶🐱")).toBe(132);
   });
 });
+
+import { instaNameSize, isInstaFormat } from "./insta";
+describe("인스타 이미지(#18)", () => {
+  it("형식은 story·feed 만", () => {
+    expect(isInstaFormat("story")).toBe(true);
+    expect(isInstaFormat("feed")).toBe(true);
+    expect(isInstaFormat("reel")).toBe(false);
+  });
+  it("이름이 길수록 작게", () => {
+    expect(instaNameSize("보리")).toBeGreaterThan(instaNameSize("아주아주긴이름의강아지"));
+    expect(instaNameSize("가".repeat(20))).toBe(72);
+  });
+});

@@ -6,7 +6,7 @@
 -- ─────────────────────────────────────────────────────────────
 begin;
 create extension if not exists pgtap with schema extensions;
-select plan(164);
+select plan(166);
 
 -- ── 준비(관리자 권한) ───────────────────────────────────────
 -- 사용자: A·B·D 구글 연결(회원), C 익명, E 이메일 가입(구글 연결 없음 → 회원 아님)
@@ -440,6 +440,8 @@ select is(public.record_sns(array['00000000-0000-0000-0000-00000000f004']::uuid[
 select is(public.record_sns(array['00000000-0000-0000-0000-00000000f004']::uuid[], 'share_sheet', 'register', 'visitor-aaaa'), 1, '등록 직후 띠의 공유 창도 남긴다');
 select is(public.record_sns(array['00000000-0000-0000-0000-00000000f004']::uuid[], 'share_visit', 'detail', 'visitor-cccc'), 1, '공유 주소로 들어온 방문을 남긴다');
 select is(public.record_sns(array['00000000-0000-0000-0000-00000000f004']::uuid[], 'share_visit', 'detail', 'visitor-cccc'), 0, '같은 사람의 공유 방문은 하루 한 번');
+select is(public.record_sns(array['00000000-0000-0000-0000-00000000f004']::uuid[], 'share_insta_story', 'detail', 'visitor-cccc'), 1, '인스타 스토리 이미지 공유를 남긴다(#18)');
+select is(public.record_sns(array['00000000-0000-0000-0000-00000000f004']::uuid[], 'share_insta_save', 'detail', 'visitor-cccc'), 1, '인스타 이미지 저장을 남긴다(#18)');
 select is(public.record_sns(array['00000000-0000-0000-0000-00000000f004']::uuid[], 'share_copy', 'hall', 'visitor-aaaa'), 0, '모르는 자리는 버린다');
 reset role;
 update public.sns_daily set n = 200000 where kst_date = public.kst_today();
