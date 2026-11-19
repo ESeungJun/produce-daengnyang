@@ -17,7 +17,8 @@ import { tokenSignedInWithin } from "../_shared/reauth.ts";
 const url = Deno.env.get("SUPABASE_URL")!;
 const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
 const admin = createClient(url, serviceKey, { auth: { persistSession: false, autoRefreshToken: false } });
-const BUCKET = "entry-photos";
+// 사진(entry-photos)과 데뷔 화보 GIF·동영상(debut-media, #31). 둘 다 "<사용자 번호>/파일" 꼴로 쌓인다
+const BUCKETS = ["entry-photos", "debut-media"];
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 // 같은 사이트 화면에서만 부른다(merge-anon·delete-account 와 같은 비밀값).
@@ -45,12 +46,15 @@ async function isAdmin(uid: string): Promise<boolean> {
 /** 그 사람 폴더의 파일 이름을 모두 모은다. 못 읽으면 null(delete-account 와 같음). */
 async function listFiles(uid: string): Promise<string[] | null> {
   const names: string[] = [];
-  for (let offset = 0; ; offset += 1000) {
-    const { data, error } = await admin.storage.from(BUCKET).list(uid, { limit: 1000, offset });
-    if (error) return null;
-    if (!data?.length) break;
-    names.push(...data.map((f) => `${uid}/${f.name}`));
-    if (data.length < 1000) break;
+  for (const bucket of BUCKETS) {
+    for (let offset = 0; ; offset += 1000) {
+      const { data, error } = await admin.storage.from(bucket).list(uid, { limit: 1000, offset });
+      if (error) return null;
+      if (!data?.length) break;
+      // "버킷:경로" 로 모아 지울 때 버킷별로 나눈다
+      names.push(...data.map((f) => `${bucket}:${uid}/${f.name}`));
+      if (data.length < 1000) break;
+    }
   }
   return names;
 }
@@ -95,9 +99,12 @@ Deno.serve(async (req) => {
   const late = (await listFiles(uid)) ?? [];
   for (const f of late) if (!files.includes(f)) files.push(f);
   let left = 0;
-  for (let i = 0; i < files.length; i += 100) {
-    const { error } = await admin.storage.from(BUCKET).remove(files.slice(i, i + 100));
-    if (error) left += files.slice(i, i + 100).length;
+  for (const bucket of BUCKETS) {
+    const mine = files.filter((f) => f.startsWith(`${bucket}:`)).map((f) => f.slice(bucket.length + 1));
+    for (let i = 0; i < mine.length; i += 100) {
+      const { error } = await admin.storage.from(bucket).remove(mine.slice(i, i + 100));
+      if (error) left += mine.slice(i, i + 100).length;
+    }
   }
   if (left) console.error(`admin-purge-user: 남은 사진 ${left}개 (${uid})`);
   // 6. 처리 기록(실패해도 정리는 끝났으므로 로그만 남긴다)

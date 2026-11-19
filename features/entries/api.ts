@@ -29,6 +29,15 @@ export async function loadBoard(
   return data ?? [];
 }
 
+export type GalleryKind = "photo" | "gif" | "video";
+/** 데뷔 화보 글 꼭지 종류(#31): 소개·소감·자랑·자유글. 종류마다 1개 */
+export type NoteKind = "intro" | "feeling" | "brag" | "free";
+export type GalleryMedia = { kind: GalleryKind; path: string; thumb_path: string };
+export type GalleryNote = { kind: "text"; note_kind: NoteKind; title: string | null; body: string };
+/** 화보 한 칸: 사진·GIF·동영상 또는 글 꼭지. 주인이 정한 순서로 섞여 온다 */
+export type GalleryItem = GalleryMedia | GalleryNote;
+export const isNote = (x: GalleryItem): x is GalleryNote => x.kind === "text";
+
 export type EntryDetail = {
   id: string;
   board: Board;
@@ -52,8 +61,8 @@ export type EntryDetail = {
   photos: { path: string; thumb_path: string }[];
   /** 데뷔한 글(get_featured 와 같은 판정)이면 화보 상세를 그린다(#17) */
   debut: boolean;
-  /** 데뷔 뒤 주인이 더한 화보 사진(0~10장) */
-  gallery: { path: string; thumb_path: string }[];
+  /** 데뷔 화보(#17). 사진·GIF·동영상 0~10칸(#31, GIF·동영상의 thumb_path 는 첫 장면 그림)과 글 꼭지 0~4개가 주인이 정한 순서로 섞여 온다 */
+  gallery: GalleryItem[];
   /** 주간 글인데 그 아이의 결선 복사본이 데뷔했으면 데뷔 화보로 가는 길(#24, 옛 공유 링크로 들어온 사람용). 아니면 null */
   debut_link?: { id: string; month: string } | null;
 };

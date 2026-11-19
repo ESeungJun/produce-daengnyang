@@ -15,6 +15,7 @@ const supabaseWs = supabase.replace(/^http/, "ws");
  * - script 'unsafe-inline': Next 가 페이지마다 넣는 인라인 스크립트 때문. nonce 방식은 모든 페이지를 동적으로 그려야 해서 지금은 쓰지 않는다.
  * - 'unsafe-eval' 은 개발 서버(빠른 새로 고침)에서만.
  * - Turnstile(#3 익명 로그인 봇 확인)은 script-src·frame-src 에 https://challenges.cloudflare.com 이 필요하다.
+ * - media-src(#31): 화보 동영상은 Supabase 공개 주소, 올리기 전 첫 장면은 blob: 으로 읽는다.
  * - #3 구글 로그인은 브라우저 signInWithOAuth(주소 이동)로 한다. 폼 제출 뒤 리다이렉트로 하면 form-action 'self' 에 막힌다.
  */
 const turnstile = "https://challenges.cloudflare.com";
@@ -23,6 +24,8 @@ const csp = [
   `script-src 'self' 'unsafe-inline'${dev ? " 'unsafe-eval'" : ""} ${turnstile}`,
   "style-src 'self' 'unsafe-inline'",
   `img-src 'self' data: blob: ${supabase}`,
+  // #31 데뷔 화보 동영상: 벽·크게 보기는 Supabase 주소, 올리기 전 첫 장면 만들기는 blob: 주소
+  `media-src 'self' blob: ${supabase}`,
   "font-src 'self'",
   `connect-src 'self' ${supabase} ${supabaseWs} ${turnstile}`,
   `frame-src ${turnstile}`,

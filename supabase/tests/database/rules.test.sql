@@ -6,7 +6,7 @@
 -- ─────────────────────────────────────────────────────────────
 begin;
 create extension if not exists pgtap with schema extensions;
-select plan(169);
+select plan(201);
 
 -- ── 준비(관리자 권한) ───────────────────────────────────────
 -- 사용자: A·B·D 구글 연결(회원), C 익명, E 이메일 가입(구글 연결 없음 → 회원 아님)
@@ -378,8 +378,16 @@ select ok(public.sns_open('00000000-0000-0000-0000-00000000f002'), '결선 글�
 -- #17 데뷔 화보: 데뷔 판정은 메인과 같고(숨긴 1위 대신 2위), 주인만 화보 사진 0~10장
 select ok(public.is_debut('00000000-0000-0000-0000-00000000f002'), '결선 1위가 숨겨지면 2위가 데뷔');
 select ok(not public.is_debut('00000000-0000-0000-0000-00000000f001') and not public.is_debut('00000000-0000-0000-0000-00000000f004'), '숨긴 글·주간 글은 데뷔가 아니다');
+-- 화보 칸은 크기·형식(metadata)까지 본다(#31 보안 리뷰). 실제 올리기처럼 metadata 를 채운다
+insert into storage.objects (bucket_id, name, metadata) values
+  ('entry-photos', '00000000-0000-0000-0000-0000000000d1/g1.webp', '{"size":120000,"mimetype":"image/webp"}'), ('entry-photos', '00000000-0000-0000-0000-0000000000d1/g1t.webp', '{"size":20000,"mimetype":"image/webp"}'),
+  ('entry-photos', '00000000-0000-0000-0000-0000000000d1/g2t.webp', '{"size":20000,"mimetype":"image/webp"}'),
+  ('entry-photos', '00000000-0000-0000-0000-0000000000d1/big.webp', '{"size":3000000,"mimetype":"image/webp"}'),
+  ('debut-media', '00000000-0000-0000-0000-0000000000d1/m1.gif', '{"size":900000,"mimetype":"image/gif"}'),
+  ('debut-media', '00000000-0000-0000-0000-0000000000d1/m2.gif', '{"size":900000,"mimetype":"video/mp4"}'),
+  ('debut-media', '00000000-0000-0000-0000-0000000000d1/v1.mp4', '{"size":4000000,"mimetype":"video/mp4"}'),
+  ('debut-media', '00000000-0000-0000-0000-0000000000d1/v2.mp4', '{"size":4000000,"mimetype":"text/html"}');
 insert into storage.objects (bucket_id, name) values
-  ('entry-photos', '00000000-0000-0000-0000-0000000000d1/g1.webp'), ('entry-photos', '00000000-0000-0000-0000-0000000000d1/g1t.webp'),
   ('entry-photos', '00000000-0000-0000-0000-0000000000d1/o1.webp'), ('entry-photos', '00000000-0000-0000-0000-0000000000d1/o1t.webp');
 -- 주인 폴더에 있는 원래 투표 사진 한 장(화보에 다시 넣으면 안 되는 파일)
 insert into public.entry_photos (entry_id, position, path, thumb_path) values
@@ -388,6 +396,39 @@ set local role authenticated;
 set local request.jwt.claims = '{"sub":"00000000-0000-0000-0000-0000000000d1","role":"authenticated","is_anonymous":false}';
 select lives_ok($$select public.set_debut_photos('00000000-0000-0000-0000-00000000f002', '[{"path":"00000000-0000-0000-0000-0000000000d1/g1.webp","thumb_path":"00000000-0000-0000-0000-0000000000d1/g1t.webp"}]')$$, '데뷔 주인은 화보 사진을 더한다');
 select is(jsonb_array_length(public.get_entry('00000000-0000-0000-0000-00000000f002') -> 'gallery'), 1, '상세에 화보 사진이 붙는다');
+-- #31 글 꼭지: 사진 칸 사이에 섞이고, 종류마다 1개·본문 1~600자·제목 40자, 금지어는 막는다
+select lives_ok($$select public.set_debut_photos('00000000-0000-0000-0000-00000000f002', '[{"kind":"text","note_kind":"intro","title":"  산책 반장  ","body":" 콩이예요 "},{"path":"00000000-0000-0000-0000-0000000000d1/g1.webp","thumb_path":"00000000-0000-0000-0000-0000000000d1/g1t.webp"},{"kind":"text","note_kind":"feeling","title":"","body":"고마워요"}]')$$, '사진 사이에 글 꼭지를 섞어 저장한다');
+select is(public.get_entry('00000000-0000-0000-0000-00000000f002') -> 'gallery' -> 0, '{"kind":"text","note_kind":"intro","title":"산책 반장","body":"콩이예요"}'::jsonb, '글은 앞뒤 공백을 자르고 순서대로 돌려준다');
+select ok(public.get_entry('00000000-0000-0000-0000-00000000f002') -> 'gallery' -> 2 -> 'title' = 'null'::jsonb and public.get_entry('00000000-0000-0000-0000-00000000f002') -> 'gallery' -> 1 ->> 'kind' = 'photo', '빈 제목은 없음으로, 사진 칸은 그 사이에 그대로');
+select throws_ok($$select public.set_debut_photos('00000000-0000-0000-0000-00000000f002', '[{"kind":"text","note_kind":"brag","body":"a"},{"kind":"text","note_kind":"brag","body":"b"}]')$$, 'P0001', 'invalid_note', '같은 종류 글 두 개는 거절');
+select throws_ok($$select public.set_debut_photos('00000000-0000-0000-0000-00000000f002', jsonb_build_array(jsonb_build_object('kind', 'text', 'note_kind', 'free', 'body', repeat('가', 601))))$$, 'P0001', 'invalid_note', '601자 글은 거절');
+select lives_ok($$select public.set_debut_photos('00000000-0000-0000-0000-00000000f002', jsonb_build_array(jsonb_build_object('kind', 'text', 'note_kind', 'free', 'body', repeat('가', 600))))$$, '600자 글은 받는다');
+select throws_ok($$select public.set_debut_photos('00000000-0000-0000-0000-00000000f002', '[{"kind":"text","note_kind":"free","body":"   "}]')$$, 'P0001', 'invalid_note', '공백만 있는 글은 거절');
+select throws_ok($$select public.set_debut_photos('00000000-0000-0000-0000-00000000f002', jsonb_build_array(jsonb_build_object('kind', 'text', 'note_kind', 'free', 'title', repeat('가', 41), 'body', '내용')))$$, 'P0001', 'invalid_note', '41자 제목은 거절');
+select throws_ok($$select public.set_debut_photos('00000000-0000-0000-0000-00000000f002', '[{"kind":"text","note_kind":"poem","body":"시"}]')$$, 'P0001', 'invalid_note', '모르는 종류는 거절');
+select throws_ok($$select public.set_debut_photos('00000000-0000-0000-0000-00000000f002', '[{"kind":"text","note_kind":"free","body":"씨~발 데뷔"}]')$$, 'P0001', 'banned_word', '금지어가 든 글은 거절');
+select throws_ok($$select public.set_debut_photos('00000000-0000-0000-0000-00000000f002', '[{"kind":"text","note_kind":"free","title":"ｆｕｃｋ","body":"좋아요"}]')$$, 'P0001', 'banned_word', '제목의 금지어도 거절');
+select throws_ok($$select public.set_debut_photos('00000000-0000-0000-0000-00000000f002', jsonb_build_array(jsonb_build_object('kind', 'text', 'note_kind', 'free', 'body', E'우리 애는 \u202E끼새개')))$$, 'P0001', 'note_hidden', '방향 바꾸기 글자로 금지어를 숨긴 글은 거절');
+select throws_ok($$select public.set_debut_photos('00000000-0000-0000-0000-00000000f002', jsonb_build_array(jsonb_build_object('kind', 'text', 'note_kind', 'free', 'body', E'\u200B')))$$, 'P0001', 'note_hidden', '제로폭 공백뿐인 글은 거절');
+select throws_ok($$select public.set_debut_photos('00000000-0000-0000-0000-00000000f002', jsonb_build_array(jsonb_build_object('kind', 'text', 'note_kind', 'free', 'body', E'\n\n\t ')))$$, 'P0001', 'invalid_note', '줄바꿈·탭뿐인 글은 빈 글로 거절');
+select throws_ok($$select public.set_debut_photos('00000000-0000-0000-0000-00000000f002', jsonb_build_array(jsonb_build_object('kind', 'text', 'note_kind', 'free', 'body', repeat(E'가\n', 32))))$$, 'P0001', 'invalid_note', '30줄 넘는 글은 거절');
+select lives_ok($$select public.set_debut_photos('00000000-0000-0000-0000-00000000f002', jsonb_build_array(jsonb_build_object('kind', 'text', 'note_kind', 'free', 'title', E'\n제목\n', 'body', E'첫 문단\r\n\r\n\r\n\r\n둘째 문단')))$$, '줄바꿈이 섞인 글을 저장한다');
+select is(public.get_entry('00000000-0000-0000-0000-00000000f002') -> 'gallery' -> 0, jsonb_build_object('kind', 'text', 'note_kind', 'free', 'title', '제목', 'body', E'첫 문단\n\n둘째 문단'), '빈 줄은 하나까지 줄이고 제목 앞뒤 줄바꿈은 자른다');
+select lives_ok($$select public.check_debut_notes('00000000-0000-0000-0000-00000000f002', '[{"path":"00000000-0000-0000-0000-0000000000d1/g1.webp","thumb_path":"00000000-0000-0000-0000-0000000000d1/g1t.webp"},{"kind":"text","note_kind":"intro","body":"괜찮은 글"}]')$$, '올리기 전 글 확인: 통과하면 아무것도 안 한다');
+select is(jsonb_array_length(public.get_entry('00000000-0000-0000-0000-00000000f002') -> 'gallery'), 1, '글 확인은 저장하지 않는다');
+select throws_ok($$select public.check_debut_notes('00000000-0000-0000-0000-00000000f002', '[{"kind":"text","note_kind":"brag","body":"씨~발"}]')$$, 'P0001', 'banned_word', '올리기 전 글 확인도 금지어를 막는다');
+-- #31 보안 리뷰: 첫가끝 자모·한글 채움 문자 우회, 파일 형식·크기 엇갈림
+select throws_ok($$select public.set_debut_photos('00000000-0000-0000-0000-00000000f002', jsonb_build_array(jsonb_build_object('kind', 'text', 'note_kind', 'free', 'body', E'시발 데뷔')))$$, 'P0001', 'banned_word', '첫가끝 자모로 쓴 금지어도 걸린다(NFC)');
+select throws_ok($$select public.set_debut_photos('00000000-0000-0000-0000-00000000f002', jsonb_build_array(jsonb_build_object('kind', 'text', 'note_kind', 'free', 'body', E'ㅤ')))$$, 'P0001', 'note_hidden', '한글 채움 문자뿐인 글은 거절');
+select throws_ok($$select public.set_debut_photos('00000000-0000-0000-0000-00000000f002', jsonb_build_array(jsonb_build_object('kind', 'text', 'note_kind', 'free', 'body', E'씨­발')))$$, 'P0001', 'note_hidden', '소프트 하이픈을 끼운 글은 거절');
+select lives_ok($$select public.set_debut_photos('00000000-0000-0000-0000-00000000f002', jsonb_build_array(jsonb_build_object('kind', 'text', 'note_kind', 'free', 'body', E'강아지')))$$, '첫가끝 자모 글은 완성형으로 저장한다');
+select is(public.get_entry('00000000-0000-0000-0000-00000000f002') -> 'gallery' -> 0 ->> 'body', '강아지', '저장된 글은 NFC 완성형');
+select throws_ok($$select public.set_debut_photos('00000000-0000-0000-0000-00000000f002', '[{"path":"00000000-0000-0000-0000-0000000000d1/big.webp","thumb_path":"00000000-0000-0000-0000-0000000000d1/g1t.webp"}]')$$, 'P0001', 'invalid_photo', '2MB 넘는 화보 사진은 거절');
+select throws_ok($$select public.set_debut_photos('00000000-0000-0000-0000-00000000f002', '[{"path":"00000000-0000-0000-0000-0000000000d1/g1.webp","thumb_path":"00000000-0000-0000-0000-0000000000d1/big.webp"}]')$$, 'P0001', 'invalid_photo', '2MB 넘는 미리보기는 거절');
+select lives_ok($$select public.set_debut_photos('00000000-0000-0000-0000-00000000f002', '[{"kind":"gif","path":"00000000-0000-0000-0000-0000000000d1/m1.gif","thumb_path":"00000000-0000-0000-0000-0000000000d1/g1t.webp"},{"kind":"video","path":"00000000-0000-0000-0000-0000000000d1/v1.mp4","thumb_path":"00000000-0000-0000-0000-0000000000d1/g2t.webp"}]')$$, 'GIF·동영상은 형식이 맞으면 받는다');
+select throws_ok($$select public.set_debut_photos('00000000-0000-0000-0000-00000000f002', '[{"kind":"gif","path":"00000000-0000-0000-0000-0000000000d1/m2.gif","thumb_path":"00000000-0000-0000-0000-0000000000d1/g1t.webp"}]')$$, 'P0001', 'invalid_photo', '.gif 이름에 동영상 형식이면 거절');
+select throws_ok($$select public.set_debut_photos('00000000-0000-0000-0000-00000000f002', '[{"kind":"video","path":"00000000-0000-0000-0000-0000000000d1/v2.mp4","thumb_path":"00000000-0000-0000-0000-0000000000d1/g1t.webp"}]')$$, 'P0001', 'invalid_photo', '동영상 칸에 html 형식이면 거절');
+select lives_ok($$select public.set_debut_photos('00000000-0000-0000-0000-00000000f002', '[{"path":"00000000-0000-0000-0000-0000000000d1/g1.webp","thumb_path":"00000000-0000-0000-0000-0000000000d1/g1t.webp"},{"kind":"text","note_kind":"brag","body":"앉아를 할 줄 알아요"}]')$$, '사진 한 칸 + 글로 되돌린다');
 -- #24 옛 링크: 주간 글(f005)의 결선 복사본(f002)이 데뷔하면 주간 글 상세에 데뷔 글로 가는 띠
 set local role postgres;
 update public.entries set source_entry_id = '00000000-0000-0000-0000-00000000f005' where id = '00000000-0000-0000-0000-00000000f002';
@@ -409,13 +450,14 @@ set local role authenticated;
 select throws_ok($$select public.set_debut_photos('00000000-0000-0000-0000-00000000f002', '[{"path":"00000000-0000-0000-0000-0000000000a1/p1.webp","thumb_path":"00000000-0000-0000-0000-0000000000a1/t1.webp"}]')$$, 'P0001', 'invalid_photo', '남의 폴더 파일은 화보에 못 넣는다');
 set local request.jwt.claims = '{"sub":"00000000-0000-0000-0000-0000000000a1","role":"authenticated","is_anonymous":false}';
 select throws_ok($$select public.set_debut_photos('00000000-0000-0000-0000-00000000f002', '[]')$$, 'P0001', 'not_owner', '주인이 아니면 못 바꾼다');
+select throws_ok($$select public.check_debut_notes('00000000-0000-0000-0000-00000000f002', '[]')$$, 'P0001', 'not_owner', '남의 글로는 글 확인도 못 한다');
 set local request.jwt.claims = '{"sub":"00000000-0000-0000-0000-0000000000c1","role":"authenticated","is_anonymous":true}';
 select throws_ok($$select public.set_debut_photos('00000000-0000-0000-0000-00000000f002', '[]')$$, 'P0001', 'signin_required', '익명 사용자는 못 바꾼다');
 set local role anon;
 select throws_ok($$select public.set_debut_photos('00000000-0000-0000-0000-00000000f002', '[]')$$, '42501', null, '손님 역할은 실행 권한이 없다');
 set local role postgres;
 select is(jsonb_array_length(public.get_featured_at('2000-06-10 12:00+09') -> 'debut' -> 0 -> 'photos'), 3, '메인 데뷔 배너는 원래 사진 3장만 넘긴다(화보 사진은 화보 상세에서만, #23)');
-select is(jsonb_array_length(public.get_featured_at('2000-06-10 12:00+09') -> 'debut' -> 0 -> 'gallery'), 1, '데뷔 항목에 화보 사진은 gallery 로 따로 싣는다(#26)');
+select is(jsonb_array_length(public.get_featured_at('2000-06-10 12:00+09') -> 'debut' -> 0 -> 'gallery'), 1, '데뷔 항목에 화보 사진은 gallery 로 따로 싣는다(#26), 글 꼭지는 빼고(#31)');
 select ok(not (public.get_featured_at('2000-06-10 12:00+09') -> 'center' -> 0 ? 'gallery'), '센터 항목에는 gallery 를 싣지 않는다');
 set local role authenticated;
 set local request.jwt.claims = '{"sub":"00000000-0000-0000-0000-0000000000d1","role":"authenticated","is_anonymous":false}';

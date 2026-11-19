@@ -19,7 +19,8 @@ import { tokenSignedInWithin } from "../_shared/reauth.ts";
 const url = Deno.env.get("SUPABASE_URL")!;
 const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
 const admin = createClient(url, serviceKey, { auth: { persistSession: false, autoRefreshToken: false } });
-const BUCKET = "entry-photos";
+// 사진(entry-photos)과 데뷔 화보 GIF·동영상(debut-media, #31). 둘 다 "<사용자 번호>/파일" 꼴로 쌓인다
+const BUCKETS = ["entry-photos", "debut-media"];
 
 // 같은 사이트 화면에서만 부른다. 허용 출처는 비밀값 ALLOWED_ORIGINS(쉼표 구분)로 둔다(merge-anon 과 같음).
 const allowed = (Deno.env.get("ALLOWED_ORIGINS") ?? "http://localhost:3104").split(",").map((s) => s.trim());
@@ -41,12 +42,15 @@ function json(body: unknown, status: number, origin: string | null) {
 /** 내 폴더의 파일 이름을 모두 모은다(한 번에 1000개까지라 넘치면 이어 읽는다). 못 읽으면 null. */
 async function listMine(uid: string): Promise<string[] | null> {
   const names: string[] = [];
-  for (let offset = 0; ; offset += 1000) {
-    const { data, error } = await admin.storage.from(BUCKET).list(uid, { limit: 1000, offset });
-    if (error) return null;
-    if (!data?.length) break;
-    names.push(...data.map((f) => `${uid}/${f.name}`));
-    if (data.length < 1000) break;
+  for (const bucket of BUCKETS) {
+    for (let offset = 0; ; offset += 1000) {
+      const { data, error } = await admin.storage.from(bucket).list(uid, { limit: 1000, offset });
+      if (error) return null;
+      if (!data?.length) break;
+      // "버킷:경로" 로 모아 지울 때 버킷별로 나눈다
+      names.push(...data.map((f) => `${bucket}:${uid}/${f.name}`));
+      if (data.length < 1000) break;
+    }
   }
   return names;
 }
@@ -81,9 +85,12 @@ Deno.serve(async (req) => {
   const late = (await listMine(user.id)) ?? [];
   for (const f of late) if (!files.includes(f)) files.push(f);
   let left = 0;
-  for (let i = 0; i < files.length; i += 100) {
-    const { error } = await admin.storage.from(BUCKET).remove(files.slice(i, i + 100));
-    if (error) left += files.slice(i, i + 100).length;
+  for (const bucket of BUCKETS) {
+    const mine = files.filter((f) => f.startsWith(`${bucket}:`)).map((f) => f.slice(bucket.length + 1));
+    for (let i = 0; i < mine.length; i += 100) {
+      const { error } = await admin.storage.from(bucket).remove(mine.slice(i, i + 100));
+      if (error) left += mine.slice(i, i + 100).length;
+    }
   }
   if (left) console.error(`delete-account: 남은 사진 ${left}개 (${user.id})`);
   return json({ ok: true }, 200, origin);
