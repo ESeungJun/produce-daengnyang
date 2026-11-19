@@ -17,6 +17,8 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import type { Board } from "@/shared/lib/format";
 import { photoUrl } from "@/shared/lib/supabase/env";
 import { buildPages, isNoteCell, type Cell, type MagPage, type Shot } from "./magazinePages";
+import { useImpression } from "@/features/sns/Impression";
+import { trackSns } from "@/features/sns/track";
 import { NOTE_LABEL } from "./notes";
 import s from "./debut.module.css";
 import m from "./magazine.module.css";
@@ -40,6 +42,8 @@ function useStill(): boolean {
 const saveData = () => (navigator as Navigator & { connection?: { saveData?: boolean } }).connection?.saveData === true;
 
 type Props = {
+  /** 맺음 노출·"픽하러 가기" 클릭 기록용(#31) */
+  entryId: string;
   items: Cell[];
   name: string;
   bio: string | null;
@@ -54,10 +58,13 @@ type Props = {
   editHref?: string;
 };
 
-export function Magazine({ items, name, bio, board, boardName, issue, month, votes, editHref }: Props) {
+export function Magazine({ entryId, items, name, bio, board, boardName, issue, month, votes, editHref }: Props) {
   const pages = useMemo(() => buildPages(items), [items]);
   const shots = useMemo(() => items.filter((c): c is Shot => !isNoteCell(c)), [items]);
   const cover = shots[0];
+  // 맺음까지 내려온 사람(분모)과 그중 "픽하러 가기"를 누른 사람(분자)을 debut_back 자리로 센다(#31 사용자 요청)
+  const backRef = useRef<HTMLDivElement>(null);
+  useImpression(backRef, [entryId], "debut_back");
   // 마지막 글 꼭지(끝 표시 ■)
   const lastNote = [...pages].reverse().find((p): p is Extract<MagPage, { type: "note" }> => p.type === "note");
 
@@ -255,7 +262,7 @@ export function Magazine({ items, name, bio, board, boardName, issue, month, vot
               {name}, {votes}
             </h2>
             <p>다음 데뷔는 지금 오디션에서 뽑아요.</p>
-            <Link className={m.backCta} href={`/${board}`}>
+            <Link className={m.backCta} href={`/${board}`} onClick={() => trackSns([entryId], "pick_cta", "debut_back")}>
               {boardName} 연습생 픽하러 가기
             </Link>
             {/* 다 읽은 사람이 바로 응원·공유로 가게(같은 화면 아래 자리, #31 사용자 리뷰) */}
@@ -290,6 +297,7 @@ export function Magazine({ items, name, bio, board, boardName, issue, month, vot
           {pages.map((p, i) => [
             <div
               key={i}
+              ref={p.type === "back" ? backRef : undefined}
               className={cls[p.type]}
               data-page={i}
               data-type={p.type}

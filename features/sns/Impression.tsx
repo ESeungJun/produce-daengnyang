@@ -2,12 +2,12 @@
 /**
  * 노출 기록. 감싼 영역이 화면에 절반 이상 처음 보이면 한 번만 view 를 남긴다(이동률의 분모).
  * 화면 밖에 그려지기만 한 것은 세지 않는다. 같은 사람·날은 DB 가 한 번만 센다.
+ * 감쌀 수 없는 곳(자식 선택자로 꾸민 지면 등)은 useImpression 으로 그 요소의 ref 에 바로 단다.
  */
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, type RefObject } from "react";
 import { trackSns, type SnsPlace } from "./track";
 
-export function Impression({ ids, place, className, children }: { ids: string[]; place: SnsPlace; className?: string; children: React.ReactNode }) {
-  const ref = useRef<HTMLDivElement>(null);
+export function useImpression(ref: RefObject<HTMLElement | null>, ids: string[], place: SnsPlace) {
   const key = ids.join(",");
   useEffect(() => {
     const el = ref.current;
@@ -25,7 +25,12 @@ export function Impression({ ids, place, className, children }: { ids: string[];
     );
     io.observe(el);
     return () => io.disconnect();
-  }, [key, place]);
+  }, [ref, key, place]);
+}
+
+export function Impression({ ids, place, className, children }: { ids: string[]; place: SnsPlace; className?: string; children: React.ReactNode }) {
+  const ref = useRef<HTMLDivElement>(null);
+  useImpression(ref, ids, place);
   return (
     <div ref={ref} className={className}>
       {children}

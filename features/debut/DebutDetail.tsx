@@ -57,6 +57,7 @@ export function DebutDetail({ e, board, comments }: Props) {
       <Confetti entryId={e.id} />
 
       <Magazine
+        entryId={e.id}
         items={[...e.photos, ...e.gallery]}
         name={e.pet_name}
         bio={e.bio}

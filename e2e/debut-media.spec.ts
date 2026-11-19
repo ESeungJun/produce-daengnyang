@@ -106,6 +106,13 @@ test("화보 폼에서 글 꼭지를 쓰면 화보 지면 사이에 기사로 �
     await expect(page.getByText("화보를 저장했어요")).toBeVisible();
 
     // 5. 지면: 소개 글 → 사진 묶음 → 소감 글 순서, 꼭지 이름과 제목
+    // 맺음 기록(7절)은 화면이 짧으면 앞 절에서 이미 나가므로 들어올 때부터 모은다
+    const tracked: string[] = [];
+    page.on("request", (r) => {
+      if (!r.url().includes("/rpc/record_sns")) return;
+      const b = r.postDataJSON() as { p_kind: string; p_place: string };
+      tracked.push(`${b.p_place}:${b.p_kind}`);
+    });
     await page.goto(`/${debut.board}/${debut.id}`);
     const wall = page.locator("[data-mag]");
     // 지면 순서: 글 지면은 꼭지 종류, 사진 지면은 칸 종류
@@ -132,6 +139,14 @@ test("화보 폼에서 글 꼭지를 쓰면 화보 지면 사이에 기사로 �
     const feeling = wall.getByText("간식은 제가 살게요.");
     await feeling.scrollIntoViewIfNeeded();
     await expect(feeling).toBeInViewport();
+
+    // 7. 맺음 기록: 맺음이 보이면 debut_back 노출을, "픽하러 가기"를 누르면 pick_cta 를 남긴다(#31)
+    const back = wall.locator('[data-type="back"]');
+    await back.scrollIntoViewIfNeeded();
+    await expect.poll(() => tracked).toContain("debut_back:view");
+    await back.getByRole("link", { name: /연습생 픽하러 가기/ }).click();
+    await expect.poll(() => tracked).toContain("debut_back:pick_cta");
+    await expect(page).toHaveURL(new RegExp(`/${debut.board}$`));
   } finally {
     sql(`delete from public.debut_photos where entry_id = ${lit(debut.id)}`);
     sql(`update public.entries set owner_id = ${lit(debut.owner_id)} where id = ${lit(debut.id)}`);
