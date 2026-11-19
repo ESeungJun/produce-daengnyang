@@ -1,11 +1,11 @@
 "use client";
 /**
- * 얼굴 픽 버튼. 게시판에 맞는 얼굴(강아지·고양이)에 "픽", 오늘 이미 픽했으면 흐린 얼굴에 "완료".
+ * 발도장 픽 버튼(#29). 발바닥 안에 "픽", 오늘 이미 픽했으면 흐린 발도장에 "완료".
  * 크기: md 62×56(차트), sm 54×49(게시판 카드), lg 96×86(글 상세).
  * closed 는 누를 수 없는 경우: "mine"(내 글) → "내 글", "ended"(마감된 라운드) → "마감". 버튼 글자와 aria-label 로 알린다.
  */
 import { BOARD_NAME, type Board } from "@/shared/lib/format";
-import { Face } from "./Face";
+import { Paw } from "./Paw";
 import { usePicks } from "./PicksProvider";
 import s from "./picks.module.css";
 
@@ -37,7 +37,7 @@ export function PickButton({ entryId, board, pickedToday = false, size = "md", c
       disabled={done || !!closed || busy}
       onClick={() => pick(entryId, board)}
     >
-      <Face board={board} />
+      <Paw />
       <span>{done ? "완료" : shut ? shut.text : "픽"}</span>
     </button>
   );
