@@ -1,11 +1,11 @@
 "use client";
 /**
- * 표지: 이달의 데뷔(댕댕이·냥이). 휴대폰은 옆으로 넘기고(점으로 위치), 1024~1279px 은 두 장을 반반 펼치고
- * 장마다 아래에 SNS 아이콘 줄(.deskSns)을 둔다.
+ * 표지: 이달의 데뷔(댕댕이·냥이). 휴대폰은 옆으로 넘기고(점으로 위치), 1024~1279px 은 두 장을 반반 펼친다.
+ * SNS 는 모든 폭에서 장 안 이름 옆 앱 아이콘이다(#26 사용자 의견. 전에는 휴대폰 표지 아래·1024 펼침면 장 아래 줄에 따로 있었다).
  * 1280px 이상은 양옆 세로 배너(DebutRail, #16)가 두 아이를 이미 보여 주므로, 가운데는 잡지 표지 한 장으로 두고
- * 두 아이를 천천히 번갈아 넘긴다(#25: 같은 두 아이가 한 화면에 세 번 나와 정신없다는 의견). SNS 아이콘은 배너가 맡는다.
+ * 두 아이를 천천히 번갈아 넘긴다(#25: 같은 두 아이가 한 화면에 세 번 나와 정신없다는 의견).
  * 시작 장은 방문자가 마지막으로 본 게시판 쪽 아이다(myBoard, #25 "내 쪽 먼저").
- * 사진·이름·표 수 어디를 눌러도 글 상세로 간다(#16). 사진이 여러 장이면 제자리에서 자동으로 넘긴다(PhotoFade).
+ * 사진·이름·표 수 어디를 눌러도 글 상세로 가고, 이름 옆 SNS 아이콘만 그 SNS 새 창으로 간다(#16, #26). 사진이 여러 장이면 제자리에서 자동으로 넘긴다(PhotoFade).
  * 큰 제호("프로듀스 댕냥")는 #16 에서 뺐다. 사이트 이름은 윗줄 로고와 읽기 도구용 h1(MainPage)이 맡는다.
  * 데뷔가 아직 없으면(서비스 첫 달) 사진 없는 글자 표지 한 장.
  */
@@ -38,7 +38,6 @@ function turnTo(el: HTMLElement | null, i: number, smooth = true) {
 export function Cover({ debutMonth, debut, below }: Props) {
   const slides = useRef<HTMLDivElement>(null);
   const [at, setAt] = useState(0);
-  const sns = debut[at] ? snsLinks(debut[at]) : [];
   // 사람이 점을 눌러 고르면 그 장에 머문다(자동 넘김을 끝낸다)
   const picked = useRef(false);
   const go = (i: number) => {
@@ -103,29 +102,50 @@ export function Cover({ debutMonth, debut, below }: Props) {
               </div>
             </div>
           ) : (
-            debut.map((d, i) => (
-              <Link key={d.entry_id} className={s.slide} href={`/${d.board}/${d.entry_id}`} aria-label={`${debutMonth}월 데뷔 ${BOARD_NAME[d.board]} ${d.pet_name}, ${count(d.votes)}표`}>
-                {/* 시작 장이 기억에 따라 바뀌어 두 장 모두 먼저 받는다(많아야 두 장). 1280 이상은 장 넘김만 돌고 장 안 사진은 멈춘다 */}
-                <PhotoFade paths={debutPhotos(d)} alt="" eager stillWhen="(min-width: 1280px)" />
-                <span className={s.scrim} />
-                {/* 1280 이상 잡지 표지 윗줄(표지 이름 + 몇 번째 장). 사이트 이름은 바로 위 로고가 맡아 넣지 않는다(#16). 그 밖의 폭은 숨김 */}
-                <span className={s.mast} aria-hidden="true">
-                  <b>이달의 커버 스타</b>
-                  {n > 1 ? (
-                    <span>
-                      {i + 1} / {n}
+            debut.map((d, i) => {
+              const list = snsLinks(d);
+              return (
+                // 장 전체가 글 상세 링크이고, SNS 아이콘만 그 위에 따로 얹는다(링크 안에 링크를 넣지 못해 글줄을 링크 밖 형제로 둔다)
+                <div key={d.entry_id} className={s.slide}>
+                  <Link className={s.slideLink} href={`/${d.board}/${d.entry_id}`} aria-label={`${debutMonth}월 데뷔 ${BOARD_NAME[d.board]} ${d.pet_name}, ${count(d.votes)}표`}>
+                    {/* 시작 장이 기억에 따라 바뀌어 두 장 모두 먼저 받는다(많아야 두 장). 1280 이상은 장 넘김만 돌고 장 안 사진은 멈춘다 */}
+                    <PhotoFade paths={debutPhotos(d)} alt="" eager stillWhen="(min-width: 1280px)" />
+                    <span className={s.scrim} />
+                    {/* 1280 이상 잡지 표지 윗줄(표지 이름 + 몇 번째 장). 사이트 이름은 바로 위 로고가 맡아 넣지 않는다(#16). 그 밖의 폭은 숨김 */}
+                    <span className={s.mast} aria-hidden="true">
+                      <b>이달의 커버 스타</b>
+                      {n > 1 ? (
+                        <span>
+                          {i + 1} / {n}
+                        </span>
+                      ) : null}
                     </span>
-                  ) : null}
-                </span>
-                <span className={s.lines} aria-hidden="true">
-                  <span className={s.kick}>
-                    {debutMonth}월 데뷔 · {BOARD_NAME[d.board]}
-                  </span>
-                  <span className={s.star}>{d.pet_name}</span>
-                  <span className={s.cap}>{count(d.votes)}표로 데뷔</span>
-                </span>
-              </Link>
-            ))
+                  </Link>
+                  {/* 글줄은 누름을 아래 사진 링크로 흘려보내고(pointer-events: none), 이름 옆 SNS 아이콘만 다시 받는다(#26) */}
+                  <div className={s.lines}>
+                    <span className={s.kick} aria-hidden="true">
+                      {debutMonth}월 데뷔 · {BOARD_NAME[d.board]}
+                    </span>
+                    <div className={s.starRow}>
+                      <span className={s.star} aria-hidden="true">
+                        {d.pet_name}
+                      </span>
+                      {/* 노출은 이 장이 실제로 보일 때만 센다(넘김 틀 밖 장은 잘려 안 보이므로 세지 않는다) */}
+                      {list.length ? (
+                        <Impression className={s.coverSns} ids={[d.entry_id]} place="cover">
+                          {list.map((x) => (
+                            <SnsLink key={x.kind} className={s.coverSnsBtn} entryId={d.entry_id} sns={x} place="cover" iconOnly iconSize="lg" label={`${d.pet_name} ${SNS_NAME[x.kind]} ${x.handle}, 새 창`} />
+                          ))}
+                        </Impression>
+                      ) : null}
+                    </div>
+                    <span className={s.cap} aria-hidden="true">
+                      {count(d.votes)}표로 데뷔
+                    </span>
+                  </div>
+                </div>
+              );
+            })
           )}
         </div>
         {debut.length > 1 ? (
@@ -136,24 +156,6 @@ export function Cover({ debutMonth, debut, below }: Props) {
           </div>
         ) : null}
       </div>
-      {/* 노출은 SNS 버튼이 실제로 보일 때(휴대폰, 지금 넘겨 둔 장)만 센다. 데스크톱은 .act 가 숨어 0 크기라 세지 않는다. */}
-      <Impression key={debut[at]?.entry_id ?? "none"} className={s.act} ids={sns.length ? [debut[at].entry_id] : []} place="cover">
-        {sns.length ? <span className={s.railSnsCap}>{debut[at].pet_name} SNS 구경 가기</span> : null}
-        {sns.map((x) => (
-          <SnsLink key={x.kind} className={s.railSnsBtn} entryId={debut[at].entry_id} sns={x} place="cover" iconSize="lg" label={`${debut[at].pet_name} ${SNS_NAME[x.kind]} ${x.handle}, 새 창`} />
-        ))}
-      </Impression>
-      {/* 1024~1279px 펼침면: 장마다 아래에 SNS 앱 아이콘(장 자체가 링크라 안에 넣지 못한다). 휴대폰·1280 이상은 숨김 */}
-      {debut.map((d) => {
-        const list = snsLinks(d);
-        return (
-          <Impression key={d.entry_id} className={s.deskSns} ids={list.length ? [d.entry_id] : []} place="cover">
-            {list.map((x) => (
-              <SnsLink key={x.kind} className={s.railSnsBtn} entryId={d.entry_id} sns={x} place="cover" iconOnly iconSize="lg" label={`${d.pet_name} ${SNS_NAME[x.kind]} ${x.handle}, 새 창`} />
-            ))}
-          </Impression>
-        );
-      })}
       {below}
     </div>
   );

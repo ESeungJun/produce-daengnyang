@@ -6,6 +6,8 @@
 .slides { display: flex; overflow-x: auto; scroll-snap-type: x mandatory; scrollbar-width: none; }
 .slides::-webkit-scrollbar { display: none; }
 .slide { flex: 0 0 100%; scroll-snap-align: start; position: relative; overflow: hidden; display: block; height: 520px; color: inherit; text-decoration: none; background: var(--pd-paper-2); }
+/* 장 전체를 덮는 글 상세 링크. 글줄(.lines)은 그 위 형제라 SNS 아이콘을 링크 밖에 둘 수 있다(#26) */
+.slideLink { position: absolute; inset: 0; display: block; color: inherit; text-decoration: none; }
 
 /* 사진 자동 넘김(PhotoFade): 부모를 꽉 채우고 겹친 사진 중 지금 장만 보인다 */
 .fade { position: absolute; inset: 0; }
@@ -13,7 +15,15 @@
 .fade img[data-on="true"] { opacity: 1; }
 @media (prefers-reduced-motion: reduce) { .fade img { transition: none; } }
 .scrim { position: absolute; inset: auto 0 0 0; height: 55%; background: linear-gradient(transparent, rgb(var(--pd-shade) / 0.55)); }
-.lines { position: absolute; left: 0; right: 0; bottom: 16px; padding: 0 16px; }
+.lines { position: absolute; left: 0; right: 0; bottom: 16px; padding: 0 16px; pointer-events: none; }
+/* 이름 + SNS 아이콘 한 줄. 이름이 길면 아이콘이 다음 줄로 내려간다 */
+.starRow { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 14px; }
+.coverSns { display: flex; gap: 6px; margin-top: 6px; pointer-events: auto; }
+/* 사진 위 앱 아이콘: 타일 40 + 둘레 2px = 누르는 칸 44(세로 배너와 같은 크기). 흰 사진 위에서도 테두리가 보이게 그늘을 깐다 */
+.coverSnsBtn { display: inline-grid; place-items: center; padding: 2px; border-radius: var(--pd-r-sm); }
+.coverSnsBtn > span { filter: drop-shadow(0 2px 6px rgb(var(--pd-shade) / 0.45)); }
+@media (hover: hover) { .coverSnsBtn > span { transition: transform 0.15s ease; } .coverSnsBtn:hover > span { transform: translateY(-2px); } }
+.coverSnsBtn:focus-visible { outline: 3px solid var(--pd-pink); outline-offset: -1px; }
 .kick {
   display: inline-block;
   background: var(--pd-butter);
@@ -50,7 +60,6 @@
 .dots { gap: 0; }
 .dots button { box-sizing: content-box; border: 0; padding: 8px; width: 8px; height: 8px; border-radius: 50%; background: var(--pd-jelly); background-clip: content-box; cursor: pointer; }
 .dots button[aria-current="true"] { background-color: var(--pd-pink); width: 22px; border-radius: 13px; }
-.act { display: flex; justify-content: center; gap: 8px; padding: 12px 16px 0; min-height: 50px; }
 
 /* 데뷔 전(첫 달): 사진 없이 글자 표지 */
 .blank { background: var(--pd-ink); position: relative; height: 320px; }
@@ -113,7 +122,7 @@
   .blank { grid-column: 1 / -1; height: 340px; }
   .lines { left: 12px; bottom: 28px; }
   .star { font-size: var(--pd-fs-d-star); }
-  .dots, .act { display: none; }
+  .dots { display: none; }
 
   .spread { grid-template-columns: repeat(4, 1fr); gap: 18px; }
   .spread img { border-radius: 20px; }
@@ -128,20 +137,14 @@
 .rail { display: none; }
 /* 아이콘만 SNS 버튼: 타일 40 + 둘레 2px = 누르는 칸 44 (세로 배너·1024~1279 펼침면) */
 .railSnsBtn { display: inline-grid; place-items: center; padding: 2px; border-radius: var(--pd-r-sm); }
-/* 1024~1279 펼침면 장 아래 SNS 줄. 그 밖의 폭은 숨김 */
-.deskSns { display: none; }
-@media (min-width: 1024px) and (max-width: 1279.98px) {
-  .deskSns { display: flex; justify-content: center; gap: 10px; min-height: 44px; margin-top: -6px; }
-}
 /* 잡지 표지 윗줄(표지 이름 + 몇 번째 장, #25). 1280 이상에서만 */
 .mast { display: none; }
 /* 장이 넘김 틀을 꽉 채워 바깥 outline 이 잘리므로, 키보드 포커스는 장 안쪽 분홍 테두리로(대각선 배너와 같은 방식) */
-.slide:focus-visible { outline: none; }
-.slide:focus-visible::after { content: ""; position: absolute; inset: 0; box-shadow: inset 0 0 0 4px var(--pd-pink); pointer-events: none; z-index: 2; }
+.slideLink:focus-visible { outline: none; }
+.slideLink:focus-visible::after { content: ""; position: absolute; inset: 0; box-shadow: inset 0 0 0 4px var(--pd-pink); pointer-events: none; z-index: 2; }
 @media (min-width: 1280px) {
   /* 양옆 세로 배너(#16)가 두 아이를 이미 보여 주므로 가운데는 잡지 표지 한 장(#25): 두 아이를 천천히 번갈아 넘긴다.
-     휴대폰과 같은 넘김 틀(.slides)을 다시 켜고, 점으로 지금 장을 보여 준다. 장 아래 SNS 줄은 배너가 맡아 숨김 */
-  .deskSns { display: none; }
+     휴대폰과 같은 넘김 틀(.slides)을 다시 켜고, 점으로 지금 장을 보여 준다 */
   .cover { display: block; grid-column: 1 / -1; }
   /* 점 줄은 넘김 틀 밖이라 모서리는 넘김 틀에 준다. 옆 세로 배너·대각선 배너와 같은 모서리 */
   .slides { display: flex; border-radius: var(--pd-r-xl); }

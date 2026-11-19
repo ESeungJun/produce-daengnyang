@@ -4,7 +4,8 @@
  * 데이터 네 가지를 한꺼번에 받는다(get_featured, 지금 라운드, 강아지·고양이 차트 4줄씩). 화면 글은 "라운드" 대신 주차(#20).
  * #16: 잡지 비유("○월호 목차", 큰 제호)를 빼고 첫 화면에서 무슨 사이트인지 한 줄로 알리게 했다. 맨 아래는 사이트 푸터(레이아웃)가 맡는다.
  * #26: 맨 위 보기 토글(전체·댕댕이·냥이). 한쪽 보기면 모든 영역을 그 게시판으로 통일하고, 1280 이상 양옆 세로 배너는
- * 둘 다 그 게시판 데뷔 아이(왼쪽 원래 사진, 오른쪽 화보). 보기는 쿠키로 정해 서버가 바로 그 보기로 그린다(view.ts).
+ * 둘 다 그 게시판 데뷔 아이(왼쪽 원래 사진, 오른쪽 화보). 표지 아래 대각선 배너도 두 칸 모두 그 아이(원래 사진 · 화보 사진).
+ * 보기는 쿠키로 정해 서버가 바로 그 보기로 그린다(view.ts).
  */
 import { cookies } from "next/headers";
 import { BOARD_NAME, roundName } from "@/shared/lib/format";
@@ -62,7 +63,7 @@ export async function MainPage() {
         <Cover
           debutMonth={debutMonth}
           debut={featured.debut}
-          below={<DebutDuo debut={featured.debut} debutMonth={debutMonth} nextMonth={monthNo === 12 ? 1 : monthNo + 1} />}
+          below={<DebutDuo debut={featured.debut} debutMonth={debutMonth} nextMonth={monthNo === 12 ? 1 : monthNo + 1} same={single !== null} />}
         />
       </div>
 
