@@ -3,7 +3,7 @@
  * 순서: 꽉 찬 표지(첫 사진 + 큰 이름 + 데뷔 표 수) → 소개 인용 + SNS·공유 + 인스타에 올리기(#18) → 사진 벽(원래 사진 + 화보 사진) → 천천히 흐르는 사진 띠 → 응원 댓글.
  * 들어올 때 꽃가루가 한 번 터진다(Confetti, 같은 글은 세션에 한 번). 사진 벽은 눌러서 크게 본다(PhotoWall, #24).
  * 공유·SNS·인스타 기록은 자리 debut 로 남겨 일반 상세(detail)와 나눠 센다(#24). '움직임 줄이기'면 꽃가루·흐름 없이 사진만(CSS).
- * 주인에게는 "화보 사진 올리기"(최대 10장, /<게시판>/<글>/gallery) 길을 둔다. 숨긴 글은 이 화면을 쓰지 않는다(DetailPage 가 거른다).
+ * 주인에게는 "화보 올리기"(사진·GIF·동영상 최대 10칸, #31, /<게시판>/<글>/gallery) 길을 둔다. 숨긴 글은 이 화면을 쓰지 않는다(DetailPage 가 거른다).
  * 부르는 곳: features/entries/DetailPage.
  */
 import Link from "next/link";
@@ -81,10 +81,10 @@ export function DebutDetail({ e, board, comments }: Props) {
         {e.is_mine ? (
           <div className={s.owner}>
             <p>
-              <b>데뷔를 축하해요!</b> 화보 사진을 {GALLERY_MAX}장까지 더 올릴 수 있어요({e.gallery.length}/{GALLERY_MAX}).
+              <b>데뷔를 축하해요!</b> 화보에 사진·GIF·동영상을 {GALLERY_MAX}칸까지 더 올릴 수 있어요({e.gallery.length}/{GALLERY_MAX}).
             </p>
             <Link className={ui.pill} href={`/${board}/${e.id}/gallery`}>
-              화보 사진 올리기
+              화보 올리기
             </Link>
           </div>
         ) : null}
@@ -92,7 +92,7 @@ export function DebutDetail({ e, board, comments }: Props) {
 
       <section className={s.wallSec} aria-labelledby="debut-wall">
         <h2 id="debut-wall">
-          {e.pet_name} 화보 <small>{all.length}장</small>
+          {e.pet_name} 화보 <small>{all.length}컷</small>
         </h2>
         <PhotoWall photos={all} name={e.pet_name} />
       </section>

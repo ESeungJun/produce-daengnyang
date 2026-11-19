@@ -73,14 +73,14 @@ isOneToOne: false
                   ]
                 },"debut_photos": {
                   Row: {
-                    "created_at": string,"entry_id": string,"path": string,"position": number,"thumb_path": string
+                    "created_at": string,"entry_id": string,"kind": string,"path": string,"position": number,"thumb_path": string
                   }
                   ComputedFields: never
                   Insert: {
-                    "created_at"?: string,"entry_id": string,"path": string,"position": number,"thumb_path": string
+                    "created_at"?: string,"entry_id": string,"kind"?: string,"path": string,"position": number,"thumb_path": string
                   }
                   Update: {
-                    "created_at"?: string,"entry_id"?: string,"path"?: string,"position"?: number,"thumb_path"?: string
+                    "created_at"?: string,"entry_id"?: string,"kind"?: string,"path"?: string,"position"?: number,"thumb_path"?: string
                   }
                   Relationships: [
                     {
@@ -394,6 +394,9 @@ isOneToOne: false
 "can_add_push_subscription":
 { Args: Record<PropertyKey, never>; Returns: boolean
                            },
+"can_upload_media":
+{ Args: { "p_name": string }; Returns: boolean
+                           },
 "can_upload_photo":
 { Args: { "p_name": string }; Returns: boolean
                            },
@@ -402,6 +405,9 @@ isOneToOne: false
                            },
 "check_entry_fields":
 { Args: { "p_bio": string,"p_instagram": string,"p_pet_name": string,"p_threads": string,"p_youtube": string }; Returns: undefined
+                           },
+"check_gallery_set":
+{ Args: { "p_items": Json,"p_owner": string }; Returns: undefined
                            },
 "check_photo_set":
 { Args: { "p_max": number,"p_min": number,"p_owner": string,"p_photos": Json }; Returns: undefined

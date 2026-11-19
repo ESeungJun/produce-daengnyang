@@ -37,7 +37,7 @@ export async function GalleryPage({ board, id }: { board: Board; id: string }) {
       {why ? (
         <div className={page.notice}>
           <h1>{why}</h1>
-          <p>데뷔한 아이의 주인은 데뷔 화보에 사진을 {GALLERY_MAX}장까지 더할 수 있어요.</p>
+          <p>데뷔한 아이의 주인은 데뷔 화보에 사진·GIF·동영상을 {GALLERY_MAX}칸까지 더할 수 있어요.</p>
           <div className={page.noticeAct}>
             {!uid ? <SignInPrompt /> : null}
             <Link className={uid ? ui.pill : ui.ghost} href={back.href}>
@@ -48,8 +48,8 @@ export async function GalleryPage({ board, id }: { board: Board; id: string }) {
       ) : (
         <>
           <div className={r.head}>
-            <h1>화보 사진 올리기</h1>
-            <p>{e.pet_name}의 데뷔 화보에 사진을 {GALLERY_MAX}장까지 더할 수 있어요. 투표에 쓴 사진은 그대로예요.</p>
+            <h1>화보 올리기</h1>
+            <p>{e.pet_name}의 데뷔 화보에 사진·GIF·동영상을 {GALLERY_MAX}칸까지 더할 수 있어요. 동영상은 15초·20MB 이하 2개, GIF 는 5MB 이하예요. 투표에 쓴 사진은 그대로예요.</p>
           </div>
           <GalleryForm entryId={e.id} back={back.href} initial={e.gallery} />
         </>

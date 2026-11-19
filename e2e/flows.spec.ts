@@ -168,24 +168,24 @@ test("데뷔 화보: 주인이 사진을 더하면 화보 벽에 늘고, 빼고 
   try {
     const wall = () => page.getByRole("heading", { level: 2, name: /화보/ });
     await page.goto(`/${debut.board}/${debut.id}`);
-    const before = Number((await wall().textContent())!.match(/(\d+)장/)![1]);
+    const before = Number((await wall().textContent())!.match(/(\d+)컷/)![1]);
 
-    await page.getByRole("link", { name: "화보 사진 올리기" }).click();
+    await page.getByRole("link", { name: "화보 올리기" }).click();
     await page.waitForURL(/\/gallery$/);
     await page.locator('input[type="file"]').setInputFiles(PHOTO);
-    await expect(page.getByRole("button", { name: "1번째 사진 빼기" })).toBeVisible();
-    await page.getByRole("button", { name: "화보 사진 저장" }).click();
-    await expect(page.getByText("화보 사진을 저장했어요")).toBeVisible();
+    await expect(page.getByRole("button", { name: "1번째 칸 빼기" })).toBeVisible();
+    await page.getByRole("button", { name: "화보 저장" }).click();
+    await expect(page.getByText("화보를 저장했어요")).toBeVisible();
     await page.goto(`/${debut.board}/${debut.id}`);
-    await expect(wall()).toContainText(`${before + 1}장`);
+    await expect(wall()).toContainText(`${before + 1}컷`);
 
     // 다시 빼고 저장하면 원래대로
     await page.goto(`/${debut.board}/${debut.id}/gallery`);
-    await page.getByRole("button", { name: "1번째 사진 빼기" }).click();
-    await page.getByRole("button", { name: "화보 사진 저장" }).click();
-    await expect(page.getByText("화보 사진을 저장했어요")).toBeVisible();
+    await page.getByRole("button", { name: "1번째 칸 빼기" }).click();
+    await page.getByRole("button", { name: "화보 저장" }).click();
+    await expect(page.getByText("화보를 저장했어요")).toBeVisible();
     await page.goto(`/${debut.board}/${debut.id}`);
-    await expect(wall()).toContainText(`${before}장`);
+    await expect(wall()).toContainText(`${before}컷`);
   } finally {
     sql(`delete from public.debut_photos where entry_id = ${lit(debut.id)}`);
     sql(`update public.entries set owner_id = ${lit(debut.owner_id)} where id = ${lit(debut.id)}`);

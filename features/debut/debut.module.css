@@ -31,32 +31,55 @@
 /* 지금 오디션으로 가는 길(손님 다음 갈 곳) */
 .next { margin: var(--pd-gap-section) var(--pd-gutter) 0; display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 10px; font-size: var(--pd-fs-ui); color: var(--pd-ink-2); }
 
-/* ── 사진 벽: 휴대폰 2열·넓으면 3열 엇갈림, 들어올 때 차례로 펼쳐짐(--i) ── */
+/* ── 화보 벽(#31): 잡지 지면처럼 크기·비율이 다른 칸, 스크롤로 하나씩 떠오름 ──
+   휴대폰 6칸 격자: 첫 칸 펼침(6) → [4·2(낮게)] [3·3(아래로 엇갈림)] [6 와이드] 를 되풀이.
+   넓은 화면 12칸 격자: 첫 칸 와이드(12) → [5·4(내려앉음)·3] [7·5(바닥 맞춤)] 를 되풀이.
+   칸 비율은 --ar 로 칸 단추에 주고 사진·동영상은 그 안을 채운다. 격자라 보이는 순서와 읽는 순서가 같다. */
 .wallSec { padding: var(--pd-gap-section) var(--pd-gutter) 0; }
 .wallSec h2 { margin: 0 0 14px; font-family: var(--pd-f-display); font-weight: 400; font-size: var(--pd-fs-section); color: var(--pd-ink); }
 .wallSec h2 small { font-family: var(--pd-f-body); font-size: var(--pd-fs-small); color: var(--pd-ink-2); }
-/* 격자라 보이는 순서와 읽는 순서가 같다. 첫 장은 두 칸을 차지해 잡지처럼 크게 */
-.wall { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
-.wall li { min-width: 0; animation: wallIn 0.7s calc(0.5s + min(var(--i), 5) * 0.08s) cubic-bezier(.2, .7, .2, 1) both; }
-.wall li:first-child { grid-column: span 2; }
-.wall img { display: block; width: 100%; aspect-ratio: 4 / 5; object-fit: cover; border-radius: var(--pd-r-md); background: var(--pd-paper-2); }
-.wall li:first-child img { aspect-ratio: 4 / 3; }
+.wall { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 10px; align-items: start; }
+.wall > li { position: relative; min-width: 0; grid-column: span 6; --ar: 4 / 3; }
+.wall > li:nth-child(5n + 2) { grid-column: span 4; --ar: 3 / 4; }
+.wall > li:nth-child(5n + 3) { grid-column: span 2; --ar: 2 / 3; align-self: end; }
+.wall > li:nth-child(5n + 4) { grid-column: span 3; --ar: 1 / 1; }
+.wall > li:nth-child(5n + 5) { grid-column: span 3; --ar: 4 / 5; margin-top: 36px; }
+.wall > li:nth-child(5n + 6) { grid-column: span 6; --ar: 16 / 10; }
+/* 마지막 칸이 줄을 다 못 채우면(4·3 칸 하나만 남음) 줄 끝까지 넓혀 빈칸을 남기지 않는다 */
+.wall > li:last-child:nth-child(5n + 2), .wall > li:last-child:nth-child(5n + 4) { grid-column: span 6; --ar: 16 / 10; margin-top: 0; }
 /* 사진을 누르면 크게 보기(#24) */
-.wallBtn { display: block; width: 100%; height: 100%; padding: 0; border: 0; background: none; border-radius: var(--pd-r-md); cursor: zoom-in; }
+.wallBtn { position: relative; display: block; width: 100%; aspect-ratio: var(--ar); padding: 0; border: 0; overflow: hidden; background: var(--pd-paper-2); border-radius: var(--pd-r-md); cursor: zoom-in; }
 .wallBtn:focus-visible { outline: 3px solid var(--pd-pink); outline-offset: 3px; }
+/* 넓은 칸에서는 위쪽(얼굴 쪽)을 살려 자른다 */
+.wall img, .wall video { display: block; width: 100%; height: 100%; object-fit: cover; object-position: 50% 30%; }
+/* 번호가 밝은 사진 위에서도 읽히게 칸 아래에 그늘을 깐다(DESIGN_SYSTEM 4절 사진 위 글자 규칙) */
+.wallBtn::after { content: ""; position: absolute; inset: auto 0 0; height: 36%; background: linear-gradient(to top, rgb(var(--pd-shade) / 0.5), rgb(var(--pd-shade) / 0.18) 55%, rgb(var(--pd-shade) / 0)); pointer-events: none; }
+/* 칸 번호(01·02…)와 종류 표시. 사진 위라 사진 위 색(on-photo)과 그늘 그림자만 쓴다 */
+.wallNo { position: absolute; left: 12px; bottom: 10px; display: flex; align-items: center; gap: 6px; font-family: var(--pd-f-display); font-size: var(--pd-fs-ui); color: var(--pd-on-photo); text-shadow: 0 1px 3px rgb(var(--pd-shade) / 0.6); pointer-events: none; z-index: 1; }
+.wallNo em { font-style: normal; font-family: var(--pd-f-body); font-size: var(--pd-fs-micro); font-weight: 700; padding: 2px 7px; border-radius: var(--pd-r-pill); background: rgb(var(--pd-shade) / 0.55); text-shadow: none; }
+/* 스크롤 등장: 스크립트가 붙은 뒤(data-reveal)에만 숨긴다. 칸은 살짝 기운 채 아래에서 떠올라 바로 서고, 사진은 조금 크게 시작해 제자리로 */
+.wall[data-reveal] > li { opacity: 0; transform: translateY(56px) scale(0.94) rotate(var(--tilt, -1.6deg)); transition: opacity 0.9s ease var(--lag, 0s), transform 1.2s cubic-bezier(.16, 1, .3, 1) var(--lag, 0s); }
+.wall[data-reveal] > li:nth-child(even) { --tilt: 1.6deg; }
+.wall[data-reveal] > li:nth-child(5n + 3), .wall[data-reveal] > li:nth-child(5n + 5) { --lag: 0.12s; }
+.wall[data-reveal] > li[data-in] { opacity: 1; transform: none; }
+.wall[data-reveal] > li img, .wall[data-reveal] > li video { transform: scale(1.12); transition: transform 1.8s cubic-bezier(.16, 1, .3, 1) var(--lag, 0s); }
+.wall[data-reveal] > li[data-in] img, .wall[data-reveal] > li[data-in] video { transform: none; }
+/* 올리기 폼의 GIF·동영상 표시 */
+.kindTag { position: absolute; left: 6px; top: 6px; padding: 2px 8px; border-radius: var(--pd-r-pill); background: rgb(var(--pd-shade) / 0.6); color: var(--pd-on-photo); font-size: var(--pd-fs-micro); font-weight: 700; pointer-events: none; }
 
 /* 크게 보기(<dialog>). 사진 위 글·버튼은 사진 위 색(on-photo)과 그늘(shade)만 쓴다 */
 .lightbox { width: 100vw; height: 100dvh; max-width: none; max-height: none; margin: 0; padding: 0; border: 0; background: rgb(var(--pd-shade) / 0.92); color: var(--pd-on-photo); overflow: hidden; }
 .lightbox::backdrop { background: rgb(var(--pd-shade) / 0.6); }
 .lightbox[open] { display: flex; align-items: center; justify-content: center; }
-.lightbox img { max-width: 100%; max-height: calc(100dvh - 120px); object-fit: contain; border-radius: var(--pd-r-sm); touch-action: pan-y; }
+.lightbox img, .lightbox video { max-width: 100%; max-height: calc(100dvh - 120px); object-fit: contain; border-radius: var(--pd-r-sm); touch-action: pan-y; }
+.lbFallback { margin: 0; display: grid; justify-items: center; gap: 12px; }
+.lbFallback figcaption { font-size: var(--pd-fs-ui); }
 .lbCount { position: absolute; left: 50%; bottom: max(16px, env(safe-area-inset-bottom, 0px)); transform: translateX(-50%); margin: 0; font-size: var(--pd-fs-ui); font-weight: 700; }
 .lbBtn { position: absolute; width: 48px; height: 48px; display: inline-flex; align-items: center; justify-content: center; border: 0; border-radius: 50%; background: rgb(var(--pd-shade) / 0.5); color: var(--pd-on-photo); font-size: 28px; line-height: 1; cursor: pointer; }
 .lbBtn:focus-visible { outline: 3px solid var(--pd-butter); outline-offset: 2px; }
 .lbClose { top: max(12px, env(safe-area-inset-top, 0px)); right: max(12px, env(safe-area-inset-right, 0px)); font-size: 20px; }
 .lbPrev { left: max(8px, env(safe-area-inset-left, 0px)); top: 50%; transform: translateY(-50%); }
 .lbNext { right: max(8px, env(safe-area-inset-right, 0px)); top: 50%; transform: translateY(-50%); }
-@keyframes wallIn { from { transform: translateY(30px) scale(0.96); opacity: 0; } to { transform: none; opacity: 1; } }
 
 /* ── 천천히 흐르는 사진 띠: 같은 목록 두 번 → -50% 이동이면 이음매 없이 돈다 ── */
 .strip { margin: var(--pd-gap-section) 0 0; overflow: hidden; }
@@ -83,10 +106,19 @@
 }
 
 @media (min-width: 720px) {
-  .wall { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px; }
-  .wall li:first-child { grid-row: span 2; }
-  .wall li:first-child img { aspect-ratio: auto; height: 100%; }
-  .lightbox img { max-width: calc(100vw - 160px); }
+  .wall { grid-template-columns: repeat(12, minmax(0, 1fr)); gap: 18px; }
+  .wall > li { grid-column: span 12; --ar: 21 / 9; margin-top: 0; }
+  .wall > li:nth-child(5n + 2) { grid-column: span 5; --ar: 4 / 5; align-self: start; }
+  .wall > li:nth-child(5n + 3) { grid-column: span 4; --ar: 3 / 4; align-self: start; margin-top: 72px; }
+  .wall > li:nth-child(5n + 4) { grid-column: span 3; --ar: 2 / 3; align-self: start; }
+  .wall > li:nth-child(5n + 5) { grid-column: span 7; --ar: 16 / 10; align-self: start; margin-top: 0; }
+  .wall > li:nth-child(5n + 6) { grid-column: span 5; --ar: 1 / 1; align-self: end; }
+  /* 마지막 줄 빈칸 메우기: [5] 하나면 12, [5·4] 면 4 칸을 7 로, [7] 하나면 12. [5·4·3] 은 그대로(휴대폰 규칙을 되돌림) */
+  .wall > li:last-child:nth-child(5n + 2), .wall > li:last-child:nth-child(5n + 5) { grid-column: span 12; --ar: 21 / 9; margin-top: 0; }
+  .wall > li:last-child:nth-child(5n + 3) { grid-column: span 7; --ar: 16 / 10; margin-top: 0; }
+  .wall > li:last-child:nth-child(5n + 4) { grid-column: span 3; --ar: 2 / 3; }
+  .wallNo { left: 16px; bottom: 14px; font-size: var(--pd-fs-body); }
+  .lightbox img, .lightbox video { max-width: calc(100vw - 160px); }
   .stripTrack img { height: 160px; }
 }
 @media (min-width: 1024px) {
@@ -104,7 +136,7 @@
 /* 움직임 줄이기: 꽃가루·흐름·펼침 없이 사진만 */
 @media (prefers-reduced-motion: reduce) {
   .confetti { display: none; }
-  .cover img, .coverText h1, .wall li { animation: none; }
+  .cover img, .coverText h1 { animation: none; }
   /* 같은 사진이 사진 벽에 다 있으니 흐르는 띠는 통째로 숨긴다 */
   .strip { display: none; }
 }

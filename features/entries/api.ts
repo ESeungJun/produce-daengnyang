@@ -29,6 +29,8 @@ export async function loadBoard(
   return data ?? [];
 }
 
+export type GalleryKind = "photo" | "gif" | "video";
+
 export type EntryDetail = {
   id: string;
   board: Board;
@@ -53,7 +55,8 @@ export type EntryDetail = {
   /** 데뷔한 글(get_featured 와 같은 판정)이면 화보 상세를 그린다(#17) */
   debut: boolean;
   /** 데뷔 뒤 주인이 더한 화보 사진(0~10장) */
-  gallery: { path: string; thumb_path: string }[];
+  /** 데뷔 화보(#17). kind: 사진·GIF·동영상(#31). GIF·동영상의 thumb_path 는 첫 장면 그림 */
+  gallery: { kind: GalleryKind; path: string; thumb_path: string }[];
   /** 주간 글인데 그 아이의 결선 복사본이 데뷔했으면 데뷔 화보로 가는 길(#24, 옛 공유 링크로 들어온 사람용). 아니면 null */
   debut_link?: { id: string; month: string } | null;
 };

@@ -11,7 +11,7 @@ import Link from "next/link";
 import { BOARD_NAME, SNS_NAME, count, snsLinks, type Board } from "@/shared/lib/format";
 import { Impression } from "@/features/sns/Impression";
 import { SnsLink } from "@/features/sns/SnsLink";
-import { debutPhotos, type FeaturedCard } from "./api";
+import { debutPhotos, railShot, type FeaturedCard } from "./api";
 import { PhotoFade } from "./PhotoFade";
 import s from "./featured.module.css";
 
@@ -37,7 +37,7 @@ export function DebutRail({ board, card, debutMonth, variant = "photos" }: Props
   }
   const sns = snsLinks(card);
   const gallery = variant === "gallery";
-  const shots = (card.gallery ?? []).map((p) => p.path).filter(Boolean);
+  const shots = (card.gallery ?? []).map(railShot).filter(Boolean) as string[];
   const href = `/${card.board}/${card.entry_id}`;
   return (
     <aside className={s.rail} aria-label={gallery ? `${title} 화보` : title}>

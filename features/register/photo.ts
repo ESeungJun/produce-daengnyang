@@ -32,7 +32,8 @@ function canWebp(): boolean {
   return webpOk;
 }
 
-async function draw(bmp: ImageBitmap, max: number, quality: number): Promise<Blob> {
+/** 그림 하나를 긴 변 max 로 줄여 WebP(못 하면 JPEG)로 만든다. 동영상 첫 장면(#31)에도 쓴다. */
+export async function draw(bmp: ImageBitmap, max: number, quality: number): Promise<Blob> {
   const { w, h } = fitSize(bmp.width, bmp.height, max);
   const canvas = document.createElement("canvas");
   canvas.width = w;

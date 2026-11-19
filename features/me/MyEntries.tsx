@@ -75,7 +75,7 @@ export function MyEntries({ entries }: { entries: MyEntry[] }) {
                 ) : e.debut && !e.hidden ? (
                   // 데뷔한 글은 화보 사진을 더 올릴 수 있다(#17). 판정은 화보 화면·set_debut_photos 와 같은 DB is_debut(#23)
                   <p className={s.acts}>
-                    <Link href={`/${e.board}/${e.id}/gallery`}>화보 사진 올리기</Link>
+                    <Link href={`/${e.board}/${e.id}/gallery`}>화보 올리기</Link>
                   </p>
                 ) : null}
               </div>

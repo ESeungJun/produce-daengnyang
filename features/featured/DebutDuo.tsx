@@ -10,7 +10,7 @@
 import Link from "next/link";
 import { BOARD_NAME } from "@/shared/lib/format";
 import { photoUrl } from "@/shared/lib/supabase/env";
-import { debutPhotos, type FeaturedCard } from "./api";
+import { debutPhotos, railShot, type FeaturedCard } from "./api";
 import s from "./featured.module.css";
 
 /** 배너에 쓸 사진: 여러 장이면 마지막 장(표지는 첫 장, 세로 배너는 두 번째 장부터) */
@@ -21,7 +21,7 @@ export function duoPhoto(c: FeaturedCard): string | null {
 
 /** 한쪽 보기 오른쪽 칸 사진: 화보 사진 마지막 장, 없으면 null(원래 사진을 다른 구도로) */
 export function duoGalleryPhoto(c: FeaturedCard): string | null {
-  const shots = (c.gallery ?? []).map((p) => p.path).filter(Boolean);
+  const shots = (c.gallery ?? []).map(railShot).filter(Boolean) as string[];
   return shots.length ? shots[shots.length - 1] : null;
 }
 

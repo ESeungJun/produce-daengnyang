@@ -4,6 +4,7 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Database } from "@/shared/lib/supabase/database.types";
 import type { Board } from "@/shared/lib/format";
+import { isMediaPath } from "@/shared/lib/supabase/env";
 
 export type FeaturedCard = {
   entry_id: string;
@@ -39,4 +40,12 @@ export async function loadFeatured(supabase: SupabaseClient<Database>): Promise<
   const { data, error } = await supabase.rpc("get_featured");
   if (error) throw error;
   return data as unknown as Featured;
+}
+
+/**
+ * 메인 배너에 놓을 화보 한 칸의 그림 경로(#31). 배너는 그림(img)만 넘기므로 동영상·GIF 는 첫 장면 그림(thumb_path)을 쓴다.
+ * 메인은 손님이 가장 많이 오는 곳이라 GIF 원본(최대 5MB)을 걸지 않는다. DebutRail·DebutDuo 가 쓴다.
+ */
+export function railShot(p: { path: string; thumb_path: string | null }): string | null {
+  return isMediaPath(p.path) ? p.thumb_path : p.path;
 }
