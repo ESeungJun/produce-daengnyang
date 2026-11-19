@@ -19,6 +19,12 @@
 .intro blockquote p { margin: 0; font-family: var(--pd-f-display); font-size: var(--pd-fs-number); line-height: 1.4; color: var(--pd-ink); text-wrap: balance; }
 .act { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; }
 .snsBtn { display: inline-flex; width: 44px; height: 44px; align-items: center; justify-content: center; border-radius: var(--pd-r-xs); }
+.insta { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 16px; padding: 14px; border-radius: var(--pd-r-sm); box-shadow: inset 0 0 0 1px var(--pd-jelly-2); }
+.instaHead { margin: 0; flex: 1 1 200px; display: flex; flex-direction: column; gap: 2px; font-size: var(--pd-fs-small); color: var(--pd-ink-2); }
+.instaHead b { font-size: var(--pd-fs-ui); color: var(--pd-ink); }
+.instaBtns { display: flex; gap: 8px; }
+.instaNote { margin: 0; flex: 1 0 100%; font-size: var(--pd-fs-small); color: var(--pd-ink-2); }
+.instaNote:empty { display: none; }
 .owner { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 10px; padding: 14px; border-radius: var(--pd-r-sm); box-shadow: inset 0 0 0 1px var(--pd-jelly-2); font-size: var(--pd-fs-ui); color: var(--pd-ink-2); line-height: 1.6; }
 .owner p { margin: 0; flex: 1 1 220px; }
 .owner b { color: var(--pd-ink); }
@@ -73,7 +79,7 @@
   .coverText h1 { font-size: var(--pd-fs-d-star); }
   .intro { padding: 40px 0 8px; flex-direction: row; flex-wrap: wrap; align-items: center; justify-content: space-between; }
   .intro blockquote { flex: 1 1 520px; }
-  .owner { flex: 1 0 100%; }
+  .owner, .insta { flex: 1 0 100%; }
   .wallSec { padding: 32px 0 0; }
   .comments { padding: 16px 0 56px; }
   .next { margin-inline: 0; }

@@ -15,7 +15,7 @@ export const OG_SIZE = { width: 1200, height: 630 };
 const C = { paper: "#FFFFFF", paper2: "#F0F0F0", ink: "#141414", ink2: "#5F5F5F", pinkText: "#C2255F" };
 const UA = "produce-daengnyang-og"; // 브라우저가 아닌 이름이면 Google Fonts 가 next/og 가 읽는 TTF 를 준다
 
-async function googleFont(family: string, text: string): Promise<ArrayBuffer | null> {
+export async function googleFont(family: string, text: string): Promise<ArrayBuffer | null> {
   try {
     const css = await fetch(`https://fonts.googleapis.com/css2?family=${encodeURIComponent(family)}&text=${encodeURIComponent(text)}`, {
       headers: { "User-Agent": UA },
@@ -31,15 +31,15 @@ async function googleFont(family: string, text: string): Promise<ArrayBuffer | n
 
 /**
  * 사진을 받아 data 주소로. next/og 는 WebP 를 그리지 못해(빈칸이 됨) JPEG·PNG 만 쓴다.
- * 1. Supabase 이미지 변환(render)으로 504×630 JPEG 를 받는다(Accept 에 webp 가 없으면 JPEG 로 준다. 운영 Pro 요금제에서 켜져 있음).
+ * 1. Supabase 이미지 변환(render)으로 width×height(기본 504×630, 인스타 이미지 #18 은 1080 폭) JPEG 를 받는다(Accept 에 webp 가 없으면 JPEG 로 준다. 운영 Pro 요금제에서 켜져 있음).
  * 2. 변환이 안 되면(로컬 등) 원본이 JPEG·PNG 일 때만 쓴다. 둘 다 아니면 null → 분홍 판.
  */
-async function photoData(path: string | null | undefined): Promise<string | null> {
+export async function photoData(path: string | null | undefined, width = 504, height = 630): Promise<string | null> {
   if (!path) return null;
   const { url } = supabaseEnv();
   const key = path.split("/").map(encodeURIComponent).join("/");
   const tries = [
-    `${url}/storage/v1/render/image/public/${PHOTO_BUCKET}/${key}?width=504&height=630&resize=cover&quality=80`,
+    `${url}/storage/v1/render/image/public/${PHOTO_BUCKET}/${key}?width=${width}&height=${height}&resize=cover&quality=80`,
     `${url}/storage/v1/object/public/${PHOTO_BUCKET}/${key}`,
   ];
   for (const u of tries) {
@@ -53,7 +53,7 @@ async function photoData(path: string | null | undefined): Promise<string | null
         continue;
       }
       const buf = await res.arrayBuffer();
-      if (buf.byteLength > 5 * 1024 * 1024) continue;
+      if (buf.byteLength > 8 * 1024 * 1024) continue;
       return `data:${type};base64,${Buffer.from(buf).toString("base64")}`;
     } catch {
       // 다음 방법
