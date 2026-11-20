@@ -19,6 +19,8 @@ import { photoUrl } from "@/shared/lib/supabase/env";
 import { buildPages, isNoteCell, type Cell, type MagPage, type Shot } from "./magazinePages";
 import { useImpression } from "@/features/sns/Impression";
 import { trackSns } from "@/features/sns/track";
+import ui from "@/shared/ui/ui.module.css";
+import { GALLERY_MAX } from "./limits";
 import { NOTE_LABEL } from "./notes";
 import s from "./debut.module.css";
 import m from "./magazine.module.css";
@@ -56,9 +58,11 @@ type Props = {
   votes: string;
   /** 주인에게만: 화보 고치기 주소(표지 위쪽에 작은 길로, 20칸을 다 내려가지 않고 고치게 #31 사용자 리뷰) */
   editHref?: string;
+  /** 표지 표 수 아래에 두는 SNS·공유 단추(#31 사용자 결정 안 A: 표지를 보고 바로 팔로우·공유하게) */
+  coverActions?: React.ReactNode;
 };
 
-export function Magazine({ entryId, items, name, bio, board, boardName, issue, month, votes, editHref }: Props) {
+export function Magazine({ entryId, items, name, bio, board, boardName, issue, month, votes, editHref, coverActions }: Props) {
   const pages = useMemo(() => buildPages(items), [items]);
   const shots = useMemo(() => items.filter((c): c is Shot => !isNoteCell(c)), [items]);
   const cover = shots[0];
@@ -203,13 +207,19 @@ export function Magazine({ entryId, items, name, bio, board, boardName, issue, m
       case "cover":
         return (
           <>
-            {cover ? <img src={photoUrl(cover.path) ?? undefined} alt={`${name} 데뷔 화보 표지`} fetchPriority="high" decoding="async" /> : null}
+            {/* 표지 사진은 지면에 다시 싣지 않으므로 표지를 눌러 크게 본다(#31 사용자 결정) */}
+            {cover ? (
+              <button type="button" className={m.coverShot} onClick={(ev) => show(0, ev.currentTarget)} aria-label={`${name} 데뷔 화보 표지 크게 보기`}>
+                <img src={photoUrl(cover.path) ?? undefined} alt="" fetchPriority="high" decoding="async" />
+              </button>
+            ) : null}
             <div className={m.coverTop}>
               <p className={m.mast}>데뷔 화보</p>
               <p className={m.issue}>
                 {issue} · {boardName}
               </p>
-              {editHref ? (
+              {/* 빈 화보 안내("화보 채우기")가 보일 때는 같은 곳으로 가는 길을 하나만 둔다 */}
+              {editHref && pages.length > 2 ? (
                 <Link className={m.edit} href={editHref}>
                   화보 고치기
                 </Link>
@@ -222,6 +232,7 @@ export function Magazine({ entryId, items, name, bio, board, boardName, issue, m
               <p className={m.votes}>
                 <b>{votes}</b>
               </p>
+              {coverActions}
             </div>
           </>
         );
@@ -292,7 +303,7 @@ export function Magazine({ entryId, items, name, bio, board, boardName, issue, m
 
   return (
     <>
-      <section className={m.mag} aria-label={`${name} 데뷔 화보`} data-mag="">
+      <section className={m.mag} aria-label={`${name} 데뷔 화보`} data-mag="" data-shots={n}>
         <div ref={sc} className={m.pages}>
           {pages.map((p, i) => [
             <div
@@ -309,10 +320,21 @@ export function Magazine({ entryId, items, name, bio, board, boardName, issue, m
               {pageBody(p)}
             </div>,
             // 표지 바로 아래 한 줄: 사진을 누르면 크게 본다는 단서(휴대폰은 커서 모양이 없어서, #31 사용자 리뷰)
-            p.type === "cover" && shots.length > 1 ? (
+            p.type === "cover" && shots.length ? (
               <p key="hint" className={m.hint}>
                 사진을 누르면 크게 봐요
               </p>
+            ) : null,
+            // 화보 칸이 비어 표지 → 맺음뿐이면 주인에게만 채우기 안내(#31 사용자 결정 안 A)
+            p.type === "cover" && editHref && pages.length === 2 ? (
+              <div key="empty" className={m.empty}>
+                <b>화보가 아직 비어 있어요</b>
+                <p>표지는 투표 사진이에요. 사진·GIF·동영상 {GALLERY_MAX}칸과 글을 더 올리면 표지 아래에 잡지 지면이 생겨요.</p>
+                <Link className={ui.pill} href={editHref}>
+                  화보 채우기
+                </Link>
+                <small>주인에게만 보여요</small>
+              </div>
             ) : null,
           ])}
         </div>

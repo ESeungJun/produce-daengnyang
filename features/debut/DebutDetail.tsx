@@ -29,6 +29,7 @@ import { Magazine } from "./Magazine";
 import { GALLERY_MAX } from "./limits";
 import d from "@/features/entries/entries.module.css";
 import s from "./debut.module.css";
+import mag from "./magazine.module.css";
 
 type Props = {
   e: EntryDetail;
@@ -67,6 +68,16 @@ export function DebutDetail({ e, board, comments }: Props) {
         month={m}
         votes={e.pick_count !== null ? `${count(e.pick_count)}표로 데뷔` : "데뷔 평가 통과"}
         editHref={e.is_mine ? `/${board}/${e.id}/gallery` : undefined}
+        coverActions={
+          // 표지를 보고 바로 팔로우·공유하게(#31 사용자 결정 안 A). 아래 SNS 칸(debut)과 자리를 나눠 센다.
+          // 공유하기는 늘 있으므로 SNS 가 없는 글도 노출을 남겨 공유율의 분모로 쓴다(SNS 유무는 분석에서 나눈다)
+          <Impression className={mag.coverSns} ids={[e.id]} place="debut_cover">
+            {sns.map((x) => (
+              <SnsLink key={x.kind} entryId={e.id} sns={x} place="debut_cover" iconSize="md" label={`${e.pet_name} ${SNS_NAME[x.kind]} ${x.handle}, 새 창`} />
+            ))}
+            <CopyLink entryId={e.id} name={e.pet_name} place="debut_cover" className={mag.coverShare} text={`${e.pet_name} ${m}월 데뷔했어요! 화보 보러 오세요`} />
+          </Impression>
+        }
       />
 
       {/* 화보 맺음의 "SNS·공유" 길이 오는 자리 */}

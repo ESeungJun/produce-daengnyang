@@ -140,6 +140,12 @@ test("화보 폼에서 글 꼭지를 쓰면 화보 지면 사이에 기사로 �
     await feeling.scrollIntoViewIfNeeded();
     await expect(feeling).toBeInViewport();
 
+    // 6-1. 표지 사진은 지면에 다시 싣지 않으므로 표지를 눌러 크게 본다(#31)
+    await wall.getByRole("button", { name: /표지 크게 보기/ }).click();
+    await expect(page.locator("dialog[open]")).toBeVisible();
+    await page.keyboard.press("Escape");
+    await expect(page.locator("dialog[open]")).toHaveCount(0);
+
     // 7. 맺음 기록: 맺음이 보이면 debut_back 노출을, "픽하러 가기"를 누르면 pick_cta 를 남긴다(#31)
     const back = wall.locator('[data-type="back"]');
     await back.scrollIntoViewIfNeeded();

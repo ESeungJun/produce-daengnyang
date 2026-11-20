@@ -13,7 +13,22 @@
 /* 높이는 4:5(최대 86svh)를 최소로 두고 긴 이름·소개면 아래로 늘어난다(고정 비율 + overflow 면 글이 잘림, #31 코드·디자인 리뷰).
    사진이 오기 전·깨졌을 때도 흰 글자가 읽히게 바탕은 그늘색 */
 .cover { position: relative; display: flex; flex-direction: column; min-height: min(125vw, 86svh); overflow: hidden; background: rgb(var(--pd-shade)); color: var(--pd-on-photo); }
-.cover > img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; object-position: 50% 30%; }
+.coverShot { position: absolute; inset: 0; padding: 0; border: 0; background: none; cursor: zoom-in; }
+/* 초점 고리는 그늘(::after) 위에 흰 줄 + 그늘 줄 두 겹으로 그려 밝은 사진에서도 보이게 */
+.coverShot:focus-visible { outline: none; }
+.cover:has(.coverShot:focus-visible)::after { box-shadow: inset 0 0 0 3px var(--pd-on-photo), inset 0 0 0 6px rgb(var(--pd-shade) / 0.7); }
+.coverShot img { width: 100%; height: 100%; object-fit: cover; object-position: 50% 30%; }
+/* 글자 칸이 표지 사진을 덮어도 빈 곳을 누르면 사진이 열리게 글자 칸은 누름을 통과시키고 링크·단추만 받는다 */
+.coverTop, .coverFoot { pointer-events: none; }
+.coverTop a, .coverFoot a, .coverFoot button, .coverFoot input { pointer-events: auto; }
+/* 표지 SNS·공유(#31 안 A): 사진 위 반투명 판 */
+/* 줄 전체가 누름을 받아 아이콘 사이 빈틈을 눌러도 크게 보기가 열리지 않게 */
+.coverSns { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; text-shadow: none; pointer-events: auto; }
+.coverSns > a { display: inline-flex; width: 44px; height: 44px; align-items: center; justify-content: center; border-radius: var(--pd-r-xs); background: rgb(var(--pd-shade) / 0.35); }
+.coverShare { min-height: 44px; padding: 0 16px; border: 0; border-radius: var(--pd-r-pill); background: rgb(var(--pd-shade) / 0.55); color: var(--pd-on-photo); font: inherit; font-size: var(--pd-fs-ui); font-weight: 700; cursor: pointer; }
+.coverSns > a:focus-visible, .coverShare:focus-visible { outline: 3px solid var(--pd-on-photo); outline-offset: 2px; }
+.coverSns > label { flex-basis: 100%; color: var(--pd-on-photo); text-shadow: 0 1px 3px rgb(var(--pd-shade) / 0.6); }
+@media (hover: hover) { .coverShare:hover { background: rgb(var(--pd-shade) / 0.7); } }
 /* 제호(위)·이름(아래)이 밝은 사진에서도 읽히게 위·아래에 그늘 */
 .cover::after { content: ""; position: absolute; inset: 0; background: linear-gradient(rgb(var(--pd-shade) / 0.6), rgb(var(--pd-shade) / 0.35) 15%, rgb(var(--pd-shade) / 0) 35%, rgb(var(--pd-shade) / 0) 45%, rgb(var(--pd-shade) / 0.72)); pointer-events: none; }
 .coverTop, .coverFoot { position: relative; z-index: 1; padding: 20px 22px; text-shadow: 0 1px 3px rgb(var(--pd-shade) / 0.6); }
@@ -41,6 +56,11 @@
 .shot:focus-visible { outline: 3px solid var(--pd-pink); outline-offset: -3px; }
 .shot img, .shot video { position: absolute; inset: 0; display: block; width: 100%; height: 100%; object-fit: cover; object-position: 50% 30%; }
 /* 주인에게만: 표지 위쪽 "화보 고치기" 길(44px 터치 영역) */
+/* 화보 칸이 빈 주인에게만: 채우기 안내(#31 안 A) */
+.empty { display: flex; flex-direction: column; align-items: flex-start; gap: 6px; margin: 0; padding: 18px; border-radius: var(--pd-r-md); background: var(--pd-paper-2); box-shadow: inset 0 0 0 1px var(--pd-jelly-2); }
+.empty b { font-size: var(--pd-fs-name); }
+.empty p { margin: 0; font-size: var(--pd-fs-small); line-height: 1.6; color: var(--pd-ink-2); }
+.empty small { font-size: var(--pd-fs-tiny); color: var(--pd-ink-2); }
 .edit { justify-self: start; display: inline-flex; align-items: center; min-height: 44px; padding: 0 14px; margin-top: 2px; border-radius: var(--pd-r-pill); background: rgb(var(--pd-shade) / 0.55); color: var(--pd-on-photo); font-size: var(--pd-fs-ui); font-weight: 700; text-decoration: none; text-shadow: none; }
 .edit:focus-visible { outline: 3px solid var(--pd-on-photo); outline-offset: 2px; }
 /* 표지 아래 한 줄 안내(휴대폰은 커서 모양으로 알 수 없어서) */

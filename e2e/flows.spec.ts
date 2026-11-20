@@ -162,8 +162,8 @@ test("데뷔 화보: 주인이 사진을 더하면 잡지 칸이 늘고, 빼고 
   // 시험 동안만 데뷔 글 주인을 시험 회원으로 바꾼다(시드 주인은 로그인할 수 없어서)
   sql(`update public.entries set owner_id = ${lit(uid)} where id = ${lit(debut.id)}`);
   try {
-    // 잡지의 사진 칸 이름표("… 화보 i/n …")에서 전체 칸 수 n 을 읽는다(차례 쪽은 쪽이 적으면 없어서 쓰지 않는다)
-    const total = async () => Number((await page.locator("[data-mag] [data-cell]").first().getAttribute("aria-label"))!.match(/\d+\/(\d+)/)![1]);
+    // 잡지가 가진 사진 칸 수(표지 포함). 사진이 한 장뿐이면 지면 칸이 없으므로(#31) 칸 이름표 대신 data-shots 를 읽는다
+    const total = async () => Number(await page.locator("[data-mag]").getAttribute("data-shots"));
     await page.goto(`/${debut.board}/${debut.id}`);
     const before = await total();
 
