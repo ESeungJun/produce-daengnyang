@@ -23,7 +23,11 @@ shot "$WORK/small-512.png" "#small"
 echo "public/icons/icon-512.png 512px"
 size public/icons/icon-512.png 192 public/icons/icon-192.png
 size public/icons/icon-512.png 180 app/apple-icon.png
-for s in 16 32 48; do size "$WORK/small-512.png" "$s" "$WORK/fav-$s.png"; done
+# Next 빌드는 ICO 안 PNG 가 RGBA 여야 읽는다(sips 결과는 RGB 라 빌드가 멈춤, #35). ffmpeg 로 줄이며 RGBA 로 쓴다
+for s in 16 32 48; do
+  ffmpeg -loglevel error -y -i "$WORK/small-512.png" -vf "scale=$s:$s:flags=lanczos,format=rgba" "$WORK/fav-$s.png"
+  echo "$WORK/fav-$s.png ${s}px"
+done
 # favicon.ico: PNG 세 장을 그대로 담는다(ICO 머리 6바이트 + 장마다 16바이트 목록 + PNG 본문)
 node -e '
 const fs = require("fs");
