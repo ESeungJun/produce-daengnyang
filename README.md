@@ -36,8 +36,10 @@ npx supabase@3.2.0 start        # point .env.local at the local URL and key to s
 bash supabase/seed-photos.sh    # upload the sample photos (CC0) to local Storage
 npx supabase@3.2.0 test db      # pgTAP rule tests
 npm run preview                 # preview on the Cloudflare runtime (needs .dev.vars)
-npm run deploy                  # deploy to Cloudflare Workers
+npm run deploy                  # deploy to Cloudflare Workers (needs the production env file, below)
 ```
+
+`npm run deploy` (`scripts/deploy.sh`) builds with the production values in `.work/deploy-env.sh` (git-ignored, `export NEXT_PUBLIC_…=` lines) instead of `.env.local`, and refuses to deploy if the build still contains a local Supabase address or lacks the production one. Use `DEPLOY_ENV=path` to point at another file.
 
 | Variable | Meaning |
 |---|---|
