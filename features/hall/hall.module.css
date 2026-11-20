@@ -1,0 +1,84 @@
+/* 명예의 전당(#8). 데뷔는 센터 화보(.spread)처럼 사진 위 이름, 센터는 게시판 카드(.gcard)처럼 사진 아래 이름. 토큰만 쓴다. */
+.head h1 { font-family: var(--pd-f-display); font-weight: 400; font-size: var(--pd-fs-page); line-height: 1; margin: 6px 0 4px; }
+.head p { margin: 0; font-size: var(--pd-fs-ui); color: var(--pd-ink-2); }
+
+.month { padding-top: 28px; }
+/* 달 사이 = 섹션 간격(--pd-gap-section) 을 점선 위아래로 나눈다 */
+.month + .month { border-top: 1px dashed var(--pd-jelly); margin-top: calc(var(--pd-gap-section) / 2); padding-top: calc(var(--pd-gap-section) / 2); }
+.month h2 { font-family: var(--pd-f-display); font-weight: 400; font-size: var(--pd-fs-number); margin: 0 0 12px; }
+
+/* 데뷔: 3:4 사진, 이름은 사진 아래쪽 그늘 위 */
+.debuts { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; list-style: none; margin: 0 0 16px; padding: 0; }
+.debut { min-width: 0; }
+.debut a { position: relative; display: block; overflow: hidden; border-radius: var(--pd-r-md); color: var(--pd-on-photo); text-decoration: none; }
+.debut img { display: block; width: 100%; aspect-ratio: 3 / 4; object-fit: cover; background: var(--pd-paper-2); }
+.scrim { position: absolute; inset: auto 0 0 0; height: 60%; background: linear-gradient(transparent, rgb(var(--pd-shade) / 0.35) 50%, rgb(var(--pd-shade) / 0.72)); }
+.debutText { position: absolute; left: 12px; right: 12px; bottom: 12px; display: flex; flex-direction: column; gap: 6px; align-items: flex-start; }
+.debutText small {
+  font-size: var(--pd-fs-micro);
+  background: var(--pd-butter);
+  color: var(--pd-on-butter);
+  border-radius: var(--pd-r-pill);
+  padding: 3px 9px;
+}
+.debutText b {
+  font-family: var(--pd-f-display);
+  font-weight: 400;
+  font-size: var(--pd-fs-card);
+  line-height: 1;
+  text-shadow: 0 2px 0 rgb(var(--pd-shade) / 0.3), 0 1px 3px rgb(var(--pd-shade) / 0.6);
+  overflow-wrap: anywhere;
+}
+.debutVotes { font-size: var(--pd-fs-tiny); text-shadow: 0 1px 3px rgb(var(--pd-shade) / 0.6); }
+
+/* 빈 카드(숨기거나 지운 1위). 사진 자리는 paper-2 판, 글자는 보조 색 */
+.placeholder { position: relative; aspect-ratio: 3 / 4; border-radius: var(--pd-r-md); background: var(--pd-paper-2); border: 1px dashed var(--pd-jelly); }
+.placeholder .debutText b { color: var(--pd-ink-2); text-shadow: none; font-size: var(--pd-fs-name); }
+.centerHidden { display: flex; flex-direction: column; gap: 3px; color: var(--pd-ink-2); }
+.centerBlank { display: block; aspect-ratio: 4 / 5; border-radius: var(--pd-r-md); background: var(--pd-paper-2); border: 1px dashed var(--pd-jelly); margin-bottom: 4px; }
+.centerHidden small { font-size: var(--pd-fs-tiny); }
+.centerHidden b { font-family: var(--pd-f-display); font-weight: 400; font-size: var(--pd-fs-name); }
+
+/* 센터: 4:5 사진 + 아래 라벨·이름·표 수 */
+.centers { display: grid; grid-template-columns: 1fr 1fr; gap: 16px 10px; list-style: none; margin: 0; padding: 0; }
+.center { min-width: 0; }
+.center a { display: flex; flex-direction: column; gap: 3px; color: inherit; text-decoration: none; }
+.center img { width: 100%; aspect-ratio: 4 / 5; object-fit: cover; display: block; border-radius: var(--pd-r-md); background: var(--pd-paper-2); margin-bottom: 4px; }
+.center small { font-size: var(--pd-fs-tiny); color: var(--pd-ink-2); }
+.center b { font-family: var(--pd-f-display); font-weight: 400; font-size: var(--pd-fs-name); overflow-wrap: anywhere; }
+.center span { font-size: var(--pd-fs-tiny); color: var(--pd-ink-2); }
+
+/* 빈 상태: 안내 판(등록 직후 공유 띠와 같은 판) */
+.empty {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-top: 24px;
+  padding: 20px;
+  background: var(--pd-ad);
+  border: 1px solid var(--pd-jelly-2);
+  border-radius: var(--pd-r-md);
+}
+.empty b { font-size: var(--pd-fs-name); }
+.empty span { font-size: var(--pd-fs-ui); color: var(--pd-ink-2); }
+.empty .emptyAct { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 8px; }
+
+@media (min-width: 720px) {
+  .centers { grid-template-columns: repeat(4, 1fr); }
+  /* 두 칸이 넓어지면 3:4 는 화면보다 길어진다 */
+  .debut img, .placeholder { aspect-ratio: 1 / 1; }
+}
+@media (min-width: 1024px) {
+  .head h1 { font-size: var(--pd-fs-d-section); }
+  .head p { font-size: var(--pd-fs-body); }
+  .month { padding-top: 40px; }
+  /* 데뷔 두 장이 한 화면 높이를 넘지 않게 가로로 눕힌다 */
+  .debut img, .placeholder { aspect-ratio: 4 / 3; }
+  .debutText small { font-size: var(--pd-fs-ui); padding: 4px 12px; }
+  .debutVotes { font-size: var(--pd-fs-ui); }
+  .month h2 { font-size: var(--pd-fs-d-board); margin-bottom: 18px; }
+  .debuts { gap: 24px; margin-bottom: 24px; }
+  .debutText { left: 20px; bottom: 20px; }
+  .debutText b { font-size: var(--pd-fs-d-card); }
+  .centers { grid-template-columns: repeat(6, 1fr); gap: 24px 18px; }
+}

@@ -7,7 +7,7 @@ Figma는 쓰지 않는다(사용자 Figma 계정이 보기 권한뿐, 결정기�
 - 무엇: V2A(v2 귀여운 매거진 부품·배치 + v3 색감) 토큰, 부품 상태별 견본(라이트·다크 나란히), 확정 시안(휴대폰 메인·게시판·글 상세, 데스크톱 메인)
 - 상태: 확정(2026-11-18). 원본 파일은 .work/mockups/시안_확정_V2A.html, 견본 재료 .work/ds-v2a
 - 색 점검(A·B 비교): https://claude.ai/artifact/8JF3D68DqrVwY1gqN1YroG
-- 원본 토큰: tokens.css · 문서: DESIGN_SYSTEM.md
+- 원본 토큰: ../../shared/styles/tokens.css · 문서: DESIGN_SYSTEM.md
 - 저장일: 2026-11-18
 
 ## 프로듀스 댕냥 · v3 시안(무채색 장부)

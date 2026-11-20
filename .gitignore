@@ -5,3 +5,19 @@ docs/images/*.html
 .env*
 !.env.example
 .DS_Store
+
+# next.js · cloudflare
+.next/
+out/
+.open-next/
+.wrangler/
+.dev.vars*
+!.dev.vars.example
+*.tsbuildinfo
+next-env.d.ts
+coverage/
+cloudflare-env.d.ts
+
+# Playwright E2E(#9)
+/test-results/
+/playwright-report/

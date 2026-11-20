@@ -1,0 +1,60 @@
+/* 발도장 픽 버튼(.jelly, #29)·윗줄 남은 픽(.beans). 원본: .work/mockups/v2a.css */
+.jelly {
+  position: relative;
+  border: 0;
+  background: none;
+  padding: 0;
+  color: var(--pd-pink);
+  width: 62px;
+  height: 56px;
+  flex: 0 0 auto;
+  display: grid;
+  place-items: center;
+  cursor: pointer;
+  transition: transform var(--pd-dur);
+}
+.jelly svg { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
+/* 글자는 큰 발바닥 가운데(그림 높이의 약 69%)에 둔다. 그리드 가운데(50%)에서 19% 내린다 */
+.jelly span {
+  position: relative;
+  top: 19%;
+  font-family: var(--pd-f-display);
+  font-size: var(--pd-fs-body);
+  color: var(--pd-on-pink);
+}
+@media (hover: hover) {
+  .jelly:hover:not(:disabled) { transform: rotate(var(--pd-hover-tilt)); }
+}
+/* 눌림은 호버 뒤에 둬야 마우스로 누를 때도 보인다(같은 우선순위라 뒤 규칙이 이김). 호버 기울기는 유지한다. */
+.jelly:active:not(:disabled) { transform: scale(var(--pd-press)); }
+@media (hover: hover) {
+  .jelly:hover:active:not(:disabled) { transform: rotate(var(--pd-hover-tilt)) scale(var(--pd-press)); }
+}
+/* 완료·닫힘: 회색 판(paper-2) 위에서도 발도장 모양이 보이게 얇은 테두리 */
+.jelly:disabled { color: var(--pd-jelly-2); cursor: default; }
+.jelly:disabled svg { stroke: var(--pd-jelly); stroke-width: 1.5px; }
+.jelly:disabled span { color: var(--pd-ink-2); font-family: var(--pd-f-body); font-size: var(--pd-fs-micro); font-weight: 700; }
+.jelly[aria-busy="true"] { opacity: 0.6; }
+.lg { width: 96px; height: 86px; }
+.lg span { font-size: var(--pd-fs-pick-lg); }
+.sm { width: 54px; height: 49px; }
+
+.beans {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: var(--pd-fs-tiny);
+  color: var(--pd-ink-2);
+  white-space: nowrap;
+}
+.beans i { width: 19px; height: 17px; display: inline-block; color: var(--pd-pink); transition: opacity 0.25s; }
+.beans i svg { width: 100%; height: 100%; display: block; }
+.beans i[data-state="off"] { opacity: 0.22; }
+/* 잠긴 칸(로그인하면 열림): 쓴 칸(off)과 투명도만으로는 구분이 안 돼서 오른쪽 아래에 작은 자물쇠를 겹친다(#3 리뷰) */
+.beans i[data-state="lock"] { position: relative; }
+.beans i[data-state="lock"] svg { opacity: 0.12; }
+.beans i[data-state="lock"]::before,
+.beans i[data-state="lock"]::after { content: ""; position: absolute; right: -1px; box-sizing: border-box; }
+.beans i[data-state="lock"]::after { bottom: 0; width: 8px; height: 6px; border-radius: 1.5px; background: var(--pd-ink-2); }
+.beans i[data-state="lock"]::before { bottom: 4px; right: 0.5px; width: 5px; height: 5px; border: 1.5px solid var(--pd-ink-2); border-bottom: 0; border-radius: 3px 3px 0 0; }
+.beansBtn { border: 0; background: none; padding: 0; min-height: 44px; font: inherit; font-size: var(--pd-fs-tiny); color: var(--pd-ink-2); cursor: pointer; }

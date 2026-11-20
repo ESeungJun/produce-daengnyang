@@ -1,0 +1,96 @@
+/* 데뷔 화보 상세(#17): 잡지(Magazine, magazine.module.css) 아래의 공유·주인 안내 → 흐르는 띠 → 댓글, 크게 보기, 꽃가루, 화보 폼. 색·글자는 토큰만 쓴다. */
+.debut { position: relative; }
+
+/* ── 소개 인용·SNS·공유·주인 안내 ── */
+.intro { padding: 28px var(--pd-gutter) 0; display: flex; flex-direction: column; gap: 18px; }
+.act { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; }
+.snsBtn { display: inline-flex; width: 44px; height: 44px; align-items: center; justify-content: center; border-radius: var(--pd-r-xs); }
+.insta { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 16px; padding: 14px; border-radius: var(--pd-r-sm); box-shadow: inset 0 0 0 1px var(--pd-jelly-2); }
+.instaHead { margin: 0; flex: 1 1 200px; display: flex; flex-direction: column; gap: 2px; font-size: var(--pd-fs-small); color: var(--pd-ink-2); }
+.instaHead b { font-size: var(--pd-fs-ui); color: var(--pd-ink); }
+.instaBtns { display: flex; gap: 8px; }
+.instaNote { margin: 0; flex: 1 0 100%; font-size: var(--pd-fs-small); color: var(--pd-ink-2); }
+.instaNote:empty { display: none; }
+.owner { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 10px; padding: 14px; border-radius: var(--pd-r-sm); box-shadow: inset 0 0 0 1px var(--pd-jelly-2); font-size: var(--pd-fs-ui); color: var(--pd-ink-2); line-height: 1.6; }
+.owner p { margin: 0; flex: 1 1 220px; }
+.owner b { color: var(--pd-ink); }
+
+/* 올리기 폼의 GIF·동영상 표시 */
+.kindTag { position: absolute; left: 6px; top: 6px; padding: 2px 8px; border-radius: var(--pd-r-pill); background: rgb(var(--pd-shade) / 0.6); color: var(--pd-on-photo); font-size: var(--pd-fs-micro); font-weight: 700; pointer-events: none; }
+
+/* 크게 보기(<dialog>). 사진 위 글·버튼은 사진 위 색(on-photo)과 그늘(shade)만 쓴다 */
+.lightbox { width: 100vw; height: 100dvh; max-width: none; max-height: none; margin: 0; padding: 0; border: 0; background: rgb(var(--pd-shade) / 0.92); color: var(--pd-on-photo); overflow: hidden; }
+.lightbox::backdrop { background: rgb(var(--pd-shade) / 0.6); }
+.lightbox[open] { display: flex; align-items: center; justify-content: center; }
+.lightbox img, .lightbox video { max-width: 100%; max-height: calc(100dvh - 120px); object-fit: contain; border-radius: var(--pd-r-sm); touch-action: pan-y; }
+.lbFallback { margin: 0; display: grid; justify-items: center; gap: 12px; }
+.lbFallback figcaption { font-size: var(--pd-fs-ui); }
+.lbCount { position: absolute; left: 50%; bottom: max(16px, env(safe-area-inset-bottom, 0px)); transform: translateX(-50%); margin: 0; font-size: var(--pd-fs-ui); font-weight: 700; }
+.lbBtn { position: absolute; width: 48px; height: 48px; display: inline-flex; align-items: center; justify-content: center; border: 0; border-radius: 50%; background: rgb(var(--pd-shade) / 0.5); color: var(--pd-on-photo); font-size: 28px; line-height: 1; cursor: pointer; }
+.lbBtn:focus-visible { outline: 3px solid var(--pd-pink); outline-offset: 2px; }
+.lbClose { top: max(12px, env(safe-area-inset-top, 0px)); right: max(12px, env(safe-area-inset-right, 0px)); font-size: 20px; }
+.lbPrev { left: max(8px, env(safe-area-inset-left, 0px)); top: 50%; transform: translateY(-50%); }
+.lbNext { right: max(8px, env(safe-area-inset-right, 0px)); top: 50%; transform: translateY(-50%); }
+
+/* ── 천천히 흐르는 사진 띠: 같은 목록 두 번 → -50% 이동이면 이음매 없이 돈다 ── */
+.strip { margin: var(--pd-gap-section) 0 0; overflow: hidden; }
+/* 간격을 gap 이 아니라 사진마다 오른쪽 여백으로 줘야 두 벌 폭이 정확히 같아 -50% 이음매가 안 튄다 */
+.stripTrack { display: flex; width: max-content; animation: drift 60s linear 3; }
+.stripTrack img { margin-right: 10px; height: 120px; width: auto; aspect-ratio: 4 / 5; object-fit: cover; border-radius: var(--pd-r-sm); background: var(--pd-paper-2); }
+@keyframes drift { to { transform: translateX(-50%); } }
+@media (hover: hover) { .strip:hover .stripTrack { animation-play-state: paused; } }
+
+.comments { padding: var(--pd-gap-section) var(--pd-gutter) 40px; }
+
+/* ── 꽃가루: 위에서 한 번 쏟아지고 사라짐 ── */
+.confetti { position: fixed; inset: 0; z-index: 30; pointer-events: none; overflow: hidden; }
+.confetti i { position: absolute; top: -20px; left: var(--x); width: 9px; height: 13px; background: var(--pd-pink); transform: rotate(var(--r)); opacity: 0; animation: fall 2.4s var(--d) cubic-bezier(.25, .6, .4, 1) forwards; }
+.confetti i[data-c="1"] { background: var(--pd-butter); box-shadow: inset 0 0 0 1px var(--pd-jelly); }
+.confetti i[data-c="2"] { background: var(--pd-ink); }
+.confetti i[data-c="3"] { background: var(--pd-ink-2); }
+.confetti i[data-w="1"] { width: 5px; height: 18px; }
+.confetti i[data-w="2"] { width: 10px; height: 10px; border-radius: 50%; }
+@keyframes fall {
+  0% { opacity: 1; transform: translateY(0) rotate(var(--r)); }
+  85% { opacity: 1; }
+  100% { opacity: 0; transform: translateY(105vh) rotate(calc(var(--r) + 540deg)); }
+}
+
+@media (min-width: 720px) {
+  .lightbox img, .lightbox video { max-width: calc(100vw - 160px); }
+  .stripTrack img { height: 160px; }
+}
+@media (min-width: 1024px) {
+  .intro { padding: 40px 0 8px; flex-direction: row; flex-wrap: wrap; align-items: center; justify-content: space-between; }
+  .owner, .insta { flex: 1 0 100%; }
+  .comments { padding: 16px 0 56px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .confetti { display: none; }
+  /* 같은 사진이 잡지에 다 있으니 흐르는 띠는 통째로 숨긴다 */
+  .strip { display: none; }
+}
+
+/* 화보 폼의 글 칸(#31): 사진 칸과 같은 4:5 자리에 종이 카드로 놓인다. 4:5 는 최소 높이로만(글자를 키우면 칸이 늘어난다) */
+.noteTile { width: 100%; aspect-ratio: 4 / 5; display: flex; flex-direction: column; gap: 6px; padding: 12px 12px 48px; border: 2px solid var(--pd-jelly); border-radius: var(--pd-r-md); background: var(--pd-paper-2); color: var(--pd-ink); font: inherit; text-align: left; cursor: pointer; }
+/* 고른 칸은 테두리 색, 초점은 바깥 고리(둘이 겹쳐도 구분된다) */
+.noteTile[data-on] { border-color: var(--pd-ink); }
+.noteTile[data-invalid] { border-color: var(--pd-pink); }
+.noteTile[data-invalid] b { color: var(--pd-pink-text); font-weight: 700; }
+.noteTile:disabled { opacity: 0.5; cursor: progress; }
+.noteTile[data-empty] b { color: var(--pd-ink-2); font-weight: 400; }
+.noteTile b { font-size: var(--pd-fs-small); line-height: 1.45; display: -webkit-box; -webkit-line-clamp: 5; -webkit-box-orient: vertical; overflow: hidden; overflow-wrap: anywhere; }
+.noteTile:focus-visible { outline: 3px solid var(--pd-pink); outline-offset: 1px; }
+.noteKind { align-self: flex-start; padding: 2px 8px; border-radius: var(--pd-r-pill); background: var(--pd-butter); color: var(--pd-on-butter); font-size: var(--pd-fs-micro); font-weight: 700; }
+.noteLen { margin-top: auto; font-size: var(--pd-fs-micro); color: var(--pd-ink-2); font-variant-numeric: tabular-nums; }
+/* 글이 끝에 몰렸을 때 고르게 섞기 권하기(#31) */
+.spreadTip { display: flex; flex-direction: column; align-items: flex-start; gap: 6px; padding: 14px 16px; border-radius: var(--pd-r-md); background: var(--pd-paper-2); box-shadow: inset 0 0 0 1px var(--pd-jelly-2); }
+.spreadTip > b { font-size: var(--pd-fs-name); }
+.spreadTip > span { font-size: var(--pd-fs-small); color: var(--pd-ink-2); line-height: 1.6; }
+.spreadTip > button { margin-top: 4px; }
+.noteAdd { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+.noteAdd > span { font-size: var(--pd-fs-small); font-weight: 700; color: var(--pd-ink-2); }
+.noteEditor { display: grid; gap: 14px; padding: 16px; border: 1px solid var(--pd-jelly); border-radius: var(--pd-r-md); background: var(--pd-paper); }
+.noteEditor h2 { margin: 0; font-family: var(--pd-f-display); font-weight: 400; font-size: var(--pd-fs-number); }
+.noteEditor > button { justify-self: start; }

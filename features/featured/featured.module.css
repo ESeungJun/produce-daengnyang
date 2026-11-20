@@ -1,0 +1,262 @@
+/* 표지·센터 화보·폴라로이드. 원본: .work/mockups/v2a.css (휴대폰 .cover/.spread/.pola, 데스크톱 .dcover/.dspread) */
+
+/* ── 표지: 휴대폰은 옆으로 넘김, 1024~1279 는 댕댕이·냥이 반반 + 바로가기 한 줄, 1280 이상은 사진을 세로 배너에 넘기고 바로가기만(#16) ── */
+.coverWrap { display: flex; flex-direction: column; }
+.cover { position: relative; overflow: hidden; }
+.slides { display: flex; overflow-x: auto; scroll-snap-type: x mandatory; scrollbar-width: none; }
+.slides::-webkit-scrollbar { display: none; }
+.slide { flex: 0 0 100%; scroll-snap-align: start; position: relative; overflow: hidden; display: block; height: 520px; color: inherit; text-decoration: none; background: var(--pd-paper-2); }
+/* 장 전체를 덮는 글 상세 링크. 글줄(.lines)은 그 위 형제라 SNS 아이콘을 링크 밖에 둘 수 있다(#26) */
+.slideLink { position: absolute; inset: 0; display: block; color: inherit; text-decoration: none; }
+
+/* 사진 자동 넘김(PhotoFade): 부모를 꽉 채우고 겹친 사진 중 지금 장만 보인다 */
+.fade { position: absolute; inset: 0; }
+.fade img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; opacity: 0; transition: opacity var(--pd-fade-dur) ease; }
+.fade img[data-on="true"] { opacity: 1; }
+@media (prefers-reduced-motion: reduce) { .fade img { transition: none; } }
+.scrim { position: absolute; inset: auto 0 0 0; height: 55%; background: linear-gradient(transparent, rgb(var(--pd-shade) / 0.55)); }
+.lines { position: absolute; left: 0; right: 0; bottom: 16px; padding: 0 16px; pointer-events: none; }
+/* 이름 밑 한 줄: 표 수 판 + SNS 아이콘(#26). 아이콘은 표 수 판과 같은 높이로 작게 둬 사진을 덜 가린다 */
+.capRow { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 0; margin-top: 6px; }
+.capRow .cap { margin-top: 0; }
+.coverSns { display: flex; pointer-events: auto; }
+/* 보이는 타일 24, 누르는 칸은 둘레 10px 로 44. 위아래 음수 여백으로 줄 높이는 표 수 판에 맞춘다 */
+.coverSnsBtn { display: inline-grid; place-items: center; padding: 10px; margin-block: -10px; border-radius: var(--pd-r-sm); }
+.coverSnsBtn > span { filter: drop-shadow(0 1px 4px rgb(var(--pd-shade) / 0.45)); }
+@media (hover: hover) { .coverSnsBtn > span { transition: transform 0.15s ease; } .coverSnsBtn:hover > span { transform: translateY(-1px); } }
+.coverSnsBtn:focus-visible { outline: 3px solid var(--pd-pink); outline-offset: -1px; }
+.kick {
+  display: inline-block;
+  background: var(--pd-butter);
+  color: var(--pd-on-butter);
+  font-family: var(--pd-f-display);
+  font-size: var(--pd-fs-ui);
+  padding: 4px 10px;
+  border-radius: var(--pd-r-pill);
+}
+.star {
+  display: block;
+  font-family: var(--pd-f-display);
+  font-size: var(--pd-fs-star);
+  line-height: 1;
+  color: var(--pd-on-photo);
+  margin-top: 6px;
+  text-shadow: 0 2px 0 rgb(var(--pd-shade) / 0.3);
+  text-decoration: none;
+}
+.cap { width: fit-content; }
+.cap {
+  display: inline-block;
+  margin-top: 6px;
+  background: var(--pd-pink);
+  color: var(--pd-on-pink);
+  font-size: var(--pd-fs-small);
+  font-weight: 700;
+  padding: 5px 10px;
+  border-radius: var(--pd-r-xs);
+  font-variant-numeric: tabular-nums;
+}
+.dots { display: flex; gap: 6px; justify-content: center; padding: 10px 0 0; }
+/* 보이는 점은 8px, 누르는 칸은 padding 으로 24px(WCAG 2.5.8). background-clip 으로 점만 칠한다. */
+.dots { gap: 0; }
+.dots button { box-sizing: content-box; border: 0; padding: 8px; width: 8px; height: 8px; border-radius: 50%; background: var(--pd-jelly); background-clip: content-box; cursor: pointer; }
+.dots button[aria-current="true"] { background-color: var(--pd-pink); width: 22px; border-radius: 13px; }
+
+/* 데뷔 전(첫 달): 사진 없이 글자 표지 */
+.blank { background: var(--pd-ink); position: relative; height: 320px; }
+.blank .lines { bottom: 24px; }
+.blank .star { text-shadow: none; }
+.blank .lines p { margin: 10px 0 0; color: var(--pd-on-photo); opacity: 0.8; font-size: var(--pd-fs-ui); max-width: 30ch; }
+
+/* ── 센터 화보: 3:4 두 장 엇갈림 ── */
+.spread { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; align-items: start; }
+.spread figure { margin: 0; position: relative; }
+.spread figure:nth-child(2) { margin-top: 28px; }
+.spread figure:nth-child(n + 3) { display: none; }
+.spread figure > a { display: block; color: inherit; }
+/* 이름이 흰 사진 위에서도 읽히게 아래쪽에 그늘(DESIGN_SYSTEM 4절) */
+.spread figure > a { position: relative; border-radius: var(--pd-r-md); overflow: hidden; }
+.spread figure > a::after { content: ""; position: absolute; inset: auto 0 0 0; height: 60%; background: linear-gradient(transparent, rgb(var(--pd-shade) / 0.35) 45%, rgb(var(--pd-shade) / 0.72)); pointer-events: none; }
+.spread img { width: 100%; aspect-ratio: 3 / 4; object-fit: cover; display: block; border-radius: var(--pd-r-md); background: var(--pd-paper-2); }
+.spread figcaption { position: absolute; left: 8px; bottom: 8px; right: 8px; pointer-events: none; }
+.spread figcaption small { display: inline-block; background: var(--pd-card); color: var(--pd-card-ink); font-size: var(--pd-fs-micro); font-weight: 700; padding: 2px 7px; border-radius: var(--pd-r-pill); }
+.spread figcaption b { display: block; font-family: var(--pd-f-display); font-weight: 400; font-size: var(--pd-fs-card); color: var(--pd-on-photo); text-shadow: 0 1px 3px rgb(var(--pd-shade) / 0.6), 0 2px 0 rgb(var(--pd-shade) / 0.35); margin-top: 2px; }
+/* 센터 SNS 칸: 그늘 위 작은 알약. figcaption 이 클릭을 통과시키므로 이 칸만 다시 받는다. */
+.spread .sns { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 6px; pointer-events: auto; }
+.snsChip { position: relative; display: inline-flex; align-items: center; justify-content: center; min-height: 32px; min-width: 32px; padding: 0 4px; border-radius: var(--pd-r-pill); background: rgb(var(--pd-shade) / 0.55); color: var(--pd-on-photo); font-size: var(--pd-fs-tiny); font-weight: 700; text-decoration: none; box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--pd-on-photo) 35%, transparent); }
+/* 보이는 알약은 32px, 누르는 칸은 위아래로 넓혀 44px(빗맞혀 사진 링크로 가지 않게) */
+.snsChip::before { content: ""; position: absolute; inset: -6px -2px; }
+.snsChip:hover { background: rgb(var(--pd-shade) / 0.75); }
+
+/* ── 모든 페이지 위 센터 띠(게시판·글 상세) ── */
+/* 게시판 위 센터 카드(#20): 폴라로이드 두 장 + 아래 SNS 앱 아이콘 */
+.centerCards { margin: 0 0 20px; padding: 14px 16px 6px; border-radius: var(--pd-r-md); background: var(--pd-paper); box-shadow: inset 0 0 0 1px var(--pd-jelly-2); }
+.centerCardsHead { margin: 0 0 6px; font-size: var(--pd-fs-small); color: var(--pd-ink-2); }
+.centerCardsHead b { font-family: var(--pd-f-display); font-weight: 400; font-size: var(--pd-fs-name); color: var(--pd-ink); margin-right: 6px; }
+.centerCards ul { display: flex; flex-wrap: nowrap; overflow-x: auto; scrollbar-width: none; gap: 14px; list-style: none; margin: 0; padding: 10px 2px 8px; }
+.centerCards .pola { flex: 0 0 104px; display: flex; flex-direction: column; }
+@media (min-width: 720px) { .centerCards ul { gap: 18px; } .centerCards .pola { flex-basis: 136px; } }
+.centerSns { display: flex; justify-content: center; gap: 4px; margin-top: 4px; }
+
+/* ── 데뷔조 후보 폴라로이드 ── */
+.polas { display: flex; gap: 14px; overflow-x: auto; padding: 10px var(--pd-gutter) 14px; margin: 0 calc(-1 * var(--pd-gutter)); scrollbar-width: none; list-style: none; }
+.polas::-webkit-scrollbar { display: none; }
+.pola { flex: 0 0 112px; min-width: 0; background: var(--pd-card); padding: 6px 6px 8px; border-radius: var(--pd-r-polaroid); box-shadow: var(--pd-card-edge); }
+.pola:nth-child(odd) { transform: rotate(-2.5deg); }
+.pola:nth-child(even) { transform: rotate(2deg); }
+.pola a { color: var(--pd-card-ink); text-decoration: none; display: block; }
+.pola img { width: 100%; aspect-ratio: 1; object-fit: cover; display: block; background: var(--pd-paper-2); }
+.pola span { display: block; font-size: var(--pd-fs-tiny); text-align: center; margin-top: 5px; }
+.pola b { display: block; font-family: var(--pd-f-display); font-weight: 400; font-size: var(--pd-fs-name); }
+
+@media (min-width: 1024px) {
+  /* 펼침면(#13): 댕댕이·냥이 같은 크기 반반 / 바로가기 한 줄 (#16 에서 위 제호 띠는 뺐다) */
+  .coverWrap {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 18px 24px;
+  }
+  .cover { display: contents; }
+  .slides { display: contents; }
+  .coverWrap { margin-top: 8px; }
+  .slide { border-radius: 28px; height: 540px; }
+  .blank { grid-column: 1 / -1; height: 340px; }
+  .lines { left: 12px; bottom: 28px; }
+  .star { font-size: var(--pd-fs-d-star); }
+  .dots { display: none; }
+
+  .spread { grid-template-columns: repeat(4, 1fr); gap: 18px; }
+  .spread img { border-radius: 20px; }
+  .spread figure:nth-child(n + 3) { display: block; }
+  .spread figure:nth-child(even) { margin-top: 40px; }
+  .spread figcaption b { font-size: var(--pd-fs-d-card); }
+
+  .polas { flex-wrap: wrap; overflow: visible; margin: 0; padding: 10px 0 14px; }
+}
+
+/* ── 메인 양옆 세로 배너(#16). 1280px 이상에서만 ── */
+.rail { display: none; }
+/* 아이콘만 SNS 버튼: 타일 40 + 둘레 2px = 누르는 칸 44 (세로 배너·1024~1279 펼침면) */
+.railSnsBtn { display: inline-grid; place-items: center; padding: 2px; border-radius: var(--pd-r-sm); }
+/* 잡지 표지 윗줄(표지 이름 + 몇 번째 장, #25). 1280 이상에서만 */
+.mast { display: none; }
+/* 장이 넘김 틀을 꽉 채워 바깥 outline 이 잘리므로, 키보드 포커스는 장 안쪽 분홍 테두리로(대각선 배너와 같은 방식) */
+.slideLink:focus-visible { outline: none; }
+.slideLink:focus-visible::after { content: ""; position: absolute; inset: 0; box-shadow: inset 0 0 0 4px var(--pd-pink); pointer-events: none; z-index: 2; }
+@media (min-width: 1280px) {
+  /* 양옆 세로 배너(#16)가 두 아이를 이미 보여 주므로 가운데는 잡지 표지 한 장(#25): 두 아이를 천천히 번갈아 넘긴다.
+     휴대폰과 같은 넘김 틀(.slides)을 다시 켜고, 점으로 지금 장을 보여 준다 */
+  .cover { display: block; grid-column: 1 / -1; }
+  /* 점 줄은 넘김 틀 밖이라 모서리는 넘김 틀에 준다. 옆 세로 배너·대각선 배너와 같은 모서리 */
+  .slides { display: flex; border-radius: var(--pd-r-xl); }
+  /* 높이는 1024 펼침면과 같은 540: 표지 + 대각선 배너가 세로 배너 높이 안에 들어오게 */
+  .slide { border-radius: 0; }
+  .blank { height: 340px; }
+  .dots { display: flex; padding: 8px 0 0; }
+  .lines { left: 0; padding: 0 28px; bottom: 32px; }
+  .mast {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    gap: 16px;
+    position: absolute;
+    inset: 0 0 auto 0;
+    padding: 28px 28px 80px;
+    /* 흰 사진 위에서도 글자가 읽히게 글자 높이까지 진하게 깔고 아래로 걷는다 */
+    background: linear-gradient(rgb(var(--pd-shade) / 0.6), rgb(var(--pd-shade) / 0.35) 45%, transparent);
+    color: var(--pd-on-photo);
+  }
+  .mast b { font-family: var(--pd-f-display); font-weight: 400; font-size: var(--pd-fs-section); line-height: 1; text-shadow: 0 2px 0 rgb(var(--pd-shade) / 0.3); }
+  .mast span { font-size: var(--pd-fs-ui); font-weight: 700; text-shadow: 0 1px 4px rgb(var(--pd-shade) / 0.6); font-variant-numeric: tabular-nums; letter-spacing: 0.04em; }
+  .rail {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    position: sticky;
+    top: 16px;
+    /* 첫 화면(윗줄 아래)에서 SNS 버튼까지 한 번에 보이게 윗줄 높이만큼 뺀다 */
+    height: clamp(420px, calc(100dvh - 120px), 820px);
+  }
+  .railCard {
+    position: relative;
+    flex: 1;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-end;
+    overflow: hidden;
+    border-radius: var(--pd-r-xl);
+    background: var(--pd-paper-2);
+    color: inherit;
+    text-decoration: none;
+  }
+  .railCard .scrim { height: 50%; }
+  .railLines { position: relative; display: flex; flex-direction: column; align-items: flex-start; gap: 8px; padding: 0 16px 20px; }
+  .railName {
+    font-family: var(--pd-f-display);
+    font-size: var(--pd-fs-d-rail);
+    line-height: 0.95;
+    color: var(--pd-on-photo);
+    text-shadow: 0 2px 0 rgb(var(--pd-shade) / 0.3);
+    overflow-wrap: anywhere;
+  }
+  .railSns { display: flex; flex-wrap: wrap; justify-content: center; align-items: center; gap: 4px 10px; }
+  .railSns { margin: 0; }
+  .railMore { display: inline-flex; align-items: center; min-height: 44px; font-size: var(--pd-fs-ui); font-weight: 700; color: var(--pd-ink); text-decoration: underline; text-decoration-color: var(--pd-pink); text-underline-offset: 4px; }
+  /* 화보 사진이 없는 한쪽 보기 오른쪽 배너: 표지와 같은 사진을 얼굴 쪽으로 당겨 다른 구도로(#26) */
+  .railCard[data-zoom="true"] .fade img { transform: scale(1.6); transform-origin: 50% 30%; }
+  .railSnsCap { flex: 1 0 100%; text-align: center; font-size: var(--pd-fs-tiny); font-weight: 700; color: var(--pd-ink-2); }
+  /* 아이콘 타일 40px + 둘레 2px 로 누르는 칸 44px */
+  @media (hover: hover) { .railSnsBtn:hover { transform: translateY(-1px); } }
+  .railBlank { justify-content: center; align-items: flex-start; gap: 10px; padding: 20px; border: 2px dashed var(--pd-jelly); background: var(--pd-paper); }
+  .railBlank b { font-family: var(--pd-f-display); font-weight: 400; font-size: var(--pd-fs-number); line-height: 1.15; }
+  .railBlank > span:last-child { font-size: var(--pd-fs-ui); font-weight: 700; color: var(--pd-ink-2); }
+}
+.centerSns .railSnsBtn { min-width: 44px; min-height: 44px; }
+
+/* ── 데뷔 대각선 배너(#20, DebutDuo): 표지 아래 한 줄. 왼쪽 위 댕댕이 / 오른쪽 아래 냥이 ── */
+.duo { position: relative; height: 220px; margin: var(--pd-gutter) var(--pd-gutter) 0; border-radius: var(--pd-r-md); overflow: hidden; background: var(--pd-paper); }
+.duoHalf { position: absolute; inset: 0; display: block; color: var(--pd-on-photo); text-decoration: none; }
+.duoHalf img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; background: var(--pd-paper-2); }
+/* 두 반쪽 사이에 종이색 틈이 보이게 1%씩 띄운다 */
+.duoHalf[data-side="a"] { clip-path: polygon(0 0, 61% 0, 39% 100%, 0 100%); }
+.duoHalf[data-side="b"] { clip-path: polygon(62% 0, 100% 0, 100% 100%, 40% 100%); }
+.duoHalf[data-side="a"] img { object-position: 30% 35%; width: 62%; }
+.duoHalf[data-side="b"] img { left: 38%; width: 62%; object-position: 70% 35%; }
+.duoTag { position: absolute; display: flex; flex-direction: column; gap: 2px; }
+/* clip-path·overflow 때문에 바깥 outline 이 잘리므로 키보드 포커스는 사진 안쪽 분홍 테두리로 보여 준다 */
+.duoHalf:focus-visible { outline: none; }
+.duoHalf:focus-visible img { box-shadow: inset 0 0 0 4px var(--pd-pink); }
+.duoHalf:focus-visible::after { content: ""; position: absolute; inset: 0; box-shadow: inset 0 0 0 4px var(--pd-pink); pointer-events: none; }
+.duoHalf[data-side="a"] .duoTag, .duoHalf[data-side="solo"] .duoTag { left: 16px; bottom: 16px; }
+.duoHalf[data-side="b"] .duoTag { right: 16px; bottom: 16px; align-items: flex-end; }
+.duoTag small { font-size: var(--pd-fs-tiny); font-weight: 700; background: var(--pd-butter); color: var(--pd-on-butter); border-radius: var(--pd-r-pill); padding: 2px 10px; }
+.duoTag b { font-family: var(--pd-f-display); font-weight: 400; font-size: var(--pd-fs-d-card); line-height: 1.1; color: var(--pd-on-photo); text-shadow: 0 2px 10px rgb(var(--pd-shade) / 0.6); }
+@media (hover: hover) { .duoHalf:hover img { transform: scale(1.03); } .duoHalf img { transition: transform 0.4s ease; } }
+@media (prefers-reduced-motion: reduce) { .duoHalf img { transition: none; } }
+@media (min-width: 1024px) {
+  .duo { grid-column: 1 / -1; margin: 0; height: 300px; border-radius: var(--pd-r-xl); }
+  .duoTag b { font-size: var(--pd-fs-star); }
+  .duoHalf[data-side="a"] .duoTag { left: 28px; bottom: 24px; }
+  .duoHalf[data-side="b"] .duoTag { right: 28px; bottom: 24px; }
+}
+
+/* 사진이 한 장뿐인 데뷔: 표지와 같은 사진이라 얼굴 쪽을 크게 당겨 다른 구도로 */
+.duoHalf img[data-zoom="true"] { transform: scale(1.6); transform-origin: 50% 30%; }
+@media (hover: hover) { .duoHalf:hover img[data-zoom="true"] { transform: scale(1.65); } }
+/* "데뷔 축하" 알약: 1280 이상(세로 배너가 같은 아이를 보여 줄 때)만 보이고 배너를 낮은 띠로 */
+.duoCheer { display: none; }
+@media (min-width: 1280px) {
+  .duo { height: 200px; }
+  .duoCheer { display: block; position: absolute; z-index: 1; top: 14px; left: 50%; transform: translateX(-50%); white-space: nowrap; font-family: var(--pd-f-display); font-size: var(--pd-fs-small); background: var(--pd-ink); color: var(--pd-paper); border-radius: var(--pd-r-pill); padding: 4px 14px; pointer-events: none; }
+}
+/* 데뷔가 하나도 없는 달: 안내 띠 + 픽하러 가기 두 알약 */
+.duoEmpty { margin: var(--pd-gutter) var(--pd-gutter) 0; padding: 18px 16px; border-radius: var(--pd-r-md); box-shadow: inset 0 0 0 1px var(--pd-jelly-2); display: flex; flex-direction: column; gap: 12px; }
+.duoEmpty p { margin: 0; display: flex; flex-direction: column; gap: 4px; }
+.duoEmpty b { font-family: var(--pd-f-display); font-weight: 400; font-size: var(--pd-fs-name); color: var(--pd-ink); }
+.duoEmpty p span { font-size: var(--pd-fs-small); color: var(--pd-ink-2); line-height: 1.6; }
+.duoGo { display: flex; flex-wrap: wrap; gap: 8px; }
+.duoGo a { display: inline-flex; align-items: center; min-height: 44px; padding: 0 18px; border-radius: var(--pd-r-pill); background: var(--pd-pink); color: var(--pd-on-pink); font-weight: 700; font-size: var(--pd-fs-small); text-decoration: none; }
+@media (min-width: 1024px) {
+  .duoEmpty { grid-column: 1 / -1; margin: 0; flex-direction: row; align-items: center; justify-content: space-between; padding: 22px 28px; border-radius: var(--pd-r-xl); }
+}

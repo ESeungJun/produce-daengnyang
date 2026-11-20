@@ -1,0 +1,21 @@
+/* 메인 화면 배치(부품 스타일은 각 부품 모듈). */
+.mainCol { min-width: 0; }
+/* 메인 보기 토글(#26): 표지 바로 위 한 줄. 휴대폰은 표지가 화면 끝까지라 양옆 여백을 준다 */
+.view { padding: 4px var(--pd-gutter) 12px; }
+.view[aria-busy="true"] { opacity: 0.7; }
+@media (min-width: 1024px) { .view { padding: 0 0 4px; } }
+
+/* 양옆 세로 배너(#16). 1280px 이상: 왼쪽 데뷔 댕댕이 · 가운데 본문 · 오른쪽 데뷔 냥이.
+   윗줄·모집 공고·푸터는 다른 화면과 같은 1280 틀에 두고, 이 띠만 화면 폭(양옆 48 여백, 최대 1664)까지 넓힌다(화면을 오가도 로고가 튀지 않게). */
+@media (min-width: 1280px) {
+  .railGrid {
+    --rail-w: min(calc(100vw - 96px), 1664px);
+    width: var(--rail-w);
+    margin-left: calc((100% - var(--rail-w)) / 2);
+    display: grid;
+    grid-template-columns: clamp(200px, 15vw, 280px) minmax(0, 1fr) clamp(200px, 15vw, 280px);
+    gap: 32px;
+    align-items: start;
+  }
+}
+

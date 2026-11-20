@@ -1,0 +1,86 @@
+/* 화면 틀: 좌우 여백, 윗줄. 휴대폰 여백 16, 데스크톱은 1280 안에서 48. */
+.page {
+  max-width: 1280px;
+  margin: 0 auto;
+  padding-left: max(var(--pd-gutter), env(safe-area-inset-left, 0px));
+  padding-right: max(var(--pd-gutter), env(safe-area-inset-right, 0px));
+  padding-bottom: calc(24px + env(safe-area-inset-bottom, 0px));
+}
+.bleed { margin-left: calc(-1 * max(var(--pd-gutter), env(safe-area-inset-left, 0px))); margin-right: calc(-1 * max(var(--pd-gutter), env(safe-area-inset-right, 0px))); }
+
+/* 윗줄(#16 재배치): 휴대폰은 [로고 | 남은 픽·내 정보] 아래에 메뉴 한 줄(옆으로 밀림), 데스크톱은 [로고 | 메뉴 | 내 영역 캡슐] 한 줄 */
+.bar { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 6px 10px; padding: 12px 0 4px; }
+.logo { font-family: var(--pd-f-display); font-size: var(--pd-fs-logo); letter-spacing: -0.01em; color: inherit; text-decoration: none; white-space: nowrap; }
+.logo em { font-style: normal; color: var(--pd-pink-text); }
+.back { display: flex; align-items: center; gap: 6px; font-size: var(--pd-fs-ui); font-weight: 700; color: inherit; text-decoration: none; min-height: 44px; }
+.nav {
+  order: 3;
+  flex: 1 0 100%;
+  display: flex;
+  gap: 4px;
+  overflow-x: auto;
+  scrollbar-width: none;
+  margin: 0 calc(-1 * max(var(--pd-gutter), env(safe-area-inset-left, 0px)));
+  /* 위아래 5px: 옆으로 미는 칸이라 세로도 잘리므로 포커스 링(3px + 간격 2px) 자리를 남긴다 */
+  padding: 5px max(var(--pd-gutter), env(safe-area-inset-left, 0px));
+  /* 오른쪽 끝을 흐리게: 메뉴가 더 있다는 단서(스크롤바를 숨겨서) */
+  mask-image: linear-gradient(to right, #000 calc(100% - 24px), transparent);
+  font-size: var(--pd-fs-ui);
+  font-weight: 700;
+}
+.nav::-webkit-scrollbar { display: none; }
+.nav a, .nav button {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  padding: 0 12px;
+  color: inherit;
+  text-decoration: none;
+  background: none;
+  border: 0;
+  font: inherit;
+  cursor: pointer;
+  white-space: nowrap;
+}
+.nav a:first-child { padding-left: 2px; }
+.nav a[aria-current="page"] { box-shadow: inset 0 -3px 0 var(--pd-pink); }
+/* 메뉴의 "연습생 등록하기"는 행동이라 오른쪽 끝에 둔다(분홍은 픽에만이라 잉크 글자 그대로) */
+.nav > :last-child { margin-left: auto; padding-right: 24px; }
+.right { display: flex; align-items: center; gap: 14px; }
+.login { display: inline-flex; }
+/* 데스크톱에서만 보이는 것(손님용 "구글로 로그인": 휴대폰은 픽할 때 로그인 시트가 뜬다) */
+.deskOnly { display: none; }
+/* 회원의 "내 정보" 길: 휴대폰·데스크톱 모두 */
+.me { display: inline-flex; align-items: center; min-height: 44px; padding: 0 2px; font-size: var(--pd-fs-ui); font-weight: 700; color: inherit; text-decoration: none; white-space: nowrap; }
+.me[aria-current="page"] { box-shadow: inset 0 -3px 0 var(--pd-pink); }
+/* 안 읽은 알림 점(#6). 분홍은 픽 관련에만 쓰므로 잉크색 */
+.dot { width: 7px; height: 7px; margin-left: 4px; border-radius: 50%; background: var(--pd-ink); align-self: flex-start; margin-top: 12px; }
+
+@media (min-width: 1024px) {
+  .page { padding-left: 48px; padding-right: 48px; }
+  .bleed { margin-left: 0; margin-right: 0; }
+  .bar { flex-wrap: nowrap; gap: 24px; padding: 20px 0; }
+  .logo { font-size: var(--pd-fs-d-logo); }
+  .nav { order: 0; flex: 1; margin: 0; padding: 0 0 0 16px; gap: 8px; overflow: visible; mask-image: none; font-size: var(--pd-fs-body); }
+  .nav a, .nav button { padding: 0 10px; }
+  .nav > :last-child { margin-left: 0; padding-right: 10px; }
+  /* 내 영역 캡슐: 남은 픽 | 내 정보(또는 로그인). 사이트 메뉴와 내 것을 나눠 보이게 */
+  /* 남은 픽 │ 로그인. 회색 캡슐 바탕은 #20 후속에서 뺐다(사용자 의견) */
+  .right { gap: 0; }
+  .login { margin-left: 12px; padding-left: 12px; border-left: 2px dotted var(--pd-jelly); }
+  /* 남은 픽 없이 로그인만 있을 때(#20): 캡슐 안 점선 칸막이 없이 */
+  .solo .login { margin-left: 0; padding-left: 0; border-left: 0; }
+  .deskOnly { display: inline-block; }
+  .me { font-size: var(--pd-fs-body); }
+}
+
+/* 없는 주소·오류 안내 */
+.notice { padding-top: 22px; min-height: 70dvh; }
+.notice h1 { font-family: var(--pd-f-display); font-weight: 400; font-size: var(--pd-fs-page); line-height: 1.05; margin: 48px 0 8px; text-wrap: balance; }
+.notice p { margin: 0; color: var(--pd-ink-2); max-width: 40ch; }
+.noticeAct { display: flex; gap: 8px; margin-top: 20px; flex-wrap: wrap; }
+
+/* 남은 픽이 없는 화면의 휴대폰 로그인 알약(#20, LoginButton). 데스크톱은 "구글로 로그인"이 맡는다 */
+.soloMobile { display: none; }
+@media (max-width: 1023px) { .solo .soloMobile { display: inline-flex; } }

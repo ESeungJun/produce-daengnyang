@@ -51,7 +51,7 @@ export default [
       items: [
         ["google", "구글 로그인", "OAuth"],
         ["cloudflare", "Turnstile", "봇 확인", "infra"],
-        ["resend", "Resend", "1위 · 결선 메일", "infra"],
+        ["gmail", "Gmail SMTP", "1위 · 결선 메일", "infra"],
         ["bell", "Web Push", "브라우저 푸시(VAPID)", "infra"],
       ],
     },
@@ -121,7 +121,7 @@ export default [
         steps: [
           ["start", "안 보낸 알림 모으기"],
           ["q", "메일 받기 동의?", ["skip", "안 함", "알림함에만 남음"]],
-          ["step", "Resend 메일", ["err", "실패", "보낸 시각 비움 · 다음 실행에 다시"]],
+          ["step", "Gmail 메일", ["err", "실패", "보낸 시각 비움 · 다음 실행에 다시"]],
           ["q", "푸시 구독 있음?", ["skip", "없음", "메일 · 알림함만"]],
           ["step", "Web Push", ["err", "구독 만료", "구독 지움"]],
           ["db", "emailed_at · pushed_at"],

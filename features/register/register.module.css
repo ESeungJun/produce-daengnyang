@@ -1,0 +1,111 @@
+/* 연습생 등록·수정 폼. 휴대폰은 한 줄(폼 → 미리보기 → 버튼), 데스크톱은 왼쪽 폼 · 오른쪽 미리보기(따라 내려옴). 값은 tokens.css 만. */
+.wrap { display: grid; gap: 28px; padding: 6px 0 24px; }
+.form { display: grid; gap: 22px; min-width: 0; }
+
+.field { display: grid; gap: 8px; border: 0; padding: 0; margin: 0; min-width: 0; }
+.field legend, .label { padding: 0; margin-bottom: 8px; font-weight: 700; font-size: var(--pd-fs-body); display: flex; align-items: baseline; gap: 6px; flex-wrap: wrap; }
+.label { margin-bottom: 0; }
+.field legend span, .label span { font-weight: 400; font-size: var(--pd-fs-small); color: var(--pd-ink-2); }
+.label span { margin-left: auto; font-variant-numeric: tabular-nums; }
+.field em { font-style: normal; font-weight: 400; font-size: var(--pd-fs-tiny); color: var(--pd-ink-2); background: var(--pd-paper-2); padding: 1px 7px; border-radius: var(--pd-r-pill); }
+
+.field input, .field textarea {
+  width: 100%;
+  min-height: 48px;
+  padding: 12px 14px;
+  border: 1px solid var(--pd-jelly);
+  border-radius: var(--pd-r-sm);
+  background: var(--pd-paper);
+  color: var(--pd-ink);
+  font: inherit;
+  font-size: var(--pd-fs-name); /* 16px: iOS 가 16px 미만 입력칸을 확대하지 않게 */
+}
+.field textarea { resize: vertical; line-height: 1.5; }
+.field input:focus-visible, .field textarea:focus-visible { outline: 3px solid var(--pd-pink); outline-offset: 1px; border-color: transparent; }
+.field [aria-invalid="true"] { border-color: var(--pd-pink); }
+.err { margin: 0; font-size: var(--pd-fs-small); color: var(--pd-pink-text); }
+.note { margin: 0; font-size: var(--pd-fs-small); color: var(--pd-ink-2); }
+
+/* 사진 칸: 3칸 격자, 4:5(게시판 카드와 같은 비율) */
+.photos { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+.photos li { position: relative; min-width: 0; }
+.photos img, .add { width: 100%; aspect-ratio: 4 / 5; border-radius: var(--pd-r-md); display: block; }
+.photos img { object-fit: cover; background: var(--pd-paper-2); }
+.add {
+  border: 2px dashed var(--pd-jelly);
+  background: var(--pd-paper-2);
+  color: var(--pd-ink-2);
+  font: inherit;
+  font-size: var(--pd-fs-small);
+  font-weight: 700;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  cursor: pointer;
+}
+.add b { font-family: var(--pd-f-display); font-weight: 400; font-size: var(--pd-fs-ad); line-height: 1; color: var(--pd-ink); }
+.add:disabled { cursor: progress; }
+.coverTag { position: absolute; top: 6px; left: 6px; box-shadow: var(--pd-card-edge); border: 1px solid var(--pd-jelly); background: var(--pd-butter); color: var(--pd-on-butter); font-family: var(--pd-f-display); font-size: var(--pd-fs-tiny); padding: 2px 8px; border-radius: var(--pd-r-pill); }
+.photoAct { position: absolute; left: 6px; right: 6px; bottom: 6px; display: flex; justify-content: flex-end; gap: 6px; }
+.photoAct button {
+  width: 32px;
+  height: 32px;
+  border: 0;
+  border-radius: 50%;
+  background: rgb(var(--pd-shade) / 0.6);
+  color: var(--pd-on-photo);
+  font-size: var(--pd-fs-small);
+  font-weight: 700;
+  cursor: pointer;
+  position: relative;
+  flex-shrink: 0;
+}
+/* 누르는 칸은 44px(보이는 원은 32px, DESIGN_SYSTEM #4 누르는 칸 규칙) */
+.photoAct button::before { content: ""; position: absolute; inset: -6px; }
+.file { position: absolute; width: 1px; height: 1px; opacity: 0; pointer-events: none; }
+
+/* SNS 한 줄: 이름표 + 입력칸 */
+.sns { display: grid; grid-template-columns: minmax(56px, max-content) 1fr; align-items: center; gap: 8px; }
+.sns span { font-size: var(--pd-fs-ui); font-weight: 700; }
+
+/* 미리보기 + 등록 버튼 */
+.side { display: grid; gap: 12px; align-content: start; }
+.sideH { margin: 0; font-weight: 700; font-size: var(--pd-fs-body); }
+.preview { width: min(100%, 240px); }
+.preview img, .ph { width: 100%; aspect-ratio: 4 / 5; object-fit: cover; display: block; border-radius: var(--pd-r-md); background: var(--pd-paper-2); }
+.ph { display: grid; place-items: center; color: var(--pd-ink-2); font-size: var(--pd-fs-small); border: 2px dashed var(--pd-jelly); }
+.pvRow { display: flex; justify-content: space-between; align-items: center; gap: 6px; margin-top: 8px; }
+.pvRow > span { min-width: 0; }
+.pvRow b { display: block; font-size: var(--pd-fs-body); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.pvRow small { font-size: var(--pd-fs-tiny); color: var(--pd-ink-2); }
+.submit { width: 100%; min-height: 52px; font-size: var(--pd-fs-body); }
+
+@media (min-width: 1024px) {
+  .wrap { grid-template-columns: minmax(0, 1fr) 320px; gap: 64px; align-items: start; }
+  .form { max-width: 620px; }
+  .side { position: sticky; top: 24px; padding: 22px; border-radius: var(--pd-r-lg); background: var(--pd-paper-2); }
+  .preview { width: 100%; }
+}
+
+/* 화면 제목(게시판 제목과 같은 크기) */
+.head h1 { font-family: var(--pd-f-display); font-weight: 400; font-size: var(--pd-fs-page); line-height: 1; margin: 6px 0 4px; }
+.head p { margin: 0 0 18px; font-size: var(--pd-fs-ui); color: var(--pd-ink-2); }
+@media (min-width: 1024px) {
+  .head h1 { font-size: var(--pd-fs-d-section); }
+  .head p { margin-bottom: 32px; }
+}
+
+/* 고치기: 게시판은 바꿀 수 없어 글로만 */
+.fixed { margin: 0; font-weight: 700; display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 8px; }
+.fixed span { font-weight: 400; font-size: var(--pd-fs-small); color: var(--pd-ink-2); }
+
+/* 올릴 수 없는 때의 안내 판(폼 대신) */
+.closed { padding: 20px; border-radius: var(--pd-r-lg); background: var(--pd-paper-2); display: grid; gap: 6px; max-width: 620px; margin-bottom: 24px; }
+.closed p { margin: 0; color: var(--pd-ink-2); }
+.closed .closedTitle { font-weight: 700; color: var(--pd-ink); font-size: var(--pd-fs-body); }
+
+/* 데뷔 화보 사진 올리기(#17): 20칸이라 휴대폰에서는 두 칸으로 넓혀 ← → ✕ 세 버튼이 겹치지 않게 */
+@media (max-width: 479px) { .photos[data-wide] { grid-template-columns: repeat(2, 1fr); } }
+.formActs { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }

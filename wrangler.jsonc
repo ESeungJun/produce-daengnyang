@@ -1,0 +1,27 @@
+{
+	// Cloudflare Workers 배포 설정. OpenNext 견본에서 R2 캐시·이미지 바인딩은 뺐다.
+	// - R2 증분 캐시: 정적 화면이 거의 없고 데이터는 Supabase에서 바로 읽어서 1차엔 필요 없음(설계서 6절).
+	// - 이미지 변환: 사진은 업로드 때 1600·480px WebP 를 만들어 둔다(설계서 1-7).
+	"$schema": "node_modules/wrangler/config-schema.json",
+	"name": "produce-daengnyang",
+	"main": ".open-next/worker.js",
+	"compatibility_date": "2026-11-01",
+	"compatibility_flags": ["nodejs_compat", "global_fetch_strictly_public"],
+	"assets": {
+		"directory": ".open-next/assets",
+		"binding": "ASSETS"
+	},
+	"services": [
+		{
+			// OpenNext 가 자기 자신을 부를 때 쓰는 바인딩. 이름은 위 name 과 같아야 한다.
+			"binding": "WORKER_SELF_REFERENCE",
+			"service": "produce-daengnyang"
+		}
+	],
+	// 운영 도메인(#10, 2026-11-19 Cloudflare 에서 구매). 서비스 이름은 "프로듀스"지만 산 주소는 product- 다(사용자 결정: 그대로 쓴다).
+	// custom_domain 이면 배포할 때 DNS 레코드와 인증서를 Cloudflare 가 만든다.
+	"routes": [{ "pattern": "product-daengnyang.com", "custom_domain": true }],
+	// routes 를 두면 workers.dev 주소가 기본으로 꺼진다. 이미 퍼진 옛 링크가 끊기지 않게 켜 둔다.
+	"workers_dev": true,
+	"observability": { "enabled": true }
+}

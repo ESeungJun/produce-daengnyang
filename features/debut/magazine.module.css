@@ -1,0 +1,145 @@
+/*
+ * 데뷔 화보(#31). 지면 구성은 magazinePages.ts, 그리기는 Magazine.tsx.
+ * 패션 매거진 웹 화보 형태로 아래로 스크롤해 읽는다(2026-11-19 사용자 결정: 잡지 "책" 형태 — 쪽 카드·쪽 번호·차례·펼침면·뒷표지 바코드 — 는 버림).
+ * 꽉 찬 표지 → 화면 가득 한 장 / 비켜 놓은 두 장 사진과 글 꼭지가 번갈아 → 맺음. 지면 사이는 넉넉히 띄워 한 지면씩 읽히게 한다.
+ * 휴대폰은 표지·한 장 사진이 화면 끝까지(재단선까지) 간다. 색·글자는 토큰만 쓴다. 사진 위 글자는 on-photo + 그늘(shade).
+ */
+.mag { position: relative; margin-top: 8px; }
+.pages { display: grid; gap: 56px; }
+/* 휴대폰에서 화면 끝까지 가는 지면(표지·한 장 사진) */
+.cover, .photos:has(.shots[data-layout="full"]) { margin-left: calc(-1 * max(var(--pd-gutter), env(safe-area-inset-left, 0px))); margin-right: calc(-1 * max(var(--pd-gutter), env(safe-area-inset-right, 0px))); }
+
+/* ── 표지: 사진 위에 제호·이름·덱·표 수(패션지 표지) ── */
+/* 높이는 4:5(최대 86svh)를 최소로 두고 긴 이름·소개면 아래로 늘어난다(고정 비율 + overflow 면 글이 잘림, #31 코드·디자인 리뷰).
+   사진이 오기 전·깨졌을 때도 흰 글자가 읽히게 바탕은 그늘색 */
+.cover { position: relative; display: flex; flex-direction: column; min-height: min(125vw, 86svh); overflow: hidden; background: rgb(var(--pd-shade)); color: var(--pd-on-photo); }
+.coverShot { position: absolute; inset: 0; padding: 0; border: 0; background: none; cursor: zoom-in; }
+/* 초점 고리는 그늘(::after) 위에 흰 줄 + 그늘 줄 두 겹으로 그려 밝은 사진에서도 보이게 */
+.coverShot:focus-visible { outline: none; }
+.cover:has(.coverShot:focus-visible)::after { box-shadow: inset 0 0 0 3px var(--pd-on-photo), inset 0 0 0 6px rgb(var(--pd-shade) / 0.7); }
+.coverShot img { width: 100%; height: 100%; object-fit: cover; object-position: 50% 30%; }
+/* 글자 칸이 표지 사진을 덮어도 빈 곳을 누르면 사진이 열리게 글자 칸은 누름을 통과시키고 링크·단추만 받는다 */
+.coverTop, .coverFoot { pointer-events: none; }
+.coverTop a, .coverFoot a, .coverFoot button, .coverFoot input { pointer-events: auto; }
+/* 표지 SNS·공유(#31 안 A): 사진 위 반투명 판 */
+/* 줄 전체가 누름을 받아 아이콘 사이 빈틈을 눌러도 크게 보기가 열리지 않게 */
+.coverSns { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; text-shadow: none; pointer-events: auto; }
+.coverSns > a { display: inline-flex; width: 44px; height: 44px; align-items: center; justify-content: center; border-radius: var(--pd-r-xs); background: rgb(var(--pd-shade) / 0.35); }
+.coverShare { min-height: 44px; padding: 0 16px; border: 0; border-radius: var(--pd-r-pill); background: rgb(var(--pd-shade) / 0.55); color: var(--pd-on-photo); font: inherit; font-size: var(--pd-fs-ui); font-weight: 700; cursor: pointer; }
+.coverSns > a:focus-visible, .coverShare:focus-visible { outline: 3px solid var(--pd-on-photo); outline-offset: 2px; }
+.coverSns > label { flex-basis: 100%; color: var(--pd-on-photo); text-shadow: 0 1px 3px rgb(var(--pd-shade) / 0.6); }
+@media (hover: hover) { .coverShare:hover { background: rgb(var(--pd-shade) / 0.7); } }
+/* 제호(위)·이름(아래)이 밝은 사진에서도 읽히게 위·아래에 그늘 */
+.cover::after { content: ""; position: absolute; inset: 0; background: linear-gradient(rgb(var(--pd-shade) / 0.6), rgb(var(--pd-shade) / 0.35) 15%, rgb(var(--pd-shade) / 0) 35%, rgb(var(--pd-shade) / 0) 45%, rgb(var(--pd-shade) / 0.72)); pointer-events: none; }
+.coverTop, .coverFoot { position: relative; z-index: 1; padding: 20px 22px; text-shadow: 0 1px 3px rgb(var(--pd-shade) / 0.6); }
+.coverTop { display: grid; gap: 6px; }
+.coverFoot { margin-top: auto; display: flex; flex-direction: column; align-items: flex-start; gap: 10px; padding-bottom: 26px; }
+/* 제호: 매달 같은 이름이라 연재 화보로 읽힌다 */
+.mast { margin: 0; font-family: var(--pd-f-display); font-weight: 400; font-size: var(--pd-fs-section); line-height: 1; letter-spacing: -0.01em; }
+.issue { margin: 0; font-size: var(--pd-fs-tiny); font-weight: 700; letter-spacing: 0.12em; }
+.coverFoot h1 { margin: 0; font-family: var(--pd-f-display); font-weight: 400; font-size: var(--pd-fs-star); line-height: 0.95; letter-spacing: -0.02em; overflow-wrap: anywhere; word-break: keep-all; max-width: 100%; text-shadow: 0 1px 3px rgb(var(--pd-shade) / 0.6), 0 4px 24px rgb(var(--pd-shade) / 0.45); }
+.deck { margin: 0; max-width: 30em; font-size: var(--pd-fs-name); line-height: 1.5; text-wrap: balance; }
+.kick { font-family: var(--pd-f-display); font-size: var(--pd-fs-ui); background: var(--pd-butter); color: var(--pd-on-butter); border-radius: var(--pd-r-pill); padding: 4px 10px; text-shadow: none; }
+.votes { margin: 0; display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.votes b { font-size: var(--pd-fs-ui); font-weight: 700; background: var(--pd-pink); color: var(--pd-on-pink); border-radius: var(--pd-r-xs); padding: 4px 10px; text-shadow: none; }
+
+/* ── 사진 지면 ── */
+.shots { display: grid; }
+/* 한 장: 화면 끝까지 가는 큰 컷(휴대폰 4:5, 넓은 화면 3:2) */
+.shots[data-layout="full"] .shot { aspect-ratio: 4 / 5; max-height: 86svh; }
+/* 두 장: 큰 컷 + 오른쪽으로 비켜 조금 겹쳐 올라온 작은 컷(화보의 짝 컷) */
+.shots[data-layout="duo"] { grid-template-columns: 1fr; }
+.shots[data-layout="duo"] > :first-child { width: 86%; aspect-ratio: 4 / 5; }
+.shots[data-layout="duo"] > :nth-child(2) { width: 62%; aspect-ratio: 3 / 4; justify-self: end; margin-top: -18%; box-shadow: 0 0 0 6px var(--pd-paper); }
+.shot { position: relative; display: block; width: 100%; padding: 0; border: 0; overflow: hidden; background: var(--pd-paper-2); cursor: zoom-in; }
+.shots[data-layout="duo"] .shot, .aside .shot { border-radius: var(--pd-r-xs); }
+.shot:focus-visible { outline: 3px solid var(--pd-pink); outline-offset: -3px; }
+.shot img, .shot video { position: absolute; inset: 0; display: block; width: 100%; height: 100%; object-fit: cover; object-position: 50% 30%; }
+/* 주인에게만: 표지 위쪽 "화보 고치기" 길(44px 터치 영역) */
+/* 화보 칸이 빈 주인에게만: 채우기 안내(#31 안 A) */
+.empty { display: flex; flex-direction: column; align-items: flex-start; gap: 6px; margin: 0; padding: 18px; border-radius: var(--pd-r-md); background: var(--pd-paper-2); box-shadow: inset 0 0 0 1px var(--pd-jelly-2); }
+.empty b { font-size: var(--pd-fs-name); }
+.empty p { margin: 0; font-size: var(--pd-fs-small); line-height: 1.6; color: var(--pd-ink-2); }
+.empty small { font-size: var(--pd-fs-tiny); color: var(--pd-ink-2); }
+.edit { justify-self: start; display: inline-flex; align-items: center; min-height: 44px; padding: 0 14px; margin-top: 2px; border-radius: var(--pd-r-pill); background: rgb(var(--pd-shade) / 0.55); color: var(--pd-on-photo); font-size: var(--pd-fs-ui); font-weight: 700; text-decoration: none; text-shadow: none; }
+.edit:focus-visible { outline: 3px solid var(--pd-on-photo); outline-offset: 2px; }
+/* 표지 아래 한 줄 안내(휴대폰은 커서 모양으로 알 수 없어서) */
+.hint { margin: -32px 0 0; font-size: var(--pd-fs-tiny); color: var(--pd-ink-2); text-align: center; }
+/* 두 장 지면·글 + 사진 지면은 차례마다 좌우를 바꾼다(data-flip) */
+.photos[data-flip] .shots[data-layout="duo"] > :first-child { justify-self: end; }
+.photos[data-flip] .shots[data-layout="duo"] > :nth-child(2) { justify-self: start; }
+/* GIF·동영상 표시(그늘 알약). 번호는 쓰지 않는다(크게 보기의 "2 / 7"이 순번을 맡는다) */
+.shotNo { position: absolute; left: 12px; top: 10px; pointer-events: none; z-index: 1; }
+.shotNo em { font-style: normal; font-size: var(--pd-fs-micro); font-weight: 700; padding: 2px 7px; border-radius: var(--pd-r-pill); background: rgb(var(--pd-shade) / 0.55); color: var(--pd-on-photo); }
+
+/* ── 글 꼭지(꼭지 이름 → 큰 제목 → 본문, 본문 단은 좁게) ── */
+.note { display: grid; gap: 24px; }
+.noteText { display: grid; gap: 18px; max-width: 640px; width: 100%; justify-self: center; }
+.note h2 { margin: 0; display: grid; gap: 12px; padding-top: 14px; border-top: 2px solid var(--pd-ink); }
+.noteKick { margin: 0; font-size: var(--pd-fs-tiny); font-weight: 700; letter-spacing: 0.12em; color: var(--pd-pink-text); }
+.noteTitle { font-family: var(--pd-f-display); font-weight: 400; font-size: var(--pd-fs-section); line-height: 1.2; text-wrap: balance; overflow-wrap: anywhere; }
+.noteBody { display: grid; gap: 14px; }
+.noteBody p { margin: 0; font-size: var(--pd-fs-name); line-height: 1.8; white-space: pre-line; overflow-wrap: anywhere; }
+/* 첫 문단은 리드(웹 매거진은 드롭캡 대신 첫 문단을 키운다, DESIGN_REF #31). 문단이 하나뿐이면 키우지 않는다 */
+.note:not([data-note="feeling"]) .noteBody p:first-child:not(:only-child) { font-size: var(--pd-fs-lead); line-height: 1.6; }
+/* 데뷔 소감은 큰 인용(표시 글꼴, 가운데, 위아래 분홍 줄) */
+.note[data-note="feeling"] .noteText { text-align: center; }
+.note[data-note="feeling"] h2 { justify-items: center; border-top-color: var(--pd-pink); }
+.note[data-note="feeling"] .noteBody { padding-bottom: 18px; border-bottom: 2px solid var(--pd-pink); }
+.note[data-note="feeling"] .noteBody p { font-family: var(--pd-f-display); font-size: var(--pd-fs-section); line-height: 1.35; text-wrap: balance; }
+/* 자랑은 회색 종이 박스(잡지의 사이드바) */
+.note[data-note="brag"] .noteBody { padding: 20px 18px; border-radius: var(--pd-r-md); background: var(--pd-paper-2); box-shadow: inset 0 0 0 1px var(--pd-jelly-2); }
+/* 짧은 글 옆(휴대폰은 아래)에 붙는 사진 한 장 */
+.aside { display: grid; }
+.aside .shot { aspect-ratio: 4 / 5; }
+/* 마지막 글 끝 표시 */
+.note[data-end] .noteBody p:last-child::after { content: " \25A0" / ""; color: var(--pd-pink); }
+
+/* ── 맺음: 잉크·종이를 뒤집은 판(라이트는 검정, 다크는 흰 판), 표 수, 다음 오디션 길, 응원·공유 길 ── */
+.back { display: flex; flex-direction: column; gap: 16px; padding: 36px 24px; border-radius: var(--pd-r-lg); background: var(--pd-ink); color: var(--pd-paper); }
+.back .noteKick { color: var(--pd-paper); }
+.back > .backVotes { margin: 0; font-family: var(--pd-f-display); font-weight: 400; font-size: var(--pd-fs-name-lg); line-height: 1.05; text-wrap: balance; }
+.back > p { margin: 0; font-size: var(--pd-fs-ui); line-height: 1.7; }
+.backCta { align-self: flex-start; display: inline-flex; align-items: center; min-height: 44px; padding: 0 18px; border-radius: var(--pd-r-pill); background: var(--pd-paper); color: var(--pd-ink); font-size: var(--pd-fs-ui); font-weight: 700; text-decoration: none; }
+.backCta:focus-visible { outline: 3px solid var(--pd-paper); outline-offset: 3px; }
+.back > .backLinks { display: flex; flex-wrap: wrap; gap: 4px 18px; }
+.backLinks a { display: inline-flex; align-items: center; min-height: 44px; color: inherit; font-weight: 700; text-underline-offset: 4px; }
+/* 맺음 판 안의 초점 고리는 판의 반대색(분홍은 다크의 흰 판에서 3:1 이 안 나옴, #31 디자인 리뷰) */
+.backLinks a:focus-visible { outline: 3px solid currentColor; outline-offset: 2px; }
+
+/* 지면 등장: 스크립트가 붙은 뒤(data-reveal)에만 숨겼다가, 스크롤해 화면에 들어온 칸부터 사진이 조금 크게 시작해 제자리로 */
+[data-reveal] .shot img, [data-reveal] .shot video { transform: scale(1.08); transition: transform 1.4s cubic-bezier(0.16, 1, 0.3, 1); }
+[data-reveal] .shot[data-in] img, [data-reveal] .shot[data-in] video { transform: none; }
+
+@media (min-width: 900px) {
+  .pages { gap: 96px; }
+  .cover, .photos:has(.shots[data-layout="full"]) { margin-inline: 0; }
+  .cover { min-height: min(calc(100svh - 160px), 720px); border-radius: var(--pd-r-lg); }
+  .coverTop, .coverFoot { padding: 32px 40px; }
+  .coverFoot { padding-bottom: 40px; }
+  .mast { font-size: var(--pd-fs-d-section); }
+  .coverFoot h1 { font-size: var(--pd-fs-d-star); }
+  .deck { font-size: var(--pd-fs-number); line-height: 1.45; }
+  .shots[data-layout="full"] .shot { aspect-ratio: 3 / 2; border-radius: var(--pd-r-lg); }
+  /* 두 장: 왼쪽 큰 컷, 오른쪽 작은 컷은 아래로 내려앉게 */
+  .shots[data-layout="duo"] { grid-template-columns: 7fr 5fr; gap: 32px; align-items: start; }
+  .shots[data-layout="duo"] > :first-child, .shots[data-layout="duo"] > :nth-child(2) { width: 100%; margin-top: 0; box-shadow: none; }
+  .shots[data-layout="duo"] > :nth-child(2) { margin-top: 30%; }
+  .noteTitle { font-size: var(--pd-fs-d-section); }
+  .note[data-note="feeling"] .noteBody p { font-size: var(--pd-fs-d-section); }
+  .note[data-note="feeling"] .noteText { max-width: 820px; }
+  /* 짧은 글 + 사진: 글 왼쪽, 사진 오른쪽 */
+  .note[data-aside] { grid-template-columns: 1fr 1fr; gap: 56px; align-items: center; }
+  .note[data-aside] .noteText { max-width: none; }
+  .note[data-aside][data-flip] .aside { order: -1; }
+  .photos[data-flip] .shots[data-layout="duo"] { grid-template-columns: 5fr 7fr; }
+  .photos[data-flip] .shots[data-layout="duo"] > :first-child { order: 2; }
+  .photos[data-flip] .shots[data-layout="duo"] > :nth-child(2) { order: 1; }
+  .hint { margin-top: -64px; }
+  .back { padding: 56px 64px; }
+}
+
+/* 움직임 줄이기: 사진 확대 없이 */
+@media (prefers-reduced-motion: reduce) {
+  [data-reveal] .shot img, [data-reveal] .shot video { transform: none; transition: none; }
+}

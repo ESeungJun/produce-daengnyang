@@ -1,0 +1,205 @@
+/**
+ * 데뷔 화보 GIF·동영상(#31).
+ * 1. 화면: 주인이 GIF·동영상을 올리면 화보 벽에 움직이는 그림·동영상으로 나오고, 15초 넘는 동영상은 받지 않는다.
+ * 2. DB·저장소 한도: 데뷔 주인이 아니면 debut-media 에 못 올리고, 동영상 3개째·5MB 넘는 GIF 는 set_debut_photos 가 막는다.
+ * 데뷔 글 주인은 시험 동안만 시험 회원으로 바꾸고 finally 에서 되돌린다(flows.spec 의 데뷔 화보 시험과 같은 방식).
+ */
+import path from "node:path";
+import { readFileSync } from "node:fs";
+import { expect, test } from "@playwright/test";
+import { lit, localEnv, memberToken, putPhoto, rpcAs, signInMember, sql } from "./support";
+
+const FIX = path.join(__dirname, "fixtures");
+const SEED = path.join(__dirname, "..", "supabase", "seed-photos", "dog1.webp");
+
+type Debut = { id: string; board: string; owner_id: string };
+const findDebut = () => sql<Debut>("select e.id, e.board, e.owner_id from public.entries e where public.is_debut(e.id) order by e.board desc limit 1")[0];
+
+/** 그 사람 토큰으로 저장소에 올린다. 상태 코드를 돌려준다 */
+async function uploadAs(token: string, bucket: string, name: string, body: Buffer, type: string): Promise<number> {
+  const env = localEnv();
+  const res = await fetch(`${env.API_URL}/storage/v1/object/${bucket}/${name}`, {
+    method: "POST",
+    headers: { apikey: env.PUBLISHABLE_KEY, Authorization: `Bearer ${token}`, "Content-Type": type },
+    body: new Uint8Array(body),
+  });
+  return res.status;
+}
+
+test.describe.configure({ timeout: 120_000 });
+
+test("화보에 GIF·동영상을 올리면 벽에서 움직이고, 15초 넘는 동영상은 받지 않는다", async ({ page, context, baseURL }) => {
+  const debut = findDebut();
+  test.skip(!debut, "데뷔한 글이 없어요(seed.sql 의 지난달 결선 결과가 필요해요)");
+  const uid = await signInMember(context, baseURL!);
+  sql(`update public.entries set owner_id = ${lit(uid)} where id = ${lit(debut.id)}`);
+  try {
+    await page.goto(`/${debut.board}/${debut.id}/gallery`);
+    const input = page.locator('input[type="file"]');
+
+    // 긴 동영상은 고르는 자리에서 막는다
+    await input.setInputFiles(path.join(FIX, "long.mp4"));
+    await expect(page.getByText(/동영상은 15초까지예요/)).toBeVisible();
+
+    await input.setInputFiles([path.join(FIX, "wiggle.gif"), path.join(FIX, "clip.mp4")]);
+    await expect(page.getByRole("img", { name: "화보 1번째 칸(GIF)" })).toBeVisible();
+    await expect(page.getByRole("img", { name: "화보 2번째 칸(동영상)" })).toBeVisible();
+    await page.getByRole("button", { name: "화보 저장" }).click();
+    await expect(page.getByText("화보를 저장했어요")).toBeVisible();
+
+    await page.goto(`/${debut.board}/${debut.id}`);
+    const wall = page.locator("[data-mag]");
+    await expect(wall.locator('video[src*="/debut-media/"]')).toHaveCount(1);
+    // GIF 는 화면에 들어오기 전엔 첫 장면 그림, 들어오면 원본(움직이는 그림)으로 바뀐다
+    const gif = wall.locator('[data-kind="gif"]');
+    await expect(gif.locator('img[src$=".gif"]')).toHaveCount(0);
+    await gif.scrollIntoViewIfNeeded();
+    await expect(gif.locator('img[src$=".gif"]')).toHaveCount(1);
+    // 동영상 칸을 누르면 크게 보기에서 조작 막대가 있는 동영상
+    await wall.getByRole("button", { name: /동영상 크게 보기/ }).click();
+    await expect(page.locator("dialog[open] video[controls]")).toBeVisible();
+  } finally {
+    sql(`delete from public.debut_photos where entry_id = ${lit(debut.id)}`);
+    sql(`update public.entries set owner_id = ${lit(debut.owner_id)} where id = ${lit(debut.id)}`);
+  }
+});
+
+test("화보 폼에서 글 꼭지를 쓰면 화보 지면 사이에 기사로 나오고, 빈 글은 저장을 막는다. 화보는 표지부터 맺음까지 아래로 스크롤해 읽는다", async ({ page, context, baseURL }) => {
+  const debut = findDebut();
+  test.skip(!debut, "데뷔한 글이 없어요");
+  const uid = await signInMember(context, baseURL!);
+  sql(`update public.entries set owner_id = ${lit(uid)} where id = ${lit(debut.id)}`);
+  try {
+    await page.goto(`/${debut.board}/${debut.id}/gallery`);
+    await page.locator('input[type="file"]').setInputFiles(path.join(FIX, "wiggle.gif"));
+    await expect(page.getByRole("img", { name: "화보 1번째 칸(GIF)" })).toBeVisible();
+
+    // 1. 빈 글은 저장 전에 막고 그 글 편집기를 연다
+    await page.getByRole("button", { name: "+ 데뷔 소감" }).click();
+    await page.getByRole("button", { name: "화보 저장" }).click();
+    await expect(page.getByRole("alert").filter({ hasText: "본문을 써 주세요" })).toBeVisible();
+    await page.getByLabel(/^본문/).fill("응원해 주신 모든 분께 고마워요.\n\n간식은 제가 살게요.");
+
+    // 2. 소개 글은 목록 맨 앞에 들어간다
+    await page.getByRole("button", { name: "+ 소개" }).click();
+    await expect(page.getByLabel(/^본문/)).toBeFocused();
+    await page.getByLabel(/^제목/).fill("산책 반장");
+    await page.getByLabel(/^본문/).fill("우리 집 산책 반장이에요.");
+    await page.getByRole("button", { name: "글 접기" }).click();
+    // 같은 종류는 하나만이라 더하기 단추가 사라진다
+    await expect(page.getByRole("button", { name: "+ 소개" })).toHaveCount(0);
+
+    // 3. 금지어가 든 글은 파일을 올리기 전에 막고 그 글을 열어 이유를 보여 준다. 뺀 글은 되돌릴 수 있다
+    await page.getByRole("button", { name: "+ 자랑" }).click();
+    await page.getByLabel(/^본문/).fill("씨~발 데뷔");
+    await page.getByRole("button", { name: "화보 저장" }).click();
+    await expect(page.getByRole("alert").filter({ hasText: "쓸 수 없는 말" })).toBeVisible();
+    await expect(page.getByRole("button", { name: "화보 저장" })).toBeEnabled();
+    await page.getByRole("button", { name: /자랑 글\) 빼기/ }).click();
+    await page.getByRole("button", { name: "↺ 방금 뺀 자랑 글 되돌리기" }).click();
+    await page.getByRole("button", { name: /자랑 글\) 빼기/ }).click();
+
+    // 4. 쓴 글이 있으면 "그대로 두기"를 한 번 더 눌러야 나간다
+    await page.getByRole("link", { name: "그대로 두기" }).click();
+    await expect(page.getByRole("link", { name: "저장하지 않고 나가기" })).toBeVisible();
+    await page.getByRole("button", { name: "화보 저장" }).click();
+    await expect(page.getByText("화보를 저장했어요")).toBeVisible();
+
+    // 5. 지면: 소개 글 → 사진 묶음 → 소감 글 순서, 꼭지 이름과 제목
+    // 맺음 기록(7절)은 화면이 짧으면 앞 절에서 이미 나가므로 들어올 때부터 모은다
+    const tracked: string[] = [];
+    page.on("request", (r) => {
+      if (!r.url().includes("/rpc/record_sns")) return;
+      const b = r.postDataJSON() as { p_kind: string; p_place: string };
+      tracked.push(`${b.p_place}:${b.p_kind}`);
+    });
+    await page.goto(`/${debut.board}/${debut.id}`);
+    const wall = page.locator("[data-mag]");
+    // 지면 순서: 글 지면은 꼭지 종류, 사진 지면은 칸 종류
+    const order = await wall.locator("[data-page]").evaluateAll((els) =>
+      els.flatMap((e) => {
+        const el = e as HTMLElement;
+        // 짧은 글은 뒤 사진 한 칸과 한 지면에 실리므로 글 다음에 그 칸도 센다
+        const kinds = [...el.querySelectorAll<HTMLElement>("[data-kind]")].map((c) => c.dataset.kind!);
+        return el.dataset.note ? [el.dataset.note, ...kinds] : kinds;
+      }),
+    );
+    // 투표 사진들이 앞에 오고, 그 뒤로 소개 → GIF → 소감
+    expect(order.slice(-3)).toEqual(["intro", "gif", "feeling"]);
+    await expect(wall.getByRole("heading", { name: /소개.*산책 반장/ })).toBeAttached();
+
+    // 6. 웹 화보 읽기: 표지 → 지면 → 맺음이 위에서 아래로 쌓이고, 책 장치(넘김 단추·차례·쪽 번호)는 없다
+    await expect(wall.getByRole("button", { name: "다음 쪽" })).toHaveCount(0);
+    await expect(wall.locator('[data-type="toc"]')).toHaveCount(0);
+    const types = await wall.locator("[data-page]").evaluateAll((els) => els.map((e) => (e as HTMLElement).dataset.type));
+    expect([types[0], types.at(-1)]).toEqual(["cover", "back"]);
+    const tops = await wall.locator("[data-page]").evaluateAll((els) => els.map((e) => e.getBoundingClientRect().top));
+    expect(tops[1]!).toBeGreaterThan(tops[0]!);
+    expect(tops.at(-1)!).toBeGreaterThan(tops[1]!);
+    const feeling = wall.getByText("간식은 제가 살게요.");
+    await feeling.scrollIntoViewIfNeeded();
+    await expect(feeling).toBeInViewport();
+
+    // 6-1. 표지 사진은 지면에 다시 싣지 않으므로 표지를 눌러 크게 본다(#31)
+    await wall.getByRole("button", { name: /표지 크게 보기/ }).click();
+    await expect(page.locator("dialog[open]")).toBeVisible();
+    await page.keyboard.press("Escape");
+    await expect(page.locator("dialog[open]")).toHaveCount(0);
+
+    // 7. 맺음 기록: 맺음이 보이면 debut_back 노출을, "픽하러 가기"를 누르면 pick_cta 를 남긴다(#31)
+    const back = wall.locator('[data-type="back"]');
+    await back.scrollIntoViewIfNeeded();
+    await expect.poll(() => tracked).toContain("debut_back:view");
+    await back.getByRole("link", { name: /연습생 픽하러 가기/ }).click();
+    await expect.poll(() => tracked).toContain("debut_back:pick_cta");
+    await expect(page).toHaveURL(new RegExp(`/${debut.board}$`));
+  } finally {
+    sql(`delete from public.debut_photos where entry_id = ${lit(debut.id)}`);
+    sql(`update public.entries set owner_id = ${lit(debut.owner_id)} where id = ${lit(debut.id)}`);
+  }
+});
+
+test("데뷔 주인만 큰 파일을 올리고, 동영상 3개째·5MB 넘는 GIF 는 DB 가 막는다", async () => {
+  const debut = findDebut();
+  test.skip(!debut, "데뷔한 글이 없어요");
+  const { uid, token } = await memberToken();
+  const clip = readFileSync(path.join(FIX, "clip.mp4"));
+
+  // 1. 데뷔 글이 없는 회원은 debut-media 에 못 올린다
+  expect(await uploadAs(token, "debut-media", `${uid}/a.mp4`, clip, "video/mp4")).toBeGreaterThanOrEqual(400);
+
+  sql(`update public.entries set owner_id = ${lit(uid)} where id = ${lit(debut.id)}`);
+  try {
+    // 2. 주인이 되면 올라간다
+    for (const n of ["v1", "v2", "v3"]) expect(await uploadAs(token, "debut-media", `${uid}/${n}.mp4`, clip, "video/mp4")).toBe(200);
+    const thumbs = await Promise.all(["t1", "t2", "t3", "t4"].map((n) => putPhoto(uid, SEED, n)));
+    const video = (n: string, i: number) => ({ kind: "video", path: `${uid}/${n}.mp4`, thumb_path: thumbs[i] });
+
+    expect((await rpcAs(token, "set_debut_photos", { p_entry_id: debut.id, p_photos: [video("v1", 0), video("v2", 1)] })).ok).toBe(true);
+    // 2-1. 화보에 붙은 파일은 지우지 못한다(지우고 같은 이름으로 다른 내용을 올려 검사를 피하는 길)
+    const env = localEnv();
+    await fetch(`${env.API_URL}/storage/v1/object/debut-media`, {
+      method: "DELETE",
+      headers: { apikey: env.PUBLISHABLE_KEY, Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
+      body: JSON.stringify({ prefixes: [`${uid}/v1.mp4`, `${uid}/v3.mp4`] }),
+    });
+    const left = sql<{ name: string }>(`select name from storage.objects where bucket_id = 'debut-media' and name in (${lit(`${uid}/v1.mp4`)}, ${lit(`${uid}/v3.mp4`)})`).map(
+      (r) => r.name,
+    );
+    expect(left).toEqual([`${uid}/v1.mp4`]); // 붙은 v1 은 남고, 안 붙은 v3 은 지워진다
+    expect(await uploadAs(token, "debut-media", `${uid}/v3.mp4`, clip, "video/mp4")).toBe(200);
+    // 3. 동영상 3개째
+    const three = await rpcAs(token, "set_debut_photos", { p_entry_id: debut.id, p_photos: [video("v1", 0), video("v2", 1), video("v3", 2)] });
+    expect(three.code).toBe("invalid_photo");
+    // 4. 확장자와 종류가 다르면(동영상을 GIF 라고 우김)
+    const lie = await rpcAs(token, "set_debut_photos", { p_entry_id: debut.id, p_photos: [{ kind: "gif", path: `${uid}/v1.mp4`, thumb_path: thumbs[0] }] });
+    expect(lie.code).toBe("invalid_photo");
+    // 5. 5MB 넘는 GIF(버킷 한도 20MB 안이라 올라가지만 화보에는 못 붙인다)
+    expect(await uploadAs(token, "debut-media", `${uid}/big.gif`, Buffer.alloc(6 * 1024 * 1024, 1), "image/gif")).toBe(200);
+    const big = await rpcAs(token, "set_debut_photos", { p_entry_id: debut.id, p_photos: [{ kind: "gif", path: `${uid}/big.gif`, thumb_path: thumbs[3] }] });
+    expect(big.code).toBe("invalid_photo");
+  } finally {
+    sql(`delete from public.debut_photos where entry_id = ${lit(debut.id)}`);
+    sql(`update public.entries set owner_id = ${lit(debut.owner_id)} where id = ${lit(debut.id)}`);
+  }
+});
