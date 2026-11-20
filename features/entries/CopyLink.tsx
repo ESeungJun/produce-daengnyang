@@ -20,15 +20,18 @@ export function CopyLink({
   primary = false,
   label = "공유하기",
   text: shareText,
+  className,
 }: {
   entryId: string;
   name: string;
-  /** 기록 자리: 글 상세(detail) · 등록 직후 띠(register) · 데뷔 화보(debut) */
-  place: "detail" | "register" | "debut";
+  /** 기록 자리: 글 상세(detail) · 등록 직후 띠(register) · 데뷔 화보(debut) · 데뷔 화보 표지(debut_cover, #31) */
+  place: "detail" | "register" | "debut" | "debut_cover";
   primary?: boolean;
   label?: string;
   /** 공유 문구(기본 "{이름} 픽해 주세요!"). 데뷔 화보는 축하 문구를 넘긴다(#17) */
   text?: string;
+  /** 단추 모양을 그 자리에 맞출 때(데뷔 화보 표지 위 반투명 단추) */
+  className?: string;
 }) {
   const toast = useToast();
   const [manual, setManual] = useState<string | null>(null);
@@ -58,7 +61,7 @@ export function CopyLink({
 
   return (
     <>
-      <button type="button" className={primary ? ui.pill : ui.ghost} onClick={share}>
+      <button type="button" className={className ?? (primary ? ui.pill : ui.ghost)} onClick={share}>
         {label}
       </button>
       {manual ? (

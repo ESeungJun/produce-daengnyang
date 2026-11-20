@@ -8,7 +8,7 @@
  * 지면 순서: 표지 → (사진 지면·글 꼭지가 주인 순서대로) → 맺음
  * - 사진 묶음은 화면 가득 한 장(full)과 비켜 놓은 두 장(duo)을 번갈아 쓴다(화보의 큰 컷 → 짝 컷 리듬, DESIGN_REF #31).
  *   짧은 글 옆 사진(aside) 바로 뒤 묶음은 두 장부터 시작한다(같은 크기 세로 큰 컷이 연달아 오지 않게, #31 디자인 리뷰).
- * - 표지에 쓴 첫 사진은 칸이 둘 이상이면 지면에 다시 싣지 않는다(#31 사용자 리뷰).
+ * - 표지에 쓴 첫 사진은 지면에 다시 싣지 않는다(#31 사용자 리뷰). 표지를 누르면 크게 본다. 사진이 한 장뿐이면 지면 없이 표지 → 맺음이다(2026-11-20 사용자 결정).
  * - 짧은 글(SHORT_CHARS 이하)은 바로 뒤 사진 한 장을 옆에 붙여 한 지면으로 싣는다(글만 덩그러니 남지 않게, #31 디자인 리뷰).
  */
 import type { GalleryKind, GalleryNote } from "@/features/entries/api";
@@ -38,9 +38,8 @@ export const parasOf = (body: string): string[] =>
 /** 화보 칸 목록(주인이 놓은 순서)을 지면 목록으로 */
 export function buildPages(cells: Cell[]): MagPage[] {
   const inner: MagPage[] = [];
-  const shotCount = cells.filter((c) => !isNoteCell(c)).length;
-  // 표지 사진(첫 사진 칸)은 칸이 둘 이상이면 지면에 다시 싣지 않는다
-  const isCover = (index: number) => index === 0 && shotCount >= 2;
+  // 표지 사진(첫 사진 칸)은 지면에 다시 싣지 않는다(표지를 눌러 크게 본다)
+  const isCover = (index: number) => index === 0;
   let index = 0;
   let run: PlacedShot[] = [];
   let afterAside = false;

@@ -18,8 +18,8 @@ describe("buildPages", () => {
     expect(pages.flatMap((p) => (p.type === "photos" ? p.shots.map((s) => s.index) : []))).toEqual([1, 2, 3, 4]);
   });
 
-  it("사진이 한 장뿐이면 표지와 지면에 같이 싣는다", () => {
-    expect(shape(buildPages([shot(0)]))).toEqual(["cover", "photos:full", "back"]);
+  it("사진이 한 장뿐이면 지면에 다시 싣지 않고 표지 → 맺음이다(#31 사용자 결정)", () => {
+    expect(shape(buildPages([shot(0)]))).toEqual(["cover", "back"]);
   });
 
   it("짧은 글은 바로 뒤 사진과 한 지면에, 긴 글은 혼자 한 지면에 다 싣는다(쪽으로 자르지 않는다)", () => {

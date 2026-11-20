@@ -24,6 +24,7 @@ import r from "@/features/register/register.module.css";
 import { GALLERY_MAX } from "./limits";
 import { MediaFail, processMedia, type NewMedia } from "./media";
 import { MEDIA_ERROR_TEXT, MEDIA_LIMIT, mediaExt, type MediaError } from "./mediaRules";
+import { notesBunched, spreadNotes } from "./spreadNotes";
 import { NOTE_HINT, NOTE_KINDS, NOTE_LABEL, NOTE_LIMIT, charCount, clip, isBlank } from "./notes";
 import s from "./debut.module.css";
 
@@ -93,7 +94,9 @@ export function GalleryForm({ entryId, back, initial }: { entryId: string; back:
   // 처음 글과 달라졌는지(떠날 때 묻기)
   const noteSig = (xs: Note[]) => JSON.stringify(xs.map((n) => [n.note_kind, n.title.trim(), n.body.trim()]));
   const initialNotes = useMemo(() => noteSig(initial.filter(isNote).map((n) => ({ note_kind: n.note_kind, title: n.title ?? "", body: n.body }))), [initial]);
-  const dirty = noteSig(slots.flatMap((x) => (x.kind === "note" ? [x.note] : []))) !== initialNotes;
+  // 고르게 섞은 순서도 저장 전이면 묻는다(섞은 순간 반영됐다고 여기기 쉬워서, #31 사용자 리뷰)
+  const [beforeSpread, setBeforeSpread] = useState<Slot[] | null>(null);
+  const dirty = noteSig(slots.flatMap((x) => (x.kind === "note" ? [x.note] : []))) !== initialNotes || beforeSpread !== null;
 
   // 올리는 동안, 또는 쓴 글이 저장 전이면 화면을 떠날 때 브라우저가 한 번 묻게 한다
   useEffect(() => {
@@ -225,6 +228,24 @@ export function GalleryForm({ entryId, back, initial }: { entryId: string; back:
       [n[i], n[i + d]] = [n[i + d], n[i]];
       return n;
     });
+
+  // 글이 모두 사진 뒤에 몰렸을 때만 "고르게 섞기"를 권한다(#31, 화보 화면은 주인 순서를 그대로 따른다)
+  const isNoteSlot = (x: Slot) => x.kind === "note";
+  const isIntro = (x: Slot) => x.kind === "note" && x.note.note_kind === "intro";
+  const bunched = notesBunched(slots, isNoteSlot, isIntro);
+  const spread = () => {
+    setBeforeSpread(slots);
+    setSlots(spreadNotes(slots, isNoteSlot, isIntro));
+    toast("글을 사진 사이에 고르게 놓았어요. '화보 저장'을 눌러야 화보에 반영돼요");
+  };
+  // 섞기 전 순서로 되돌리기: 그 뒤에 칸을 더하거나 빼지 않았을 때만(같은 칸들), 고친 글 내용은 지금 것을 쓴다
+  const sameMembers = beforeSpread !== null && beforeSpread.length === slots.length && beforeSpread.every((x) => slots.some((y) => y.key === x.key));
+  const unspread = () => {
+    if (!beforeSpread) return;
+    const now = new Map(slots.map((x) => [x.key, x]));
+    setSlots(beforeSpread.map((x) => now.get(x.key) ?? x));
+    setBeforeSpread(null);
+  };
 
   async function save() {
     // 빈 글이 있으면 올리기 전에 그 글을 열어 보여 준다(DB 도 invalid_note 로 막는다)
@@ -409,6 +430,22 @@ export function GalleryForm({ entryId, back, initial }: { entryId: string; back:
           </li>
         ) : null}
       </ul>
+      {bunched ? (
+        <div className={s.spreadTip} role="group" aria-labelledby="spread-tip-h">
+          <b id="spread-tip-h">글이 화보 끝에 몰려 있어요</b>
+          <span>사진 사이로 옮기면 잡지처럼 읽혀요. 소개 글은 화보 칸 맨 앞, 나머지는 사진 사이에 고르게 놓아요.</span>
+          <button type="button" className={ui.ghost} onClick={spread} disabled={busy !== null}>
+            고르게 섞기
+          </button>
+        </div>
+      ) : null}
+      {sameMembers ? (
+        <div className={s.noteAdd} role="group" aria-label="고르게 섞기 되돌리기">
+          <button type="button" className={ui.ghost} onClick={unspread} disabled={busy !== null}>
+            ↺ 섞기 전 순서로 되돌리기
+          </button>
+        </div>
+      ) : null}
       {used.size < NOTE_KINDS.length || undo ? (
         <div className={s.noteAdd} role="group" aria-label="글 꼭지 더하기">
           <span>글 더하기</span>

@@ -84,6 +84,11 @@
 .noteTile:focus-visible { outline: 3px solid var(--pd-pink); outline-offset: 1px; }
 .noteKind { align-self: flex-start; padding: 2px 8px; border-radius: var(--pd-r-pill); background: var(--pd-butter); color: var(--pd-on-butter); font-size: var(--pd-fs-micro); font-weight: 700; }
 .noteLen { margin-top: auto; font-size: var(--pd-fs-micro); color: var(--pd-ink-2); font-variant-numeric: tabular-nums; }
+/* 글이 끝에 몰렸을 때 고르게 섞기 권하기(#31) */
+.spreadTip { display: flex; flex-direction: column; align-items: flex-start; gap: 6px; padding: 14px 16px; border-radius: var(--pd-r-md); background: var(--pd-paper-2); box-shadow: inset 0 0 0 1px var(--pd-jelly-2); }
+.spreadTip > b { font-size: var(--pd-fs-name); }
+.spreadTip > span { font-size: var(--pd-fs-small); color: var(--pd-ink-2); line-height: 1.6; }
+.spreadTip > button { margin-top: 4px; }
 .noteAdd { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
 .noteAdd > span { font-size: var(--pd-fs-small); font-weight: 700; color: var(--pd-ink-2); }
 .noteEditor { display: grid; gap: 14px; padding: 16px; border: 1px solid var(--pd-jelly); border-radius: var(--pd-r-md); background: var(--pd-paper); }
