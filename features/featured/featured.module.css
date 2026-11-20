@@ -63,7 +63,8 @@
 .dots button[aria-current="true"] { background-color: var(--pd-pink); width: 22px; border-radius: 13px; }
 
 /* 데뷔 전(첫 달): 사진 없이 글자 표지 */
-.blank { background: var(--pd-ink); position: relative; height: 320px; }
+/* 다크 모드에서 --pd-ink 는 흰색으로 뒤집혀 흰 글씨가 묻힌다(#34). 두 모드 모두 어두운 마감 띠 색을 쓴다 */
+.blank { background: var(--pd-band); position: relative; height: 320px; }
 .blank .lines { bottom: 24px; }
 .blank .star { text-shadow: none; }
 .blank .lines p { margin: 10px 0 0; color: var(--pd-on-photo); opacity: 0.8; font-size: var(--pd-fs-ui); max-width: 30ch; }
