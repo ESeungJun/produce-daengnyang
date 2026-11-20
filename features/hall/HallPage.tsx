@@ -37,7 +37,7 @@ export async function HallPage() {
       {months.length === 0 ? (
         <div className={s.empty} role="status">
           <b>{cards ? "아직 전당에 오른 아이가 없어요" : "전당을 불러오지 못했어요"}</b>
-          <span>{cards ? "1주차가 끝나면 댕댕이·냥이 1위가 여기 걸려요." : "잠시 뒤 다시 와 주세요. 게시판은 그대로 볼 수 있어요."}</span>
+          <span>{cards ? "이번 주차가 끝나면 댕댕이·냥이 1위가 여기 걸려요." : "잠시 뒤 다시 와 주세요. 게시판은 그대로 볼 수 있어요."}</span>
           <span className={s.emptyAct}>
             <Link className={ui.pill} href="/dog">
               댕댕이 연습생 보기
