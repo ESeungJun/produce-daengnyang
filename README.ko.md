@@ -36,8 +36,10 @@ npx supabase@3.2.0 start        # .env.local 을 로컬 주소·키로 바꾸면
 bash supabase/seed-photos.sh    # 예시 사진(CC0)을 로컬 Storage 에 올리기
 npx supabase@3.2.0 test db      # pgTAP 규칙 시험
 npm run preview                 # Cloudflare 런타임으로 미리보기(.dev.vars 필요)
-npm run deploy                  # Cloudflare Workers 배포
+npm run deploy                  # Cloudflare Workers 배포(운영 값 파일 필요, 아래)
 ```
+
+배포(`scripts/deploy.sh`)는 `.env.local` 대신 운영 값 파일 `.work/deploy-env.sh`(git 제외, `export NEXT_PUBLIC_…=` 줄들)로 빌드해요. 빌드 결과에 로컬 Supabase 주소가 있거나 운영 주소가 없으면 배포하지 않고 멈춰요. 다른 파일을 쓰려면 `DEPLOY_ENV=경로`.
 
 | 환경 변수 | 뜻 |
 |---|---|
