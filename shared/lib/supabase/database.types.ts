@@ -412,9 +412,12 @@ isOneToOne: false
               "author_name": string,"board": Database["public"]['Enums']["board_kind"],"body": string,"entry_id": string,"hidden_at": string,"pet_name": string,"target": Database["public"]['Enums']["report_target"],"target_id": string,"thumb_path": string
             }[]
                            },
+"admin_remove_reply":
+{ Args: { "p_comment_id": string }; Returns: undefined
+                           },
 "admin_reports":
 { Args: { "p_limit"?: number }; Returns: {
-              "author_id": string,"author_name": string,"board": Database["public"]['Enums']["board_kind"],"body": string,"deleted": boolean,"entry_id": string,"hidden": boolean,"last_at": string,"pet_name": string,"reasons": (string)[],"reports": number,"target": Database["public"]['Enums']["report_target"],"target_id": string,"thumb_path": string
+              "author_id": string,"author_name": string,"board": Database["public"]['Enums']["board_kind"],"body": string,"deleted": boolean,"entry_id": string,"hidden": boolean,"last_at": string,"pet_name": string,"reasons": (string)[],"reply_body": string,"reports": number,"target": Database["public"]['Enums']["report_target"],"target_id": string,"thumb_path": string
             }[]
                            },
 "admin_rounds":

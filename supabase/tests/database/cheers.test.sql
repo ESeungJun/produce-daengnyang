@@ -3,7 +3,7 @@
 -- 시험용 라운드는 2031·2032년 달에 '지금' 기준 시각으로 만든다(실제 라운드와 겹치지 않음).
 begin;
 create extension if not exists pgtap with schema extensions;
-select plan(44);
+select plan(54);
 
 -- ── 준비 ────────────────────────────────────────────────────
 -- A: 진출자 주인 · B: 응원하는 회원 · C: 익명
@@ -102,6 +102,33 @@ select throws_ok($$select public.reply_comment('00000000-0000-0000-0000-00000039
 set local role postgres;
 select is((select count(*)::int from public.notifications where user_id = '00000000-0000-0000-0000-0000000039b1' and kind = 'comment_reply'), 1,
           '답글을 고쳐도 댓글 쓴 사람에게는 한 번만 알린다');
+
+-- ── 5-1. 관리자가 답글만 지우기(#40) ────────────────────────
+-- 답글은 댓글 신고로 같이 들어온다. A 가 답글 달린 댓글을 신고하고, 관리자가 된 A 가 처리한다.
+set local role authenticated;
+set local request.jwt.claims = '{"sub":"00000000-0000-0000-0000-0000000039a1","role":"authenticated","is_anonymous":false}';
+select public.report('comment', '00000000-0000-0000-0000-00000039c001', '답글 확인');
+select throws_ok($$select public.admin_remove_reply('00000000-0000-0000-0000-00000039c001')$$, 'P0001', 'not_admin', '관리자가 아니면 답글을 지우지 못한다');
+set local role postgres;
+update public.profiles set is_admin = true where id = '00000000-0000-0000-0000-0000000039a1';
+set local role authenticated;
+select is((select reply_body from public.admin_reports() where target = 'comment' and target_id = '00000000-0000-0000-0000-00000039c001'), '고마워요!',
+          '관리자 신고 목록에 댓글의 주인 답글이 보인다');
+select lives_ok($$select public.admin_remove_reply('00000000-0000-0000-0000-00000039c001')$$, '관리자는 답글만 지운다');
+select is((select reply_body from public.entry_comments('00000000-0000-0000-0000-00000039e001') where id = '00000000-0000-0000-0000-00000039c001'), null,
+          '지운 답글은 댓글 목록에서 사라진다');
+select is((select count(*)::int from public.entry_comments('00000000-0000-0000-0000-00000039e001') where id = '00000000-0000-0000-0000-00000039c001'), 1,
+          '답글을 지워도 댓글 본문은 남는다');
+select is((select reports from public.admin_reports() where target = 'comment' and target_id = '00000000-0000-0000-0000-00000039c001'), 1,
+          '답글을 지워도 신고는 열려 있다(댓글 본문은 따로 판단)');
+select throws_ok($$select public.reply_comment('00000000-0000-0000-0000-00000039c001', '다시 쓴 답글')$$, 'P0001', 'already_replied',
+                 '지운 답글 자리에 주인이 다시 쓰지 못한다');
+select throws_ok($$select public.admin_remove_reply('00000000-0000-0000-0000-00000039c001')$$, 'P0001', 'not_found', '지울 답글이 없으면 not_found');
+set local role postgres;
+select is((select count(*)::int from public.admin_actions where action = 'remove_reply' and target_id = '00000000-0000-0000-0000-00000039c001'), 1,
+          '답글 지우기는 처리 기록에 남는다');
+select is(has_function_privilege('anon', 'public.admin_remove_reply(uuid)', 'execute'), false, '손님 역할은 답글 지우기를 부르지 못한다');
+update public.profiles set is_admin = false where id = '00000000-0000-0000-0000-0000000039a1';
 
 -- ── 6. 센터 성과 ────────────────────────────────────────────
 -- 2032-01: 1주차는 8일 전에 끝났고, 그 센터가 걸린 2주차는 1일 전에 끝났다
