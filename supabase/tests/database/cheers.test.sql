@@ -3,7 +3,7 @@
 -- 시험용 라운드는 2031·2032년 달에 '지금' 기준 시각으로 만든다(실제 라운드와 겹치지 않음).
 begin;
 create extension if not exists pgtap with schema extensions;
-select plan(54);
+select plan(61);
 
 -- ── 준비 ────────────────────────────────────────────────────
 -- A: 진출자 주인 · B: 응원하는 회원 · C: 익명
@@ -160,6 +160,36 @@ select is((select sns_moves from public.my_finalist_stats() where entry_id = '00
 select is((select cheers from public.my_finalist_stats() where entry_id = '00000000-0000-0000-0000-00000039e001'), 1, '내 정보에서 응원단 수를 본다');
 select is((select final_open from public.my_finalist_stats() where entry_id = '00000000-0000-0000-0000-00000039e001'), true, '결선이 열렸으면 내 정보에서 final_open');
 select is((select center_done from public.my_finalist_stats() where entry_id = '00000000-0000-0000-0000-00000039e101'), true, '센터 주간이 끝났으면 center_done');
+
+-- ── 8. 성과 재기(#43) ───────────────────────────────────────
+set local role postgres;
+select set_config('t.auth0', coalesce((select sum(n) from public.auth_daily where kst_date = public.kst_today() and kind = 'sheet' and detail = 'cheer'), 0)::text, true);
+select set_config('t.clk0', coalesce((select sum(n) from public.notice_clicks where kst_date = public.kst_today() and kind = 'final_open'), 0)::text, true);
+set local role anon;
+select public.record_auth('sheet', 'cheer');
+select public.record_notice_click('final_open', 'push');
+select public.record_notice_click('final_open', 'inbox');
+select public.record_notice_click('final_open', 'evil');
+select public.record_notice_click('nope', 'push');
+set local role postgres;
+select is((select sum(n)::int from public.auth_daily where kst_date = public.kst_today() and kind = 'sheet' and detail = 'cheer'),
+          current_setting('t.auth0')::int + 1, '응원단 로그인 시트가 cheer 이유로 따로 세진다');
+select is((select sum(n)::int from public.notice_clicks where kst_date = public.kst_today() and kind = 'final_open'),
+          current_setting('t.clk0')::int + 2, '데뷔 평가 알림 클릭이 경로별로 세지고, 모르는 경로·종류는 버린다');
+select is((select count(*)::int from public.notice_clicks where via = 'evil' or kind = 'nope'), 0, '허용 목록 밖 값은 줄을 만들지 않는다');
+select is(has_table_privilege('anon', 'public.notice_clicks', 'SELECT'), false, '손님은 클릭 수 표를 직접 읽지 못한다');
+set local role authenticated;
+set local request.jwt.claims = '{"sub":"00000000-0000-0000-0000-0000000039b1","role":"authenticated","is_anonymous":false}';
+select throws_ok($$select * from public.admin_revisit_stats()$$, 'P0001', 'not_admin', '관리자가 아니면 성과 숫자를 못 본다');
+set local role postgres;
+update public.profiles set is_admin = true where id = '00000000-0000-0000-0000-0000000039b1';
+set local role authenticated;
+select is((select count(*)::int from public.admin_revisit_stats()), 4, '기본은 이번 주 포함 4주');
+select ok((select final_open_clicks >= current_setting('t.clk0')::int + 2 and cheer_sheets >= 1 and replies >= 1 and cheers >= 1
+             from public.admin_revisit_stats() order by week_start desc limit 1),
+          '이번 주 줄에 응원단·답글·알림 클릭·응원단 시트 수가 모인다');
+set local role postgres;
+update public.profiles set is_admin = false where id = '00000000-0000-0000-0000-0000000039b1';
 
 select * from finish();
 rollback;

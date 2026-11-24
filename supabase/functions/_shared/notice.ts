@@ -7,6 +7,7 @@
  * - final_open(#39): 응원단에게 데뷔 평가 시작(알림함 + 푸시, 메일 없음). entry_id 는 결선 글.
  * - center_report(#39): 센터 주간이 끝난 뒤 SNS 로 넘어간 사람 수(알림함 + 푸시, 메일 없음). payload.sns_moves.
  * - comment_reply(#39): 내 응원 댓글에 글 주인이 답글(알림함에만).
+ * 푸시·메일 링크는 noticeLink 로 ?from=<kind>&via=<push|mail> 을 붙인다. 화면(features/notifications/click.ts)이 받아 날짜·종류별 숫자로만 센다(#43).
  * 모르는 kind 는 버리지 않고 일반 문구로 보여 준다(새 kind 를 먼저 배포해도 알림함이 깨지지 않게).
  * Deno 와 브라우저가 함께 읽으므로 아무것도 가져오지 않는다. 게시판 이름은 shared/lib/format.ts BOARD_NAME 과 같다(시험이 확인).
  */
@@ -15,6 +16,17 @@ type NoticeBoard = keyof typeof NOTICE_BOARD_NAME;
 type Payload = { entry_id?: string; pet_name?: string; board?: string; sns_moves?: number; round_seq?: number };
 /** 주간 마지막(3주차) 결과는 데뷔 평가가 바로 열려 응원단을 모을 틈이 없다(ensure_month_rounds: 3주차 끝 = 결선 시작) */
 const LAST_WEEK = 3;
+
+/** 알림을 눌러 들어온 경로. DB record_notice_click 허용 목록과 같아야 한다 */
+export type NoticeVia = "push" | "inbox" | "mail";
+
+/** 알림에서 여는 주소에 출처를 붙인다. 이미 쿼리가 있으면 이어 붙인다 */
+export function noticeLink(href: string, kind: string, via: NoticeVia): string {
+  const q = `from=${encodeURIComponent(kind)}&via=${via}`;
+  const hash = href.indexOf("#");
+  const [path, frag] = hash < 0 ? [href, ""] : [href.slice(0, hash), href.slice(hash)];
+  return `${path}${path.includes("?") ? "&" : "?"}${q}${frag}`;
+}
 
 export function noticeView(kind: string, payload: unknown): { text: string; href: string | null } {
   const p = (payload && typeof payload === "object" ? payload : {}) as Payload;

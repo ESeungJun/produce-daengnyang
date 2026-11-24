@@ -5,6 +5,7 @@
  * - 처리 안 된 신고를 대상별로 묶어 신고 많은 순으로 보여 준다. 동작은 AdminActions(숨기기·되살리기·문제없음·계정 정리).
  * - 댓글 신고 줄에는 그 댓글에 글 주인이 단 답글도 보인다. 답글만 문제면 "답글만 지우기"(#40, 답글은 따로 신고하지 않는다).
  * - 숨기면 신고가 닫혀 목록에서 빠지므로, 아래 "최근 숨긴 것"(14일)에서 잘못 숨긴 것을 되살린다.
+ * - "결선 대기 성과"(#43): 최근 4주, 주마다 응원단·주인 답글·데뷔 평가 알림 클릭·응원단 로그인 시트 수(admin_revisit_stats).
  * - 맨 아래 "라운드 결과": 최근 끝난 라운드와 확정 여부. 신고로 글을 숨긴 뒤 RecalcButton 으로 다시 센다(#7).
  */
 import Link from "next/link";
@@ -20,16 +21,25 @@ import { AdminActions } from "./AdminActions";
 import { RecalcButton } from "./RecalcButton";
 import s from "./admin.module.css";
 
+/** 결선 대기 성과 표의 줄(#43). 좁은 화면에서도 한 화면에 들어오게 주를 열로, 항목을 줄로 둔다 */
+const REVISIT_ROWS = [
+  ["응원단 들어옴", "cheers"],
+  ["주인 답글", "replies"],
+  ["데뷔 평가 알림 클릭", "final_open_clicks"],
+  ["응원단 로그인 안내", "cheer_sheets"],
+] as const;
+
 export async function AdminPage() {
   const supabase = await createClient();
   const uid = await memberId(supabase);
   if (!uid) notFound();
   const { data: me } = await supabase.from("profiles").select("is_admin").eq("id", uid).maybeSingle();
   if (!me?.is_admin) notFound();
-  const [{ data: rows, error }, { data: hiddenRows }, { data: rounds }] = await Promise.all([
+  const [{ data: rows, error }, { data: hiddenRows }, { data: rounds }, { data: revisit }] = await Promise.all([
     supabase.rpc("admin_reports", { p_limit: 100 }),
     supabase.rpc("admin_recent_hidden", { p_days: 14 }),
     supabase.rpc("admin_rounds", { p_limit: 8 }),
+    supabase.rpc("admin_revisit_stats", { p_weeks: 4 }),
   ]);
 
   return (
@@ -99,6 +109,35 @@ export async function AdminPage() {
           );
         })}
       </ul>
+      <h2 className={s.h2}>결선 대기 성과</h2>
+      <p className={s.lead}>결선 진출자가 다시 오게 하는 장치(응원단·주인 답글·데뷔 평가 알림)가 얼마나 쓰이는지 주마다 세요. 왼쪽이 이번 주예요.</p>
+      {revisit?.length ? (
+        <div className={s.tableWrap} tabIndex={0} role="region" aria-label="결선 대기 성과 표">
+          <table className={s.table}>
+            <thead>
+              <tr>
+                <th scope="col">주(월요일부터)</th>
+                {revisit.map((w) => (
+                  <th scope="col" key={w.week_start}>{`${Number(w.week_start.slice(5, 7))}/${Number(w.week_start.slice(8, 10))}`}</th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              {REVISIT_ROWS.map(([label, key]) => (
+                <tr key={key}>
+                  <th scope="row">{label}</th>
+                  {revisit.map((w) => (
+                    <td key={w.week_start}>{w[key].toLocaleString("ko-KR")}</td>
+                  ))}
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      ) : (
+        <p className={s.empty}>숫자를 읽지 못했어요. 새로고침해 주세요.</p>
+      )}
+      <p className={s.meta}>응원단은 지금 남아 있는 사람만 세요(나가면 빠져요). 알림 클릭은 푸시·알림함을 합친 수예요.</p>
       <h2 className={s.h2}>라운드 결과</h2>
       <p className={s.lead}>결과는 매일 0시에 자동으로 확정돼요. 신고로 글을 숨긴 뒤에는 여기서 다시 계산해 주세요.</p>
       {!rounds?.length ? <p className={s.empty}>끝난 라운드가 아직 없어요.</p> : null}

@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { BOARD_NAME } from "@/shared/lib/format";
-import { NOTICE_BOARD_NAME } from "@/supabase/functions/_shared/notice";
+import { NOTICE_BOARD_NAME, noticeLink } from "@/supabase/functions/_shared/notice";
+import { readNoticeSource } from "./click";
 import { notificationView } from "./text";
 
 const id = "11111111-2222-3333-4444-555555555555";
@@ -47,5 +48,21 @@ describe("notificationView", () => {
     );
     expect(notificationView({ kind: "center_report", payload: { pet_name: "콩이", sns_moves: "9" } }).text).toContain("센터 주간이 끝났어요");
     expect(notificationView({ kind: "comment_reply", payload: { pet_name: "콩이", board: "cat", entry_id: id } }).text).toBe("‘콩이’ 주인이 내 응원 댓글에 답했어요");
+  });
+});
+
+describe("알림 출처(#43)", () => {
+  it("푸시·메일 링크에 출처를 붙이고, 쿼리·해시가 있어도 깨지지 않는다", () => {
+    expect(noticeLink("/dog/abc", "final_open", "push")).toBe("/dog/abc?from=final_open&via=push");
+    expect(noticeLink("/me?tab=1#n", "center_report", "mail")).toBe("/me?tab=1&from=center_report&via=mail#n");
+  });
+  it("주소에서 출처를 읽고 뗀 주소를 돌려준다", () => {
+    expect(readNoticeSource("https://x.test/dog/abc?from=final_open&via=push")).toEqual({ kind: "final_open", via: "push", clean: "https://x.test/dog/abc" });
+    expect(readNoticeSource("https://x.test/dog/abc?ch=1&from=final_open&via=inbox")?.clean).toBe("https://x.test/dog/abc?ch=1");
+  });
+  it("모르는 경로나 이상한 종류는 세지 않는다", () => {
+    expect(readNoticeSource("https://x.test/?from=final_open&via=sms")).toBeNull();
+    expect(readNoticeSource("https://x.test/?from=<x>&via=push")).toBeNull();
+    expect(readNoticeSource("https://x.test/dog/abc")).toBeNull();
   });
 });

@@ -2,12 +2,14 @@
 /**
  * 알림함(#6). 내 정보 화면에 최근 20개를 보여 주고, 화면을 연 뒤 안 읽은 알림을 모두 읽음으로 바꾼다(RLS: 내 알림의 read_at 만).
  * 이번에 새로 온 것은 "새" 표시를 화면에 남긴다(읽음 처리는 DB 에만 반영).
+ * 누르면 알림 클릭 수를 센다(#43, click.ts).
  */
 import Link from "next/link";
 import { useEffect } from "react";
 import { usePicks } from "@/features/picks/PicksProvider";
 import { timeAgo } from "@/shared/lib/format";
 import { browserClient } from "@/shared/lib/supabase/client";
+import { trackNotice } from "./click";
 import { notificationView, type NotificationRow } from "./text";
 import s from "./notifications.module.css";
 
@@ -42,7 +44,17 @@ export function Inbox({ items, unread, failed = false }: { items: NotificationRo
             </time>
           </>
         );
-        return <li key={n.id}>{v.href ? <Link href={v.href}>{body}</Link> : <div>{body}</div>}</li>;
+        return (
+          <li key={n.id}>
+            {v.href ? (
+              <Link href={v.href} onClick={() => trackNotice(n.kind, "inbox")}>
+                {body}
+              </Link>
+            ) : (
+              <div>{body}</div>
+            )}
+          </li>
+        );
       })}
     </ul>
   );

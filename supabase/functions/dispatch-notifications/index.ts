@@ -22,7 +22,7 @@ import { createClient } from "npm:@supabase/supabase-js@2.119.0";
 import webpush from "npm:web-push@3.6.7";
 import nodemailer from "npm:nodemailer@6.9.16";
 import { debutMail } from "../_shared/debutMail.ts";
-import { noticeView } from "../_shared/notice.ts";
+import { noticeLink, noticeView } from "../_shared/notice.ts";
 
 const url = Deno.env.get("SUPABASE_URL")!;
 const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
@@ -77,7 +77,7 @@ function gmail(): Mailer {
 
 async function sendMail(mailer: Mailer, r: Row): Promise<MailResult> {
   const { text, href } = noticeView(r.kind, r.payload);
-  const link = `${SITE_URL}${href ?? "/me"}`;
+  const link = `${SITE_URL}${noticeLink(href ?? "/me", r.kind, "mail")}`;
   // 데뷔는 화보 사진 요청 + 노출 가이드 본문(#27), 나머지는 한 줄 본문
   const debut = debutMail(r.kind, r.payload, SITE_URL);
   try {
@@ -103,7 +103,7 @@ async function sendPush(r: Row): Promise<boolean> {
   if (error) return false;
   if (!subs?.length) return true;
   const { text, href } = noticeView(r.kind, r.payload);
-  const body = JSON.stringify({ title: "프로듀스 댕냥", body: text, url: href ?? "/me", tag: `pd-notice-${r.id}` });
+  const body = JSON.stringify({ title: "프로듀스 댕냥", body: text, url: noticeLink(href ?? "/me", r.kind, "push"), tag: `pd-notice-${r.id}` });
   let delivered = 0;
   let gone = 0;
   for (const s of subs) {

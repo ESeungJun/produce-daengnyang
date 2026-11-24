@@ -6,7 +6,7 @@
 import { supabaseEnv } from "@/shared/lib/supabase/env";
 
 export type AuthEvent =
-  | ["sheet", "pick" | "register" | "comment" | "login" | "ip"]
+  | ["sheet", "pick" | "register" | "comment" | "login" | "ip" | "cheer"]
   | ["google", "link" | "signin" | "inapp_kakao" | "inapp_other" | "open_failed"]
   | ["callback", "ok" | "cancel" | "error" | "already"]
   | ["merge", "moved" | "dropped" | "failed"];
