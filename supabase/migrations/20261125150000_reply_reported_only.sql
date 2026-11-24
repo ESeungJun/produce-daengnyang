@@ -6,8 +6,11 @@ create or replace function public.admin_remove_reply(p_comment_id uuid) returns 
 language plpgsql security definer set search_path = '' as $$
 declare uid uuid := public.require_admin();
 begin
-  if not exists (select 1 from public.reports
-                  where target = 'comment' and target_id = p_comment_id and resolved_at is null) then
+  -- 열린 신고 줄을 잠가, 확인과 지우기 사이에 다른 관리자가 신고를 닫지 못하게 한다
+  perform 1 from public.reports
+   where target = 'comment' and target_id = p_comment_id and resolved_at is null
+     for update;
+  if not found then
     raise exception using errcode = 'P0001', message = 'not_reported';
   end if;
   update public.comments set reply_body = null where id = p_comment_id and reply_body is not null;

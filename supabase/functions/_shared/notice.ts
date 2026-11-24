@@ -15,13 +15,13 @@ export const NOTICE_BOARD_NAME = { dog: "댕댕이", cat: "냥이" } as const;
 type NoticeBoard = keyof typeof NOTICE_BOARD_NAME;
 type Payload = { entry_id?: string; pet_name?: string; board?: string; sns_moves?: number; final_starts_at?: string };
 
-/** 데뷔 평가 시작 시각(finalize_round 가 주간 결과 알림에 넣는다, #46)을 KST 'M월 D일' 로. 없거나 읽을 수 없으면 null */
+/** 데뷔 평가 시작 시각(finalize_round 가 주간 결과 알림에 넣는다, #46)을 KST 'M월 D일(요일)' 로. 없거나 읽을 수 없으면 null */
 function kstDay(iso: unknown): string | null {
   if (typeof iso !== "string") return null;
   const t = Date.parse(iso);
   if (Number.isNaN(t)) return null;
   const d = new Date(t + 9 * 3600_000);
-  return `${d.getUTCMonth() + 1}월 ${d.getUTCDate()}일`;
+  return `${d.getUTCMonth() + 1}월 ${d.getUTCDate()}일(${"일월화수목금토"[d.getUTCDay()]})`;
 }
 
 /** 알림을 눌러 들어온 경로. DB record_notice_click 허용 목록과 같아야 한다 */

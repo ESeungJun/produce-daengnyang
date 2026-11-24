@@ -60,7 +60,8 @@ begin
     from public.round_results rr
     join public.entries e on e.id = rr.entry_id
     -- 주간 결과 알림에 그달 데뷔 평가 시작 시각을 넣는다(#46). 결선 결과(debut)는 null 이라 jsonb 에 null 로 남고 문구가 쓰지 않는다
-    left join public.rounds fin on r.kind = 'weekly' and fin.month = r.month and fin.kind = 'final'
+    -- 결선이 이미 시작한 뒤(관리자 다시 계산 등)에는 '…부터 열려요' 가 틀리므로 넣지 않는다(문구는 예전 것으로)
+    left join public.rounds fin on r.kind = 'weekly' and fin.month = r.month and fin.kind = 'final' and fin.starts_at > now()
    where rr.round_id = r.id and rr.role is not null and not quiet
      and not exists (select 1 from public.notifications x
                       where x.user_id = e.owner_id and x.kind = rr.role::text

@@ -26,8 +26,8 @@ describe("notificationView", () => {
   it("메일·푸시 쪽 게시판 이름이 화면과 같다", () => expect(NOTICE_BOARD_NAME).toEqual(BOARD_NAME));
   it("결과 알림 문구", () => {
     // 주간 결과 알림은 데뷔 평가 시작 날을 KST 로 적는다(#46). 3주차는 21일 결과 → 22일 결선
-    expect(notificationView({ kind: "finalist", payload: { pet_name: "두부", final_starts_at: "2026-12-21T15:00:00+00:00" } }).text).toBe("‘두부’ 데뷔 후보 선정! 마지막 주차 데뷔 평가에 올라가요. 데뷔 평가는 12월 22일부터 열려요. 그때까지 글을 공유해서 응원단을 모아 보세요");
-    expect(notificationView({ kind: "center", payload: { pet_name: "두부", final_starts_at: "2027-01-21T15:00:00Z" } }).text).toContain("데뷔 평가는 1월 22일부터 열려요");
+    expect(notificationView({ kind: "finalist", payload: { pet_name: "두부", final_starts_at: "2026-12-21T15:00:00+00:00" } }).text).toBe("‘두부’ 데뷔 후보 선정! 마지막 주차 데뷔 평가에 올라가요. 데뷔 평가는 12월 22일(화)부터 열려요. 그때까지 글을 공유해서 응원단을 모아 보세요");
+    expect(notificationView({ kind: "center", payload: { pet_name: "두부", final_starts_at: "2027-01-21T15:00:00Z" } }).text).toContain("데뷔 평가는 1월 22일(금)부터 열려요");
     // 날짜를 넣기 전에 만든 알림·읽을 수 없는 값은 예전 문구
     expect(notificationView({ kind: "finalist", payload: { pet_name: "두부", round_seq: 3, round_month: "2026-11-01" } }).text).toContain("그때까지 응원단을 모아 보세요");
     expect(notificationView({ kind: "finalist", payload: { pet_name: "두부", final_starts_at: "언젠가" } }).text).toBe("‘두부’ 데뷔 후보 선정! 마지막 주차 데뷔 평가에 올라가요. 그때까지 응원단을 모아 보세요");

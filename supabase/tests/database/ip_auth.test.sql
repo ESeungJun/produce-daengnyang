@@ -33,11 +33,15 @@ select throws_ok($$select public.cast_pick('00000000-0000-0000-0000-0000000007e1
 select set_config('request.jwt.claims', '{"sub":"00000000-0000-0000-0000-0000000000b7","role":"authenticated","is_anonymous":false}', true);
 select lives_ok($$select public.cast_pick('00000000-0000-0000-0000-0000000007e1')$$, '구글 회원은 IP 한도와 상관없다');
 
+reset role;
+-- 같은 날 E2E 가 남긴 기록이 있을 수 있어 늘어난 수만 센다
+select set_config('t.auth0', coalesce((select n from public.auth_daily where kst_date = public.kst_today() and kind = 'sheet' and detail = 'pick'), 0)::text, true);
+set local role authenticated;
 select lives_ok($$select public.record_auth('sheet', 'pick')$$, '로그인 기록은 화면 역할도 부를 수 있다');
 reset role;
 select public.record_auth('sheet', 'pick');
 select public.record_auth('nope', 'x');
-select is((select n from public.auth_daily where kst_date = public.kst_today() and kind = 'sheet' and detail = 'pick'), 2, '정해진 종류만 날짜별로 센다');
+select is((select n from public.auth_daily where kst_date = public.kst_today() and kind = 'sheet' and detail = 'pick') - current_setting('t.auth0')::int, 2, '정해진 종류만 날짜별로 센다');
 
 select * from finish();
 rollback;

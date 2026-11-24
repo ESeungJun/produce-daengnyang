@@ -182,6 +182,9 @@ export function openWeeklyForTest(): { close: () => void } {
   sql(`select public.ensure_month_rounds(${lit(E2E_MONTH)})`);
   const id = sql<{ id: number }>(`select id from public.rounds where month = ${lit(E2E_MONTH)} and kind = 'weekly' and seq = 1`)[0].id;
   sql(`update public.rounds set starts_at = now() - interval '1 hour', ends_at = now() + interval '2 days', finalized_at = null where id = ${Number(id)}`);
+  // 지난 실행이 닫지 못해 로컬 자정 작업이 이 라운드를 확정했으면 그 결과·알림을 지운다(명예의 전당·센터에 2099 가 뜨지 않게)
+  sql(`delete from public.round_results where round_id = ${Number(id)}`);
+  sql(`delete from public.notifications where payload ->> 'round_id' = '${Number(id)}'`);
   // 글이 없으면 시드처럼 게시판마다 6개. 주인·사진은 시드 글(사진이 있는 아무 글)에서 빌린다
   sql(`do $$
     declare src record; i int;
@@ -197,11 +200,14 @@ export function openWeeklyForTest(): { close: () => void } {
         insert into public.entry_photos (entry_id, position, path, thumb_path) select x.id, 0, src.path, src.thumb_path from x;
       end loop;
     end $$`);
-  return {
-    close: () =>
-      sql(`update public.rounds set starts_at = (${lit(E2E_MONTH)}::date)::timestamp at time zone 'Asia/Seoul',
-                                    ends_at = (${lit(E2E_MONTH)}::date + 7)::timestamp at time zone 'Asia/Seoul', finalized_at = null where id = ${Number(id)}`),
-  };
+  return { close: closeWeeklyForTest };
+}
+
+/** 시험용 주간 라운드를 원래 날짜(2099-12-01~08)로 돌린다. 시험 파일 afterAll 과 global-teardown(중간에 멈췄을 때)이 부른다 */
+export function closeWeeklyForTest() {
+  sql(`update public.rounds set starts_at = (${lit(E2E_MONTH)}::date)::timestamp at time zone 'Asia/Seoul',
+                                    ends_at = (${lit(E2E_MONTH)}::date + 7)::timestamp at time zone 'Asia/Seoul', finalized_at = null
+          where month = ${lit(E2E_MONTH)} and kind = 'weekly' and seq = 1`);
 }
 
 /** 그 라운드·게시판에 보이는 글(숨김·삭제 제외) */
