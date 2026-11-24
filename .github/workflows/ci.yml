@@ -27,6 +27,19 @@ jobs:
       - run: npm test
       - run: npx opennextjs-cloudflare build
 
+  harness:
+    # keel 구현 하네스(#37): 규칙표(docs/RULES.md)·하드코딩 색·기능 지도 검사와 그 검사기의 시험. 의존성 설치 없이 bash 만 쓴다.
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - run: bash scripts/harness/check-rules.sh
+      - run: bash scripts/harness/check-tokens.sh
+      - run: bash scripts/harness/check-map.sh
+      - run: for t in scripts/harness/tests/*.test.sh; do bash "$t" || exit 1; done
+
   db:
     # 마이그레이션을 빈 로컬 Supabase 에 처음부터 적용하고 supabase/tests 의 pgTAP 시험을 돌린다.
     # 시험에 필요 없는 서비스는 띄우지 않는다(auth·storage 스키마는 gotrue·storage-api 가 만든다).
