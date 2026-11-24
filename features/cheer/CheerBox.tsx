@@ -7,7 +7,7 @@
  * - 데뷔 평가 글(복사본): 원본에서 모은 응원단 수.
  * - 손님·익명이 누르면 이 탭에 적어 두고(handoff) 로그인 시트를 띄운다. 회원으로 돌아오면 한 번 바로 들어간다.
  *   앱 안 브라우저에서 기본 브라우저로 옮겨 오면 주소의 ch=1 로 다시 적어 두고 시트를 띄운다.
- * - 들어간 직후 이 기기 알림이 꺼져 있으면 켜기 안내 시트를 한 번 띄운다(#42). 데뷔 평가 날 알림은 아침 9시에 푸시로도 간다.
+ * - 들어간 직후 이 기기 알림이 꺼져 있으면 켜기 안내 시트를 한 번 띄운다(#42). 데뷔 평가 시작 알림은 그날 0시에 알림함에 남고, 푸시는 아침 9시에 간다(#42·#44).
  * 응원단은 표가 아니다(set_cheer 는 picks·pick_count 를 건드리지 않는다). 데뷔 평가 날 알림만 받는다.
  */
 import Link from "next/link";
@@ -64,7 +64,7 @@ export function CheerBox({ entryId, board, initial }: Props) {
       if (!on) return toast("응원단에서 나왔어요");
       // 이 기기 알림이 꺼져 있으면 토스트 대신 켜기 안내를 띄운다(켜져 있거나 켤 수 없는 기기면 토스트만)
       if ((await detectPush()) === "off") return setAskPush(true);
-      toast("응원단에 들어갔어요. 데뷔 평가가 열리는 날 아침 9시에 알려 드려요");
+      toast("응원단에 들어갔어요. 데뷔 평가가 열리면 알림함으로 알려 드려요");
     },
     [entryId, openLogin, toast],
   );
@@ -170,7 +170,7 @@ export function CheerBox({ entryId, board, initial }: Props) {
       <Sheet
         open={askPush}
         title="응원단에 들어갔어요"
-        body={`데뷔 평가가 열리는 ${day ?? "날"} 아침 9시에 알림함으로 알려 드려요. 이 기기 알림도 켜면 화면을 열지 않아도 바로 받아요.`}
+        body={`데뷔 평가가 열리는 ${day ?? "날"} 0시에 알림함으로 알려 드려요. 이 기기 알림도 켜면 그날 아침 9시에 휴대폰으로 받아요.`}
         mainLabel={pushBusy ? "켜는 중…" : "이 기기 알림 켜기"}
         subLabel="알림함으로만 받을게요"
         onMain={async () => {
@@ -189,7 +189,7 @@ export function CheerBox({ entryId, board, initial }: Props) {
         <span>
           {st.mine ? (
             <>
-              응원단 <em className={s.num}>{n}</em>명과 함께하고 있어요. 데뷔 평가 날 아침 9시에 알림함으로 알려 드려요(내 정보에서 이 기기 알림을 켜면 바로 받아요).
+              응원단 <em className={s.num}>{n}</em>명과 함께하고 있어요. 데뷔 평가가 열리면 알림함으로 알려 드려요(내 정보에서 이 기기 알림을 켜면 그날 아침 9시에 휴대폰으로도 받아요).
             </>
           ) : st.count ? (
             <>

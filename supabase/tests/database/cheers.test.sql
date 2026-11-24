@@ -3,7 +3,7 @@
 -- 시험용 라운드는 2031·2032년 달에 '지금' 기준 시각으로 만든다(실제 라운드와 겹치지 않음).
 begin;
 create extension if not exists pgtap with schema extensions;
-select plan(67);
+select plan(72);
 
 -- ── 준비 ────────────────────────────────────────────────────
 -- A: 진출자 주인 · B: 응원하는 회원 · C: 익명
@@ -95,7 +95,7 @@ select is((select count(*)::int from public.dispatch_queue(500) q where q.kind =
 update public.notifications set created_at = now() - interval '1 day' where user_id = '00000000-0000-0000-0000-0000000039b1' and kind = 'final_open';
 select is((select count(*)::int from public.dispatch_queue(500) q where q.kind = 'final_open' and q.user_id = '00000000-0000-0000-0000-0000000039b1' and q.need_push and not q.need_email), 1,
           '9시가 지나면 발송 거리에 푸시만 필요한 줄로 들어간다');
-select is((select count(*)::int from cron.job where jobname = 'pd-morning-push' and schedule = '0 0 * * *'), 1, '매일 KST 9시(UTC 0시)에 발송을 한 번 더 깨운다');
+select is((select count(*)::int from cron.job where jobname = 'pd-morning-push'), 1, '매일 KST 9시(UTC 0시)에 발송을 한 번 더 깨운다');
 select is((select count(*)::int from public.dispatch_queue(500, (select max(id) from public.notifications)) q), 0, '이어 받기(p_after)는 지난 쪽 마지막 id 뒤만 준다');
 
 -- ── 5. 주인 답글 ────────────────────────────────────────────
@@ -166,6 +166,21 @@ select is((select (payload ->> 'sns_moves')::int from public.notifications where
 select public.report_centers();
 select is((select count(*)::int from public.notifications where kind = 'center_report' and payload ->> 'entry_id' = '00000000-0000-0000-0000-00000039e101'), 1, '다시 불러도 한 번');
 
+-- 3주차 센터(#44): 결과 확정(50시간 전)과 결선 시작(26시간 전) 사이 하루(21일 응원단 모으는 날)도 센터 기간이다
+insert into public.rounds (month, kind, seq, starts_at, ends_at, finalized_at) values
+  ('2032-02-01', 'weekly', 3, now() - interval '9 days', now() - interval '50 hours', now() - interval '50 hours'),
+  ('2032-02-01', 'final', 0, now() - interval '26 hours', now() - interval '1 hour', null);
+insert into public.entries (id, round_id, board, owner_id, pet_name) values
+  ('00000000-0000-0000-0000-00000039e102', (select id from public.rounds where month = '2032-02-01' and seq = 3), 'dog', '00000000-0000-0000-0000-0000000039a1', '삼주멍');
+insert into public.round_results (round_id, board, rank, entry_id, votes, role) values
+  ((select id from public.rounds where month = '2032-02-01' and seq = 3), 'dog', 1, '00000000-0000-0000-0000-00000039e102', 5, 'center');
+insert into public.sns_events (entry_id, kind, place, viewer_key, kst_date) values
+  ('00000000-0000-0000-0000-00000039e102', 'instagram', 'banner', 'viewer-0101', ((now() - interval '50 hours') at time zone 'Asia/Seoul')::date),
+  ('00000000-0000-0000-0000-00000039e102', 'threads', 'detail', 'viewer-0102', ((now() - interval '26 hours') at time zone 'Asia/Seoul')::date);
+select public.report_centers();
+select is((select sns_moves from public.center_reports where entry_id = '00000000-0000-0000-0000-00000039e102'), 2,
+          '3주차 센터는 결과 확정 날(21일)부터 센다');
+
 set local role authenticated;
 set local request.jwt.claims = '{"sub":"00000000-0000-0000-0000-0000000039a1","role":"authenticated","is_anonymous":false}';
 select is((select sns_moves from public.my_finalist_stats() where entry_id = '00000000-0000-0000-0000-00000039e101'), 2, '내 정보에서 센터 성과를 본다');
@@ -189,6 +204,19 @@ select is((select sum(n)::int from public.auth_daily where kst_date = public.kst
 select is((select sum(n)::int from public.notice_clicks where kst_date = public.kst_today() and kind = 'final_open'),
           current_setting('t.clk0')::int + 2, '데뷔 평가 알림 클릭이 경로별로 세지고, 모르는 경로·종류는 버린다');
 select is((select count(*)::int from public.notice_clicks where via = 'evil' or kind = 'nope'), 0, '허용 목록 밖 값은 줄을 만들지 않는다');
+select lives_ok($$select public.record_notice_click(null, 'push'); select public.record_auth('sheet', null)$$, 'null 인자는 오류 없이 무시한다');
+-- 칸마다 상한(#44): 한 칸이 20,000 이면 그 칸만 멈추고 다른 칸은 계속 센다
+insert into public.notice_clicks (kst_date, kind, via, n) values (public.kst_today(), 'comment', 'mail', 20000)
+  on conflict (kst_date, kind, via) do update set n = 20000;
+select set_config('t.clk1', (select sum(n) from public.notice_clicks where kst_date = public.kst_today() and kind = 'final_open')::text, true);
+set local role anon;
+select public.record_notice_click('comment', 'mail');
+select public.record_notice_click('final_open', 'mail');
+set local role postgres;
+select is((select n from public.notice_clicks where kst_date = public.kst_today() and kind = 'comment' and via = 'mail'), 20000, '상한에 닿은 칸은 더 늘지 않는다');
+select is((select sum(n)::int from public.notice_clicks where kst_date = public.kst_today() and kind = 'final_open'), current_setting('t.clk1')::int + 1,
+          '다른 칸은 계속 센다');
+select is((select schedule from cron.job where jobname = 'pd-morning-push'), '0,10,20 0 * * *', '아침 푸시는 9시 0·10·20분 세 번 돈다');
 select is(has_table_privilege('anon', 'public.notice_clicks', 'SELECT'), false, '손님은 클릭 수 표를 직접 읽지 못한다');
 set local role authenticated;
 set local request.jwt.claims = '{"sub":"00000000-0000-0000-0000-0000000039b1","role":"authenticated","is_anonymous":false}';
