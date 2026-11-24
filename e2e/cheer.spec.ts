@@ -20,8 +20,8 @@ test("응원단(#39): 손님이 누르면 로그인 시트, 로그인하고 돌�
   sql(
     `update public.rounds set starts_at = greatest(starts_at, now() + interval '2 days'), ends_at = greatest(ends_at, now() + interval '3 days') where id = ${t.final_id}`,
   );
-  // 실제 사용자처럼 "아직 허락 전, 구독 없음"(off)으로 맞춘다. CI 의 headless Chromium 은 알림 권한이 처음부터 denied 라
-  // 그대로 두면 켜기 안내 대신 "막혀 있어요" 길을 탄다(#44). 권한만 주고 구독은 만들지 않으므로 상태는 off 다
+  // 알림 권한은 허용, 구독은 없음 → detectPush 가 off 라 켜기 안내가 뜬다. 실제 사용자(아직 묻기 전, default)와 상태는 같고
+  // 권한 묻는 창만 다르다. 브라우저마다 기본 권한이 달라(denied 인 곳도 있음) 시험에서 맞춰 둔다(#44)
   await context.grantPermissions(["notifications"]);
   try {
     await page.goto(`/${t.board}/${t.id}`);
@@ -35,7 +35,7 @@ test("응원단(#39): 손님이 누르면 로그인 시트, 로그인하고 돌�
     await expect(page).not.toHaveURL(/ch=1/);
     const uid = await signInMember(context, baseURL!);
     await page.reload();
-    // #42: 이 기기 알림이 꺼져 있으면(시험 브라우저는 허락 전) 들어간 직후 켜기 안내가 한 번 뜬다
+    // #42: 이 기기 알림이 꺼져 있으면(위에서 권한만 주고 구독은 없음) 들어간 직후 켜기 안내가 한 번 뜬다
     const ask = page.getByRole("dialog", { name: "응원단에 들어갔어요" });
     await expect(ask).toBeVisible();
     await expect(ask.getByText(/아침 9시/)).toBeVisible();

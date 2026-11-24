@@ -95,7 +95,7 @@ select is((select count(*)::int from public.dispatch_queue(500) q where q.kind =
 update public.notifications set created_at = now() - interval '1 day' where user_id = '00000000-0000-0000-0000-0000000039b1' and kind = 'final_open';
 select is((select count(*)::int from public.dispatch_queue(500) q where q.kind = 'final_open' and q.user_id = '00000000-0000-0000-0000-0000000039b1' and q.need_push and not q.need_email), 1,
           '9시가 지나면 발송 거리에 푸시만 필요한 줄로 들어간다');
-select is((select count(*)::int from cron.job where jobname = 'pd-morning-push'), 1, '매일 KST 9시(UTC 0시)에 발송을 한 번 더 깨운다');
+select is((select count(*)::int from cron.job where jobname = 'pd-morning-push'), 1, '아침 9시 발송 작업이 있다(시각은 아래 #44 시험)');
 select is((select count(*)::int from public.dispatch_queue(500, (select max(id) from public.notifications)) q), 0, '이어 받기(p_after)는 지난 쪽 마지막 id 뒤만 준다');
 
 -- ── 5. 주인 답글 ────────────────────────────────────────────
@@ -166,17 +166,23 @@ select is((select (payload ->> 'sns_moves')::int from public.notifications where
 select public.report_centers();
 select is((select count(*)::int from public.notifications where kind = 'center_report' and payload ->> 'entry_id' = '00000000-0000-0000-0000-00000039e101'), 1, '다시 불러도 한 번');
 
--- 3주차 센터(#44): 결과 확정(50시간 전)과 결선 시작(26시간 전) 사이 하루(21일 응원단 모으는 날)도 센터 기간이다
+-- 3주차 센터(#44): 결과 확정과 결선 시작 사이(21일 응원단 모으는 날)도 센터 기간이다.
+-- 사이에 다른 라운드가 시작하면 그 라운드가 "다음 라운드"로 잡히므로, 3~10일 전 KST 0시 중 앞뒤 2시간에 시작하는 라운드가 없는 날(t.mid)을 골라
+-- 결과 확정을 그 1시간 전, 결선 시작을 1시간 뒤로 둔다(1·8·15·22일 0시에 시작하는 시드 라운드와 겹치지 않게)
+select set_config('t.mid', (
+  select x.d::text from (select ((((now() at time zone 'Asia/Seoul')::date - k)::timestamp) at time zone 'Asia/Seoul') as d from generate_series(3, 10) k) x
+   where not exists (select 1 from public.rounds r where r.starts_at > x.d - interval '2 hours' and r.starts_at < x.d + interval '2 hours')
+   order by x.d desc limit 1), true);
 insert into public.rounds (month, kind, seq, starts_at, ends_at, finalized_at) values
-  ('2032-02-01', 'weekly', 3, now() - interval '9 days', now() - interval '50 hours', now() - interval '50 hours'),
-  ('2032-02-01', 'final', 0, now() - interval '26 hours', now() - interval '1 hour', null);
+  ('2032-02-01', 'weekly', 3, current_setting('t.mid')::timestamptz - interval '7 days', current_setting('t.mid')::timestamptz - interval '1 hour', current_setting('t.mid')::timestamptz - interval '1 hour'),
+  ('2032-02-01', 'final', 0, current_setting('t.mid')::timestamptz + interval '1 hour', now() - interval '1 hour', null);
 insert into public.entries (id, round_id, board, owner_id, pet_name) values
   ('00000000-0000-0000-0000-00000039e102', (select id from public.rounds where month = '2032-02-01' and seq = 3), 'dog', '00000000-0000-0000-0000-0000000039a1', '삼주멍');
 insert into public.round_results (round_id, board, rank, entry_id, votes, role) values
   ((select id from public.rounds where month = '2032-02-01' and seq = 3), 'dog', 1, '00000000-0000-0000-0000-00000039e102', 5, 'center');
 insert into public.sns_events (entry_id, kind, place, viewer_key, kst_date) values
-  ('00000000-0000-0000-0000-00000039e102', 'instagram', 'banner', 'viewer-0101', ((now() - interval '50 hours') at time zone 'Asia/Seoul')::date),
-  ('00000000-0000-0000-0000-00000039e102', 'threads', 'detail', 'viewer-0102', ((now() - interval '26 hours') at time zone 'Asia/Seoul')::date);
+  ('00000000-0000-0000-0000-00000039e102', 'instagram', 'banner', 'viewer-0101', ((current_setting('t.mid')::timestamptz - interval '1 hour') at time zone 'Asia/Seoul')::date),
+  ('00000000-0000-0000-0000-00000039e102', 'threads', 'detail', 'viewer-0102', ((current_setting('t.mid')::timestamptz + interval '1 hour') at time zone 'Asia/Seoul')::date);
 select public.report_centers();
 select is((select sns_moves from public.center_reports where entry_id = '00000000-0000-0000-0000-00000039e102'), 2,
           '3주차 센터는 결과 확정 날(21일)부터 센다');
