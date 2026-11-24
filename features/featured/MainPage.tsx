@@ -71,7 +71,7 @@ export async function MainPage() {
         <SectionHead
           id="center"
           title="이번 주 센터 화보"
-          sub={center.length ? `${Number(center[0].round_month.slice(5, 7))}월 ${center[0].round_seq}주차 1위. 다음 주간 투표 결과가 나올 때까지 사이트 곳곳에 걸려요.` : "1주차가 끝나면 댕댕이·냥이 1위가 여기 걸려요."}
+          sub={center.length ? `${Number(center[0].round_month.slice(5, 7))}월 ${center[0].round_seq}주차 1위. 다음 주간 투표 결과가 나올 때까지 사이트 곳곳에 걸려요.` : "이번 주차가 끝나면 댕댕이·냥이 1위가 여기 걸려요."}
         />
         {center.length ? <CenterSpread center={center} past={pastCenters} /> : null}
       </section>
@@ -95,7 +95,7 @@ export async function MainPage() {
         <SectionHead
           id="finalists"
           title="데뷔조 후보"
-          sub={featured.finalists.length ? "주간 1·2위만 오를 수 있어요. 22일부터 데뷔 평가, 다음 달 1일 0시에 게시판마다 1마리가 데뷔해요." : "1주차가 끝나면 첫 후보가 여기 걸려요."}
+          sub={featured.finalists.length ? "주간 1·2위만 오를 수 있어요. 22일부터 데뷔 평가, 다음 달 1일 0시에 게시판마다 1마리가 데뷔해요." : "이번 주차가 끝나면 첫 후보가 여기 걸려요."}
         />
         {featured.finalists.length ? <Polaroids items={featured.finalists} /> : null}
       </section>
