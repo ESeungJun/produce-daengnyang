@@ -3,7 +3,7 @@
 -- 시험용 라운드는 2031·2032년 달에 '지금' 기준 시각으로 만든다(실제 라운드와 겹치지 않음).
 begin;
 create extension if not exists pgtap with schema extensions;
-select plan(72);
+select plan(73);
 
 -- ── 준비 ────────────────────────────────────────────────────
 -- A: 진출자 주인 · B: 응원하는 회원 · C: 익명
@@ -166,26 +166,33 @@ select is((select (payload ->> 'sns_moves')::int from public.notifications where
 select public.report_centers();
 select is((select count(*)::int from public.notifications where kind = 'center_report' and payload ->> 'entry_id' = '00000000-0000-0000-0000-00000039e101'), 1, '다시 불러도 한 번');
 
--- 3주차 센터(#44): 결과 확정과 결선 시작 사이(21일 응원단 모으는 날)도 센터 기간이다.
--- 사이에 다른 라운드가 시작하면 그 라운드가 "다음 라운드"로 잡히므로, 3~10일 전 KST 0시 중 앞뒤 2시간에 시작하는 라운드가 없는 날(t.mid)을 골라
--- 결과 확정을 그 1시간 전, 결선 시작을 1시간 뒤로 둔다(1·8·15·22일 0시에 시작하는 시드 라운드와 겹치지 않게)
+-- 3주차 센터(#44·#45): 센터는 다음 주간 결과가 나올 때까지 걸리므로, 결과 확정(21일)부터 다음 달 1주차 끝까지 센다(결선 기간이 아니라).
+-- 사이에 다른 주간 라운드가 시작하면 그 라운드가 "다음 주간"으로 잡히므로, 3~10일 전 KST 0시 중 앞뒤 2시간에 시작하는 라운드가 없는 날(t.mid)을 골라
+-- 결과 확정을 그 1시간 전, 결선과 다음 주간(2032-03 1주차) 시작을 1시간 뒤로 둔다(시드 라운드와 겹치지 않게).
+-- 결선은 아직 진행 중이어도(끝 = 2일 뒤) 다음 주간이 끝났으면 센다
 select set_config('t.mid', (
   select x.d::text from (select ((((now() at time zone 'Asia/Seoul')::date - k)::timestamp) at time zone 'Asia/Seoul') as d from generate_series(3, 10) k) x
    where not exists (select 1 from public.rounds r where r.starts_at > x.d - interval '2 hours' and r.starts_at < x.d + interval '2 hours')
    order by x.d desc limit 1), true);
 insert into public.rounds (month, kind, seq, starts_at, ends_at, finalized_at) values
   ('2032-02-01', 'weekly', 3, current_setting('t.mid')::timestamptz - interval '7 days', current_setting('t.mid')::timestamptz - interval '1 hour', current_setting('t.mid')::timestamptz - interval '1 hour'),
-  ('2032-02-01', 'final', 0, current_setting('t.mid')::timestamptz + interval '1 hour', now() - interval '1 hour', null);
+  ('2032-02-01', 'final', 0, current_setting('t.mid')::timestamptz + interval '1 hour', now() + interval '2 days', null),
+  ('2032-03-01', 'weekly', 1, current_setting('t.mid')::timestamptz + interval '1 hour', now() - interval '1 hour', now() - interval '1 hour');
 insert into public.entries (id, round_id, board, owner_id, pet_name) values
   ('00000000-0000-0000-0000-00000039e102', (select id from public.rounds where month = '2032-02-01' and seq = 3), 'dog', '00000000-0000-0000-0000-0000000039a1', '삼주멍');
 insert into public.round_results (round_id, board, rank, entry_id, votes, role) values
   ((select id from public.rounds where month = '2032-02-01' and seq = 3), 'dog', 1, '00000000-0000-0000-0000-00000039e102', 5, 'center');
+-- 결과 확정 날(21일), 결선 시작 날, 그 다음 날(다음 달 1주차 중)은 센다. 다음 주간이 끝난 날은 빼고 센다
 insert into public.sns_events (entry_id, kind, place, viewer_key, kst_date) values
   ('00000000-0000-0000-0000-00000039e102', 'instagram', 'banner', 'viewer-0101', ((current_setting('t.mid')::timestamptz - interval '1 hour') at time zone 'Asia/Seoul')::date),
-  ('00000000-0000-0000-0000-00000039e102', 'threads', 'detail', 'viewer-0102', ((current_setting('t.mid')::timestamptz + interval '1 hour') at time zone 'Asia/Seoul')::date);
+  ('00000000-0000-0000-0000-00000039e102', 'threads', 'detail', 'viewer-0102', ((current_setting('t.mid')::timestamptz + interval '1 hour') at time zone 'Asia/Seoul')::date),
+  ('00000000-0000-0000-0000-00000039e102', 'youtube', 'center', 'viewer-0103', ((current_setting('t.mid')::timestamptz + interval '1 hour') at time zone 'Asia/Seoul')::date + 1),
+  ('00000000-0000-0000-0000-00000039e102', 'instagram', 'banner', 'viewer-0104', ((now() - interval '1 hour') at time zone 'Asia/Seoul')::date);
 select public.report_centers();
-select is((select sns_moves from public.center_reports where entry_id = '00000000-0000-0000-0000-00000039e102'), 2,
-          '3주차 센터는 결과 확정 날(21일)부터 센다');
+select is((select sns_moves from public.center_reports where entry_id = '00000000-0000-0000-0000-00000039e102'), 3,
+          '3주차 센터는 결과 확정 날(21일)부터 다음 달 1주차 결과까지 센다');
+select is((select to_at from public.center_window((select id from public.rounds where month = '2032-02-01' and seq = 3))),
+          (select ends_at from public.rounds where month = '2032-03-01' and kind = 'weekly' and seq = 1), '3주차 센터 기간 끝은 결선이 아니라 다음 주간 라운드 끝');
 
 set local role authenticated;
 set local request.jwt.claims = '{"sub":"00000000-0000-0000-0000-0000000039a1","role":"authenticated","is_anonymous":false}';
