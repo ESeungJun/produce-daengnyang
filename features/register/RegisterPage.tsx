@@ -12,7 +12,7 @@ import { LoginButton } from "@/features/auth/LoginButton";
 import { memberId } from "@/features/auth/server";
 import { SiteNav } from "@/features/entries/SiteNav";
 import { loadOpenRound } from "@/features/rounds/api";
-import { roundTitle } from "@/features/rounds/schedule";
+import { CHEER_DAY, isCheerDay, roundTitle } from "@/features/rounds/schedule";
 import { RegisterForm } from "./RegisterForm";
 import s from "./register.module.css";
 
@@ -33,7 +33,9 @@ export async function RegisterPage({ resumeSubmit = false }: { resumeSubmit?: bo
   // 주간 1·2라운드가 끝나면 바로 다음 주간이, 3라운드 뒤에는 결선이라 다음 달 1일에 열린다
   const nextOpen = round && round.kind === "weekly" && round.seq < 3 ? `${kstDay(round.ends_at)}일` : "다음 달 1일";
   const closed = !round
-    ? { title: "지금은 열린 주차가 없어요", body: "다음 주차가 열리면 올릴 수 있어요." }
+    ? isCheerDay()
+      ? { title: "오늘은 응원단 모으는 날이에요", body: `내일 ${CHEER_DAY + 1}일부터 데뷔 평가라 이번 달 등록은 끝났어요. 다음 달 1일부터 다시 받아요.` }
+      : { title: "지금은 열린 주차가 없어요", body: "다음 주차가 열리면 올릴 수 있어요." }
     : round.kind === "final"
       ? { title: "지금은 데뷔 평가 기간이에요", body: "마지막 주차(22일~말일)에는 등록을 쉬어요. 다음 달 1일부터 다시 받아요." }
       : left === 0
@@ -46,7 +48,7 @@ export async function RegisterPage({ resumeSubmit = false }: { resumeSubmit?: bo
       <div className={s.head}>
         <h1>연습생 등록</h1>
         <p>{round && round.kind === "weekly" ? `${roundTitle(round)} · ${deadlineLabel(round.ends_at)}` : "사진 한 장이면 충분해요"}</p>
-        {round?.kind === "weekly" && round.seq === 3 ? <p>이번 달 마지막 등록 주차예요. 22일부터는 데뷔 평가라 다음 달 1일에 다시 열려요.</p> : null}
+        {round?.kind === "weekly" && round.seq === 3 ? <p>이번 달 마지막 등록 주차예요. {CHEER_DAY}일은 응원단 모으는 날, {CHEER_DAY + 1}일부터 데뷔 평가라 다음 달 1일에 다시 열려요.</p> : null}
       </div>
       {closed ? (
         <div className={s.closed} role="status">

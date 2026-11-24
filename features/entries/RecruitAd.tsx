@@ -1,5 +1,5 @@
 /**
- * 모집 공고: 큰 제목 + 규칙 목록 + 등록 버튼. 메인·게시판 맨 아래에 둔다. 결선 기간(closed)에는 버튼 대신 다시 여는 날을 알린다.
+ * 모집 공고: 큰 제목 + 규칙 목록 + 등록 버튼. 메인·게시판 맨 아래에 둔다. 결선 기간과 그 전날 21일(closed)에는 버튼 대신 다시 여는 날을 알린다.
  * wide(메인, #16): 화면 폭 전체를 쓰는 긴 띠. 오른쪽에 포스터(지금 연습생 사진 몇 장을 붙인 모집 포스터, 꾸밈이라 읽기 도구에서 숨김).
  * 포스터 사진이 없으면(첫 라운드) 글자만 있는 포스터.
  */
@@ -20,7 +20,7 @@ export function RecruitAd({ id, title = "우리 애도 연습생으로!", closed
           <li>주간 1위는 다음 결과가 나올 때까지 사이트에 걸려요</li>
           {wide ? <li>마지막 주차 1위는 데뷔! 다음 달 내내 메인에 걸려요</li> : null}
         </ul>
-        {closed ? <p className={s.adNote}>지금은 데뷔 평가 기간이라 등록을 쉬어요. 다음 달 1일부터 다시 받아요.</p> : <RegisterButton className={s.adBtn} />}
+        {closed ? <p className={s.adNote}>이번 달 등록은 끝났어요. 다음 달 1일부터 다시 받아요.</p> : <RegisterButton className={s.adBtn} />}
       </div>
       {wide ? (
         <div className={s.poster} aria-hidden="true">

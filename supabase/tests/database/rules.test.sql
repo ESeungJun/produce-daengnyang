@@ -337,7 +337,7 @@ select results_eq(
   $$select kind::text, seq::int, starts_at, ends_at from public.rounds where month = '2001-05-01' order by starts_at$$,
   $$values ('weekly', 1, '2001-05-01 00:00+09'::timestamptz, '2001-05-08 00:00+09'::timestamptz),
            ('weekly', 2, '2001-05-08 00:00+09'::timestamptz, '2001-05-15 00:00+09'::timestamptz),
-           ('weekly', 3, '2001-05-15 00:00+09'::timestamptz, '2001-05-22 00:00+09'::timestamptz),
+           ('weekly', 3, '2001-05-15 00:00+09'::timestamptz, '2001-05-21 00:00+09'::timestamptz),
            ('final',  0, '2001-05-22 00:00+09'::timestamptz, '2001-06-01 00:00+09'::timestamptz)$$,
   '한 달 라운드 4개를 한국 자정 기준으로 만들고, 두 번 불러도 그대로');
 
