@@ -26,7 +26,9 @@ export default defineConfig({
     timezoneId: "Asia/Seoul",
     trace: "retain-on-failure",
     screenshot: "only-on-failure",
-    channel: ci ? undefined : (process.env.E2E_CHANNEL ?? "chrome"),
+    // CI 는 Playwright 의 chromium(새 headless 모드). 기본값인 chrome-headless-shell(옛 headless)은 웹 푸시 같은 기능이 빠져
+    // 응원단 알림 켜기 안내(#42)가 "푸시 안 되는 브라우저"로 숨는다(#44)
+    channel: ci ? "chromium" : (process.env.E2E_CHANNEL ?? "chrome"),
   },
   projects: [{ name: "desktop", use: { ...devices["Desktop Chrome"], viewport: { width: 1280, height: 900 } } }],
   webServer: process.env.E2E_START
