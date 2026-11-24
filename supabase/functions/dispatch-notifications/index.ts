@@ -1,10 +1,12 @@
 /**
  * dispatch-notifications (#7, 설계서 4-4 5번)
- * 결과 알림(center·finalist·debut)을 메일(Gmail SMTP)과 웹 푸시로 보낸다. 알림함 줄은 결과 확정 때 DB 가 이미 넣었다.
+ * 결과 알림(center·finalist·debut)을 메일(Gmail SMTP)과 웹 푸시로, 응원단·센터 성과 알림(final_open·center_report, #39)은 푸시로만 보낸다.
+ * 알림함 줄은 DB 가 이미 넣었다(메일을 안 보낼 줄은 넣을 때 emailed_at 을 채운다).
  * 부르는 곳: DB 의 kick_dispatch()(매일 0시 자정 작업, 관리자 다시 계산) → pg_net → 이 함수. 사용자 토큰이 없으므로
  *   게이트웨이 JWT 확인은 끄고(verify_jwt false), 헤더 x-dispatch-token 을 DB 의 dispatch_token_ok() 로 확인한다.
  * 1. 토큰 확인. 틀리면 401.
- * 2. dispatch_queue(): 최근 3일 결과 알림 중 메일·푸시를 아직 못 보낸 것(메일 주소 포함).
+ * 2. dispatch_queue(): 최근 3일 알림 중 메일·푸시를 아직 못 보낸 것(메일 주소 포함). 100줄씩 이어 받아(p_after) 큐를 비운다.
+ *    응원단 알림은 사람마다 한 줄이라 하루 100줄을 넘을 수 있다. 실행 시간 한도 안(약 100초)까지만 돌고 남은 것은 다음 실행에.
  * 3. 메일: GMAIL_USER·GMAIL_APP_PASSWORD 가 없으면 건너뛴다(표시하지 않아 설정 뒤 다음 실행 때 보낸다).
  *    Gmail(smtp.gmail.com:465, SSL)로 연결 하나를 열어 차례로 보낸다. Supabase Edge Function 은 25·587 포트를 막아 465 를 쓴다.
  *    로그인이 거절되면(EAUTH) 남은 메일은 보내지 않고 다음 실행으로 넘긴다(틀린 비밀번호로 계속 두드리면 구글이 계정을 잠글 수 있어서).
@@ -129,53 +131,67 @@ Deno.serve(async (req) => {
   const ok = await admin.rpc("dispatch_token_ok", { p_token: token });
   if (ok.error || ok.data !== true) return json({ error: "unauthorized" }, 401);
 
-  // 2. 보낼 거리
-  const { data, error } = await admin.rpc("dispatch_queue", { p_limit: 100 });
-  if (error) return json({ error: "queue_failed" }, 500);
-  const rows = (data ?? []) as Row[];
-
-  // 3. 메일
-  const mailed: number[] = [];
+  // 2~5. 100줄씩 받아 보내고 표시한다. 큐가 비거나 시간 한도(약 100초)에 닿으면 멈춘다(남은 것은 다음 실행에)
+  const started = Date.now();
+  let after = 0;
+  let queued = 0;
+  let mailedN = 0;
+  let pushedN = 0;
   let mailAuthFailed = false;
-  if (mailReady) {
-    const mailer = gmail();
-    try {
-      for (const r of rows.filter((x) => x.need_email)) {
-        if (!r.email) {
-          mailed.push(r.id);
-          continue;
+  for (let page = 0; page < 20 && Date.now() - started < 100_000; page++) {
+    // 2. 보낼 거리
+    const { data, error } = await admin.rpc("dispatch_queue", { p_limit: 100, p_after: after });
+    if (error) return json({ error: "queue_failed" }, 500);
+    const rows = (data ?? []) as Row[];
+    queued += rows.length;
+    if (!rows.length) break;
+    after = rows[rows.length - 1].id;
+
+    // 3. 메일(로그인이 한 번 거절되면 이번 실행에서는 더 보내지 않는다)
+    const mailed: number[] = [];
+    if (mailReady && !mailAuthFailed && rows.some((x) => x.need_email)) {
+      const mailer = gmail();
+      try {
+        for (const r of rows.filter((x) => x.need_email)) {
+          if (!r.email) {
+            mailed.push(r.id);
+            continue;
+          }
+          const res = await sendMail(mailer, r);
+          if (res === "sent") mailed.push(r.id);
+          if (res === "auth") {
+            mailAuthFailed = true;
+            break;
+          }
         }
-        const res = await sendMail(mailer, r);
-        if (res === "sent") mailed.push(r.id);
-        if (res === "auth") {
-          mailAuthFailed = true;
-          break;
-        }
+      } finally {
+        mailer.close();
       }
-    } finally {
-      mailer.close();
     }
-  }
 
-  // 4. 푸시
-  const pushed: number[] = [];
-  if (pushReady) {
-    for (const r of rows.filter((x) => x.need_push)) {
-      if (await sendPush(r)) pushed.push(r.id);
+    // 4. 푸시
+    const pushed: number[] = [];
+    if (pushReady) {
+      for (const r of rows.filter((x) => x.need_push)) {
+        if (await sendPush(r)) pushed.push(r.id);
+      }
     }
-  }
 
-  // 5. 보낸 표시
-  // 표시를 못 하면 다음 실행 때 한 번 더 갈 수 있으니 오류로 남긴다
-  const marks = await Promise.all([
-    mailed.length ? admin.rpc("mark_dispatched", { p_ids: mailed, p_channel: "email" }) : null,
-    pushed.length ? admin.rpc("mark_dispatched", { p_ids: pushed, p_channel: "push" }) : null,
-  ]);
-  if (marks.some((m) => m?.error)) {
-    console.error(`dispatch-notifications: 보낸 표시 실패 mailed=${mailed.length} pushed=${pushed.length}`);
-    return json({ error: "mark_failed" }, 500);
+    // 5. 보낸 표시
+    // 표시를 못 하면 다음 실행 때 한 번 더 갈 수 있으니 오류로 남긴다
+    const marks = await Promise.all([
+      mailed.length ? admin.rpc("mark_dispatched", { p_ids: mailed, p_channel: "email" }) : null,
+      pushed.length ? admin.rpc("mark_dispatched", { p_ids: pushed, p_channel: "push" }) : null,
+    ]);
+    if (marks.some((m) => m?.error)) {
+      console.error(`dispatch-notifications: 보낸 표시 실패 mailed=${mailed.length} pushed=${pushed.length}`);
+      return json({ error: "mark_failed" }, 500);
+    }
+    mailedN += mailed.length;
+    pushedN += pushed.length;
+    if (rows.length < 100) break;
   }
-  const result = { queued: rows.length, mailed: mailed.length, pushed: pushed.length, mail_ready: mailReady, mail_auth_failed: mailAuthFailed, push_ready: pushReady };
+  const result = { queued, mailed: mailedN, pushed: pushedN, mail_ready: mailReady, mail_auth_failed: mailAuthFailed, push_ready: pushReady };
   console.log(`dispatch-notifications: ${JSON.stringify(result)}`);
   return json(result);
 });

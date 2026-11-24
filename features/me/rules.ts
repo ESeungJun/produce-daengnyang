@@ -45,7 +45,7 @@ export type MyEntry = {
 
 export type EntryState = { label: string; tone: "live" | "done" | "hidden" | "win"; editable: boolean };
 
-const ROLE_NAME = { center: "센터", finalist: "데뷔 후보", debut: "데뷔" } as const;
+export const ROLE_NAME = { center: "센터", finalist: "데뷔 후보", debut: "데뷔" } as const;
 
 export function entryState(e: MyEntry): EntryState {
   if (e.hidden) return { label: "숨김(운영자 확인 중)", tone: "hidden", editable: false };

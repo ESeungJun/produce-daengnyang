@@ -2,7 +2,6 @@
 // 마이그레이션을 바꾸면 다시 만든다: Supabase MCP generate_typescript_types 또는
 // npx supabase@3.2.0 gen types typescript --project-id szqxjeegveouzjorkvbj > shared/lib/supabase/database.types.ts
 
-
 export type Json = string | number | boolean | null | { [key: string]: Json | undefined } | Json[]
 
 export type Database = {
@@ -51,16 +50,62 @@ export type Database = {
                   Relationships: [
                     
                   ]
-                },"comments": {
+                },"center_reports": {
                   Row: {
-                    "author_id": string,"body": string,"created_at": string,"deleted_at": string | null,"entry_id": string,"hidden_at": string | null,"id": string
+                    "created_at": string,"entry_id": string,"round_id": number,"sns_moves": number
                   }
                   ComputedFields: never
                   Insert: {
-                    "author_id": string,"body": string,"created_at"?: string,"deleted_at"?: string | null,"entry_id": string,"hidden_at"?: string | null,"id"?: string
+                    "created_at"?: string,"entry_id": string,"round_id": number,"sns_moves": number
                   }
                   Update: {
-                    "author_id"?: string,"body"?: string,"created_at"?: string,"deleted_at"?: string | null,"entry_id"?: string,"hidden_at"?: string | null,"id"?: string
+                    "created_at"?: string,"entry_id"?: string,"round_id"?: number,"sns_moves"?: number
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "center_reports_entry_id_fkey"
+      columns: ["entry_id"]
+isOneToOne: false
+      referencedRelation: "entries"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "center_reports_round_id_fkey"
+      columns: ["round_id"]
+isOneToOne: false
+      referencedRelation: "rounds"
+      referencedColumns: ["id"]
+    }
+                  ]
+                },"cheers": {
+                  Row: {
+                    "created_at": string,"entry_id": string,"user_id": string
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "created_at"?: string,"entry_id": string,"user_id": string
+                  }
+                  Update: {
+                    "created_at"?: string,"entry_id"?: string,"user_id"?: string
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "cheers_entry_id_fkey"
+      columns: ["entry_id"]
+isOneToOne: false
+      referencedRelation: "entries"
+      referencedColumns: ["id"]
+    }
+                  ]
+                },"comments": {
+                  Row: {
+                    "author_id": string,"body": string,"created_at": string,"deleted_at": string | null,"entry_id": string,"hidden_at": string | null,"id": string,"replied_at": string | null,"reply_body": string | null
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "author_id": string,"body": string,"created_at"?: string,"deleted_at"?: string | null,"entry_id": string,"hidden_at"?: string | null,"id"?: string,"replied_at"?: string | null,"reply_body"?: string | null
+                  }
+                  Update: {
+                    "author_id"?: string,"body"?: string,"created_at"?: string,"deleted_at"?: string | null,"entry_id"?: string,"hidden_at"?: string | null,"id"?: string,"replied_at"?: string | null,"reply_body"?: string | null
                   }
                   Relationships: [
                     {
@@ -421,6 +466,14 @@ isOneToOne: false
 "check_photos":
 { Args: { "p_owner": string,"p_photos": Json }; Returns: undefined
                            },
+"cheer_state":
+{ Args: { "p_entry_id": string }; Returns: Json
+                           },
+"cheer_target":
+{ Args: { "p_entry_id": string }; Returns: {
+              "final_ended": boolean,"final_entry_id": string,"final_starts_at": string,"is_final": boolean,"open": boolean,"owner_id": string,"src_id": string
+            }[]
+                           },
 "clean_gallery":
 { Args: { "p_items": Json }; Returns: Json
                            },
@@ -459,7 +512,7 @@ isOneToOne: false
 { Args: { "p_uid": string }; Returns: number
                            },
 "dispatch_queue":
-{ Args: { "p_limit"?: number }; Returns: {
+{ Args: { "p_after"?: number,"p_limit"?: number }; Returns: {
               "email": string,"id": number,"kind": string,"need_email": boolean,"need_push": boolean,"payload": Json,"user_id": string
             }[]
                            },
@@ -471,7 +524,7 @@ isOneToOne: false
                            },
 "entry_comments":
 { Args: { "p_entry_id": string,"p_limit"?: number,"p_offset"?: number }; Returns: {
-              "body": string,"created_at": string,"id": string,"is_entry_owner": boolean,"is_mine": boolean,"nickname": string,"total": number
+              "body": string,"created_at": string,"id": string,"is_entry_owner": boolean,"is_mine": boolean,"nickname": string,"replied_at": string,"reply_body": string,"total": number
             }[]
                            },
 "finalize_due_rounds":
@@ -528,10 +581,18 @@ isOneToOne: false
 "my_entries_left":
 { Args: Record<PropertyKey, never>; Returns: number
                            },
+"my_finalist_stats":
+{ Args: Record<PropertyKey, never>; Returns: {
+              "board": Database["public"]['Enums']["board_kind"],"center_done": boolean,"cheers": number,"entry_id": string,"final_ended": boolean,"final_open": boolean,"final_starts_at": string,"pet_name": string,"role": Database["public"]['Enums']["result_role"],"round_month": string,"round_seq": number,"sns_moves": number
+            }[]
+                           },
 "my_picks_today":
 { Args: Record<PropertyKey, never>; Returns: {
               "board": Database["public"]['Enums']["board_kind"],"picked": (string)[],"remaining": number
             }[]
+                           },
+"notify_final_open":
+{ Args: Record<PropertyKey, never>; Returns: number
                            },
 "photo_in_use":
 { Args: { "p_name": string }; Returns: boolean
@@ -551,8 +612,14 @@ isOneToOne: false
 "record_view":
 { Args: { "p_entry_id": string,"p_viewer_key": string }; Returns: boolean
                            },
+"reply_comment":
+{ Args: { "p_body": string,"p_comment_id": string }; Returns: boolean
+                           },
 "report":
 { Args: { "p_reason"?: string,"p_target": Database["public"]['Enums']["report_target"],"p_target_id": string }; Returns: undefined
+                           },
+"report_centers":
+{ Args: Record<PropertyKey, never>; Returns: number
                            },
 "require_admin":
 { Args: Record<PropertyKey, never>; Returns: string
@@ -562,6 +629,9 @@ isOneToOne: false
                            },
 "result_exposure_over":
 { Args: { "r": Omit<Database["public"]['Tables']["rounds"]['Row'], Database["public"]['Tables']["rounds"]['ComputedFields']> }; Returns: boolean
+                           },
+"set_cheer":
+{ Args: { "p_entry_id": string,"p_on": boolean }; Returns: number
                            },
 "set_debut_photos":
 { Args: { "p_entry_id": string,"p_photos": Json }; Returns: Json

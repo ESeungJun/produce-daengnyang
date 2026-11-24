@@ -81,3 +81,16 @@
 /* 알림함(#6)과 관리자 링크 */
 .inbox { margin-bottom: 32px; }
 .adminLink { font-size: var(--pd-fs-small); color: var(--pd-ink-2); text-underline-offset: 3px; min-height: 44px; display: inline-flex; align-items: center; }
+
+/* 결선 진출 현황(#39): 글마다 이름 줄 + 숫자 두 칸 */
+.stats { list-style: none; margin: 0 0 32px; padding: 0; display: grid; gap: 12px; }
+.stats li { padding: 6px 16px 14px; border-radius: var(--pd-r-md); background: var(--pd-ad); border: 1px solid var(--pd-jelly-2); display: grid; gap: 8px; }
+.statName { margin: 0; display: flex; flex-wrap: wrap; align-items: center; gap: 0 10px; font-weight: 700; word-break: keep-all; }
+.statName a { color: inherit; text-underline-offset: 3px; min-height: 44px; display: inline-flex; align-items: center; }
+.statWhen { font-weight: 400; font-size: var(--pd-fs-small); color: var(--pd-ink-2); }
+.statNums { margin: 0; display: flex; flex-wrap: wrap; gap: 8px 24px; }
+.statNums div { display: grid; gap: 2px; }
+.statNums dt { font-size: var(--pd-fs-tiny); color: var(--pd-ink-2); }
+.statNums dd { margin: 0; font-family: var(--pd-f-display); font-size: var(--pd-fs-number); font-variant-numeric: tabular-nums; }
+/* 아직 숫자가 없을 때는 숫자 글꼴 대신 보조 글로(값처럼 보이지 않게, 디자인 리뷰) */
+.statNums dd.statWait { font-family: inherit; font-size: var(--pd-fs-small); color: var(--pd-ink-2); padding-top: 4px; }

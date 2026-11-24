@@ -24,11 +24,28 @@ describe("notificationView", () => {
   });
   it("메일·푸시 쪽 게시판 이름이 화면과 같다", () => expect(NOTICE_BOARD_NAME).toEqual(BOARD_NAME));
   it("결과 알림 문구", () => {
-    expect(notificationView({ kind: "center", payload: { pet_name: "두부", board: "dog", entry_id: id } }).text).toBe("‘두부’ 이번 주 센터 선정! 다음 주간 결과가 나올 때까지 메인과 게시판 맨 위에 걸리고, 월말 데뷔 평가에도 올라가요");
+    // 3주차 결과는 데뷔 평가가 바로 열려 응원단을 모으라고 하지 않는다(#39)
+    expect(notificationView({ kind: "finalist", payload: { pet_name: "두부", round_seq: 3 } }).text).toContain("오늘부터 데뷔 평가가 열려요");
+    expect(notificationView({ kind: "finalist", payload: { pet_name: "두부", round_seq: 3 } }).text).not.toContain("응원단");
+    expect(notificationView({ kind: "center", payload: { pet_name: "두부", board: "dog", entry_id: id } }).text).toBe("‘두부’ 이번 주 센터 선정! 다음 주간 결과가 나올 때까지 메인과 게시판 맨 위에 걸리고, 월말 데뷔 평가에도 올라가요. 그때까지 응원단을 모아 보세요");
     expect(notificationView({ kind: "finalist", payload: { pet_name: "콩이", board: "dog", entry_id: id } }).href).toBe(`/dog/${id}`);
   });
   it("결과 정정 알림", () =>
     expect(notificationView({ kind: "result_changed", payload: { pet_name: "두부", board: "dog", entry_id: id, prev_role: "center" } }).text).toBe(
       "‘두부’ 결과가 다시 계산돼 순위가 바뀌었어요. 신고된 글이 빠지거나 표가 다시 세어졌어요",
     ));
+  it("결선 대기 알림(#39)", () => {
+    expect(notificationView({ kind: "final_open", payload: { pet_name: "콩이", board: "dog", entry_id: id } })).toEqual({
+      text: "‘콩이’ 데뷔 평가가 시작됐어요! 응원하던 아이에게 픽하러 가요",
+      href: `/dog/${id}`,
+    });
+    expect(notificationView({ kind: "center_report", payload: { pet_name: "콩이", board: "dog", entry_id: id, sns_moves: 1234 } }).text).toBe(
+      "‘콩이’ 센터 주간 동안 1,234명이 SNS로 놀러 갔어요",
+    );
+    expect(notificationView({ kind: "center_report", payload: { pet_name: "콩이", sns_moves: 0 } }).text).toBe(
+      "‘콩이’ 센터 주간이 끝났어요. 이번에는 SNS로 놀러 간 집사님이 없었어요",
+    );
+    expect(notificationView({ kind: "center_report", payload: { pet_name: "콩이", sns_moves: "9" } }).text).toContain("센터 주간이 끝났어요");
+    expect(notificationView({ kind: "comment_reply", payload: { pet_name: "콩이", board: "cat", entry_id: id } }).text).toBe("‘콩이’ 주인이 내 응원 댓글에 답했어요");
+  });
 });

@@ -74,3 +74,17 @@
 @media (min-width: 1024px) {
   .form { margin-inline: 0; padding-inline: 0; }
 }
+/* 주인 답글(#39): 댓글 아래 들여 쓴 칸. 버튼은 지우기·신고와 같은 글자 버튼 */
+.reply { margin: 8px 0 0 12px; padding: 8px 12px; border-left: 3px solid var(--pd-jelly); background: var(--pd-paper-2); border-radius: 0 var(--pd-r-sm) var(--pd-r-sm) 0; }
+.reply p { margin: 4px 0 0; }
+.replyBtn { min-height: 44px; margin-block: -6px -12px; padding: 0; border: 0; background: none; color: var(--pd-ink); font: inherit; font-size: var(--pd-fs-tiny); font-weight: 700; text-decoration: underline; cursor: pointer; }
+.replyForm { margin: 8px 0 0 12px; display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.replyForm input { flex: 1 1 200px; min-width: 0; min-height: 48px; padding: 0 12px; border: 1px solid var(--pd-jelly); border-radius: var(--pd-r-sm); background: var(--pd-paper-2); color: var(--pd-ink); font: inherit; font-size: var(--pd-fs-name); }
+.replyForm input[aria-invalid="true"] { border-color: var(--pd-pink); }
+.replyForm input:focus-visible { outline: 3px solid var(--pd-pink); outline-offset: 1px; border-color: transparent; }
+.replyForm input::placeholder { color: var(--pd-ink-2); }
+.replyForm button[type="submit"] { min-height: 48px; padding: 0 16px; border: 0; border-radius: var(--pd-r-pill); background: var(--pd-ink); color: var(--pd-paper); font: inherit; font-size: var(--pd-fs-small); font-weight: 700; cursor: pointer; }
+.replyForm button[type="submit"]:disabled { opacity: 0.5; cursor: default; }
+.reply:focus-visible { outline: 3px solid var(--pd-pink); outline-offset: 2px; }
+.replyForm .whoBtn { margin: 0; text-align: center; }
+.replyForm .err { flex-basis: 100%; margin: 0; font-size: var(--pd-fs-tiny); }

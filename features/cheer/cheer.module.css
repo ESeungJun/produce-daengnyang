@@ -1,0 +1,9 @@
+/* 응원단 상자(#39). 등록 직후 공유 띠(.fresh)와 같은 판: --pd-ad 바탕, 잉크 알약 버튼. 토큰만 쓴다 */
+.box { margin: 16px 0 0; padding: 14px 16px; border-radius: var(--pd-r-md); background: var(--pd-ad); color: var(--pd-ink); border: 1px solid var(--pd-jelly-2); display: flex; flex-wrap: wrap; gap: 10px 16px; align-items: center; justify-content: space-between; }
+.text { margin: 0; display: grid; gap: 2px; min-width: 0; flex: 1 1 220px; word-break: keep-all; }
+.text b { font-size: var(--pd-fs-body); }
+.text span { font-size: var(--pd-fs-small); color: var(--pd-ink-2); }
+.num { font-style: normal; font-weight: 700; color: var(--pd-ink); font-variant-numeric: tabular-nums; }
+.acts { display: flex; flex-wrap: wrap; gap: 8px; }
+/* 판(--pd-ad) 위의 보조 버튼: ghost 는 판과 같은 바탕이라 보이지 않아 종이 바탕 + 젤리 테두리 알약을 쓴다(디자인 리뷰) */
+.out { composes: pill from "../../shared/ui/ui.module.css"; background: var(--pd-paper); color: var(--pd-ink); box-shadow: inset 0 0 0 1px var(--pd-jelly); }
