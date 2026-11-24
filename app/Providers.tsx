@@ -1,6 +1,7 @@
 "use client";
 /** 화면 전체가 같이 쓰는 상태: 토스트 → 로그인 시트 → 오늘 남은 픽(픽이 시트·토스트를 부르므로 이 순서). */
 import { LoginSheetProvider } from "@/features/auth/LoginSheet";
+import { NoticeClickTracker } from "@/features/notifications/NoticeClickTracker";
 import { RegisterSW } from "@/features/pwa/RegisterSW";
 import { PicksProvider, type PicksInit } from "@/features/picks/PicksProvider";
 import { useEffect } from "react";
@@ -20,6 +21,7 @@ export function Providers({ picks, children }: { picks: PicksInit; children: Rea
   return (
     <ToastProvider>
       <RegisterSW />
+      <NoticeClickTracker />
       <FlashToast />
       <LoginSheetProvider>
         {/* 서버가 다른 로그인 상태로 그리면(구글에서 돌아온 새 페이지 등) 남은 픽 상태를 새 값으로 다시 만든다. 손님 첫 픽은 PicksProvider 안에서만 바꾼다 */}

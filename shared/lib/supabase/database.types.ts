@@ -420,6 +420,11 @@ isOneToOne: false
               "author_id": string,"author_name": string,"board": Database["public"]['Enums']["board_kind"],"body": string,"deleted": boolean,"entry_id": string,"hidden": boolean,"last_at": string,"pet_name": string,"reasons": (string)[],"reply_body": string,"reports": number,"target": Database["public"]['Enums']["report_target"],"target_id": string,"thumb_path": string
             }[]
                            },
+"admin_revisit_stats":
+{ Args: { "p_weeks"?: number }; Returns: {
+              "cheer_sheets": number,"cheers": number,"final_open_clicks": number,"replies": number,"week_start": string
+            }[]
+                           },
 "admin_rounds":
 { Args: { "p_limit"?: number }; Returns: {
               "ends_at": string,"exposure_over": boolean,"finalized_at": string,"id": number,"kind": Database["public"]['Enums']["round_kind"],"month": string,"results": number,"seq": number,"tops": Json
@@ -608,6 +613,9 @@ isOneToOne: false
                            },
 "record_auth":
 { Args: { "p_detail": string,"p_kind": string }; Returns: undefined
+                           },
+"record_notice_click":
+{ Args: { "p_kind": string,"p_via": string }; Returns: undefined
                            },
 "record_sns":
 { Args: { "p_entry_ids": (string)[],"p_kind": string,"p_place": string,"p_viewer_key": string }; Returns: number

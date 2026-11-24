@@ -50,7 +50,7 @@ export function LoginSheetProvider({ children }: { children: React.ReactNode }) 
     if (r !== "pick" && r !== "ip") clearPendingPick();
     if (r !== "comment") clearPendingComment();
     if (r !== "cheer") clearPendingCheer();
-    trackAuth("sheet", r === "submit" ? "register" : r === "report" || r === "gallery" || r === "cheer" ? "login" : r); // DB 허용 목록은 그대로(등록·로그인으로 센다)
+    trackAuth("sheet", r === "submit" ? "register" : r === "report" || r === "gallery" ? "login" : r); // 신고·화보는 로그인으로 센다. 응원단은 cheer 로 따로(#43)
     setReason(r);
   }, []);
   const [title, body] = TEXT[reason ?? "pick"];

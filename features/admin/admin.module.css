@@ -20,3 +20,10 @@
 /* 댓글에 달린 글 주인 답글(#40). 댓글 본문과 구분되게 왼쪽 선을 두고 들여 쓴다 */
 .reply { padding-left: 10px; border-left: 2px solid var(--pd-jelly-2); font-size: var(--pd-fs-body); overflow-wrap: anywhere; }
 .reply b { font-size: var(--pd-fs-small); color: var(--pd-ink-2); font-weight: 700; margin-right: 4px; }
+/* 결선 대기 성과 표(#43). 주 4개가 열이라 390px 에서도 한 화면에 든다. 더 좁으면 표만 가로로 밀린다 */
+.tableWrap { overflow-x: auto; margin-bottom: 8px; }
+.table { border-collapse: collapse; width: 100%; max-width: 640px; font-size: var(--pd-fs-small); }
+.table th, .table td { padding: 8px 6px; text-align: right; border-bottom: 1px solid var(--pd-jelly-2); white-space: nowrap; }
+.table th:first-child { text-align: left; white-space: normal; word-break: keep-all; }
+.table thead th { color: var(--pd-ink-2); font-weight: 700; }
+.table td { font-variant-numeric: tabular-nums; }
