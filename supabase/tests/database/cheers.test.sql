@@ -3,7 +3,7 @@
 -- 시험용 라운드는 2031·2032년 달에 '지금' 기준 시각으로 만든다(실제 라운드와 겹치지 않음).
 begin;
 create extension if not exists pgtap with schema extensions;
-select plan(78);
+select plan(79);
 
 -- ── 준비 ────────────────────────────────────────────────────
 -- A: 진출자 주인 · B: 응원하는 회원 · C: 익명
@@ -133,6 +133,14 @@ update public.profiles set is_admin = true where id = '00000000-0000-0000-0000-0
 set local role authenticated;
 select is((select reply_body from public.admin_reports() where target = 'comment' and target_id = '00000000-0000-0000-0000-00000039c001'), '고마워요!',
           '관리자 신고 목록에 댓글의 주인 답글이 보인다');
+-- #47 신고가 닫혀 있으면 관리자라도 지우지 못한다(잠깐 닫았다가 다시 연다)
+set local role postgres;
+update public.reports set resolved_at = now() where target = 'comment' and target_id = '00000000-0000-0000-0000-00000039c001';
+set local role authenticated;
+select throws_ok($$select public.admin_remove_reply('00000000-0000-0000-0000-00000039c001')$$, 'P0001', 'not_reported', '열린 신고가 없는 댓글의 답글은 지우지 못한다');
+set local role postgres;
+update public.reports set resolved_at = null where target = 'comment' and target_id = '00000000-0000-0000-0000-00000039c001';
+set local role authenticated;
 select lives_ok($$select public.admin_remove_reply('00000000-0000-0000-0000-00000039c001')$$, '관리자는 답글만 지운다');
 select is((select reply_body from public.entry_comments('00000000-0000-0000-0000-00000039e001') where id = '00000000-0000-0000-0000-00000039c001'), null,
           '지운 답글은 댓글 목록에서 사라진다');

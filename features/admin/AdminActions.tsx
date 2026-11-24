@@ -3,7 +3,7 @@
  * 신고 한 줄의 관리 동작(#6).
  * - 숨기기/되살리기: admin_set_hidden. 신고도 처리됨으로 닫는다.
  * - 문제없음: admin_dismiss(신고만 닫음).
- * - 답글만 지우기(#40): 댓글에 글 주인 답글이 있을 때. admin_remove_reply 로 답글만 지우고 신고는 열어 둔다
+ * - 답글만 지우기(#40): 댓글에 글 주인 답글이 있을 때. admin_remove_reply 로 답글만 지우고 신고는 열어 둔다. 열린 신고가 없으면 DB 가 거절한다(#47)
  *   (댓글 본문은 따로 판단해 숨기기·문제없음을 누른다). 되돌릴 수 없어 확인 시트를 거친다.
  * - 계정 정리: 봇·악성 계정. 최근 10분 안에 로그인했는지 먼저 보고(아니면 구글로 다시 확인받고 /admin 으로 돌아옴),
  *   확인 시트(되돌릴 수 없음) → Edge Function admin-purge-user(계정 막기 → 확정 전 라운드의 픽 삭제 → 계정·글·사진·댓글 삭제).
@@ -46,6 +46,11 @@ export function AdminActions({ target, targetId, hidden, deleted, authorId, auth
     setBusy(kind);
     const { error } = await fn();
     setBusy(null);
+    // 다른 관리자가 먼저 신고를 닫았으면 답글은 지우지 않는다(#47). 목록을 다시 받아 닫힌 줄을 뺀다
+    if ((error as { message?: string } | null)?.message === "not_reported") {
+      toast("이미 처리된 신고예요. 목록을 새로 불러올게요");
+      return router.refresh();
+    }
     if (error) return toast("처리하지 못했어요. 관리자 권한과 연결을 확인해 주세요");
     toast(done);
     router.refresh();
