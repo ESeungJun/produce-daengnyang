@@ -20,7 +20,7 @@ import { Band } from "@/features/rounds/Band";
 import { Chart } from "@/features/rounds/Chart";
 import { loadOpenRound } from "@/features/rounds/api";
 import { HowToPick } from "@/features/rounds/HowToPick";
-import { bandLabel, isBlind } from "@/features/rounds/schedule";
+import { CHEER_DAY_NOTE, bandLabel, isBlind, isCheerDay } from "@/features/rounds/schedule";
 import { Cover } from "./Cover";
 import { DebutDuo } from "./DebutDuo";
 import { DebutRail } from "./DebutRail";
@@ -80,7 +80,7 @@ export async function MainPage() {
         <SectionHead
           id="chart"
           title={chartTitle}
-          sub={round ? (single ? `${BOARD_NAME[single]} 게시판 하루 3픽. 같은 아이는 하루 한 번.` : `${BOARD_NAME.dog}·${BOARD_NAME.cat} 따로, 게시판마다 하루 3픽. 같은 아이는 하루 한 번.`) : "다음 주차를 준비하고 있어요."}
+          sub={round ? (single ? `${BOARD_NAME[single]} 게시판 하루 3픽. 같은 아이는 하루 한 번.` : `${BOARD_NAME.dog}·${BOARD_NAME.cat} 따로, 게시판마다 하루 3픽. 같은 아이는 하루 한 번.`) : isCheerDay() ? CHEER_DAY_NOTE : "다음 주차를 준비하고 있어요."}
         />
         {round ? (
           <>
@@ -95,14 +95,14 @@ export async function MainPage() {
         <SectionHead
           id="finalists"
           title="데뷔조 후보"
-          sub={featured.finalists.length ? "주간 1·2위만 오를 수 있어요. 22일부터 데뷔 평가, 다음 달 1일 0시에 게시판마다 1마리가 데뷔해요." : "이번 주차가 끝나면 첫 후보가 여기 걸려요."}
+          sub={featured.finalists.length ? "주간 1·2위만 오를 수 있어요. 21일에 응원단을 모으고 22일부터 데뷔 평가, 다음 달 1일 0시에 게시판마다 1마리가 데뷔해요." : "이번 주차가 끝나면 첫 후보가 여기 걸려요."}
         />
         {featured.finalists.length ? <Polaroids items={featured.finalists} /> : null}
       </section>
     </div>
   );
   // 모집 공고는 양옆 배너 밖, 화면 폭 전체 한 줄(#16)
-  const recruit = <RecruitAd id="recruit" title="연습생 모집 공고" closed={round?.kind === "final"} wide poster={poster} />;
+  const recruit = <RecruitAd id="recruit" title="연습생 모집 공고" closed={round?.kind === "final" || (!round && isCheerDay())} wide poster={poster} />;
 
   return (
     <div className={page.page}>

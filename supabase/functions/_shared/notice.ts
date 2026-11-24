@@ -14,7 +14,7 @@
 export const NOTICE_BOARD_NAME = { dog: "댕댕이", cat: "냥이" } as const;
 type NoticeBoard = keyof typeof NOTICE_BOARD_NAME;
 type Payload = { entry_id?: string; pet_name?: string; board?: string; sns_moves?: number; round_seq?: number };
-/** 주간 마지막(3주차) 결과는 데뷔 평가가 바로 열려 응원단을 모을 틈이 없다(ensure_month_rounds: 3주차 끝 = 결선 시작) */
+/** 주간 마지막(3주차) 결과는 21일 0시에 나오고 데뷔 평가는 하루 뒤 22일에 열린다(#41, ensure_month_rounds) */
 const LAST_WEEK = 3;
 
 /** 알림을 눌러 들어온 경로. DB record_notice_click 허용 목록과 같아야 한다 */
@@ -31,7 +31,7 @@ export function noticeLink(href: string, kind: string, via: NoticeVia): string {
 export function noticeView(kind: string, payload: unknown): { text: string; href: string | null } {
   const p = (payload && typeof payload === "object" ? payload : {}) as Payload;
   const name = p.pet_name ? `‘${p.pet_name}’` : "내 아이";
-  const wait = p.round_seq === LAST_WEEK ? "오늘부터 데뷔 평가가 열려요. 글을 공유해서 픽을 모아 보세요" : "그때까지 응원단을 모아 보세요";
+  const wait = p.round_seq === LAST_WEEK ? "내일부터 데뷔 평가가 열려요. 오늘 하루 글을 공유해서 응원단을 모아 보세요" : "그때까지 응원단을 모아 보세요";
   const board: NoticeBoard | null = p.board === "dog" || p.board === "cat" ? p.board : null;
   const href = board && p.entry_id && /^[0-9a-f-]{36}$/i.test(p.entry_id) ? `/${board}/${p.entry_id}` : null;
   switch (kind) {

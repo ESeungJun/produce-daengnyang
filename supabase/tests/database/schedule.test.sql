@@ -2,7 +2,7 @@
 -- 자정 작업 묶음, 알림 발송 거리, 관리자 다시 계산. 모두 되돌린다.
 begin;
 create extension if not exists pgtap with schema extensions;
-select plan(46);
+select plan(49);
 
 -- ── 1. 달마다 라운드 4개 ────────────────────────────────────
 select public.ensure_month_rounds('2027-02-01');  -- 28일
@@ -24,7 +24,24 @@ select is((select (ends_at - starts_at)::text from public.rounds where month = '
           '10 days', '31일 달: 결선 10일');
 select is((select string_agg((starts_at at time zone 'Asia/Seoul')::date::text || '~' || (ends_at at time zone 'Asia/Seoul')::date::text, ',' order by seq)
              from public.rounds where month = '2027-01-01' and kind = 'weekly'),
-          '2027-01-01~2027-01-08,2027-01-08~2027-01-15,2027-01-15~2027-01-22', '주간 라운드는 1·8·15일 시작, 7일씩 빈틈 없이');
+          '2027-01-01~2027-01-08,2027-01-08~2027-01-15,2027-01-15~2027-01-21', '주간 라운드는 1·8·15일 시작, 3주차는 20일까지(#41)');
+select is((select count(*)::int from public.rounds
+            where month = '2027-01-01' and starts_at <= '2027-01-21 12:00'::timestamp at time zone 'Asia/Seoul'
+              and ends_at > '2027-01-21 12:00'::timestamp at time zone 'Asia/Seoul'),
+          0, '21일은 열린 라운드가 없는 응원단 모으는 날(#41)');
+-- 옛 규칙(22일 0시 마감)으로 만들어진 아직 안 끝난 3주차는 마이그레이션이 21일 0시로 당긴다. 같은 update 를 다시 돌려 확인한다.
+select public.ensure_month_rounds('2031-03-01');
+select public.ensure_month_rounds('2020-06-01');
+update public.rounds set ends_at = ('2020-06-22'::date)::timestamp at time zone 'Asia/Seoul' where month = '2020-06-01' and kind = 'weekly' and seq = 3;
+update public.rounds set ends_at = ('2031-03-22'::date)::timestamp at time zone 'Asia/Seoul' where month = '2031-03-01' and kind = 'weekly' and seq = 3;
+update public.rounds r set ends_at = (r.month + 20)::timestamp at time zone 'Asia/Seoul'
+ where r.kind = 'weekly' and r.seq = 3 and r.finalized_at is null
+   and r.ends_at = (r.month + 21)::timestamp at time zone 'Asia/Seoul'
+   and (r.month + 20)::timestamp at time zone 'Asia/Seoul' > now();
+select is((select (ends_at at time zone 'Asia/Seoul')::text from public.rounds where month = '2031-03-01' and kind = 'weekly' and seq = 3),
+          '2031-03-21 00:00:00', '아직 안 끝난 옛 3주차는 21일 0시 마감으로 당겨진다');
+select is((select (ends_at at time zone 'Asia/Seoul')::text from public.rounds where month = '2020-06-01' and kind = 'weekly' and seq = 3),
+          '2020-06-22 00:00:00', '이미 끝난 옛 3주차(22일 0시 마감)는 그대로');
 
 -- ── 준비: 2030년 1월 라운드. 1주차는 방금(1분 전) 끝난 것으로, 2·3주차는 그보다 먼저 끝난 것으로(아직 확정 전), 결선은 열린 것으로 옮긴다.
 -- 1주차가 가장 최근에 끝난 라운드여야 "노출 중"이라 알림이 나간다(result_exposure_over: 뒤에 끝난 라운드가 있으면 노출 끝남).

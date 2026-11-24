@@ -88,10 +88,17 @@
 /* 지난 칸: 글자 대비는 그대로 두고(AA) 윗선만 연하게, 하는 일 자리에 "끝났어요" */
 .track li[data-state="past"] { border-top-color: var(--pd-jelly-2); }
 .track li[data-kind="final"] { border-top-color: var(--pd-pink); }
+/* 21일 응원단 칸: 하루짜리라 날짜만, 가운데 */
+.track li[data-kind="cheer"] { padding-inline: 2px; align-items: center; justify-content: center; border-top-color: var(--pd-pink); border-top-style: dotted; }
+.track li[data-kind="cheer"][data-state="past"] { border-top-color: var(--pd-jelly-2); }
 .track li[data-state="now"] { background: var(--pd-ink); color: var(--pd-paper); border-top-color: var(--pd-pink); }
 .track li[data-state="now"] b { color: var(--pd-paper); }
 
 /* 네 단계: 번호 동그라미 + 굵은 제목 + 뜻 풀이. 휴대폰 세로, 넓으면 네 칸 */
+/* 21일 칸이 들어간 뒤 3주차(6일)가 좁아져 "끝났어요"가 잘리지 않게 휴대폰에서는 옆 여백을 줄인다(#41) */
+@media (max-width: 420px) {
+  .track li { padding-inline: 4px; }
+}
 @media (max-width: 359px) {
   .track em { display: none; }
   .track b { white-space: normal; }
