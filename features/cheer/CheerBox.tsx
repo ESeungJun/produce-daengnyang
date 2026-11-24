@@ -7,6 +7,7 @@
  * - 데뷔 평가 글(복사본): 원본에서 모은 응원단 수.
  * - 손님·익명이 누르면 이 탭에 적어 두고(handoff) 로그인 시트를 띄운다. 회원으로 돌아오면 한 번 바로 들어간다.
  *   앱 안 브라우저에서 기본 브라우저로 옮겨 오면 주소의 ch=1 로 다시 적어 두고 시트를 띄운다.
+ * - 들어간 직후 이 기기 알림이 꺼져 있으면 켜기 안내 시트를 한 번 띄운다(#42). 데뷔 평가 날 알림은 아침 9시에 푸시로도 간다.
  * 응원단은 표가 아니다(set_cheer 는 picks·pick_count 를 건드리지 않는다). 데뷔 평가 날 알림만 받는다.
  */
 import Link from "next/link";
@@ -15,7 +16,9 @@ import { CHEER_PARAM, savePendingCheer, takePendingCheer } from "@/features/auth
 import { useLoginSheet } from "@/features/auth/LoginSheet";
 import { usePicks } from "@/features/picks/PicksProvider";
 import type { Board } from "@/shared/lib/format";
+import { detectPush, enablePush } from "@/features/notifications/pushDevice";
 import { browserClient } from "@/shared/lib/supabase/client";
+import { Sheet } from "@/shared/ui/Sheet";
 import { useToast } from "@/shared/ui/Toast";
 import ui from "@/shared/ui/ui.module.css";
 import { cheerErrorText, finalDayLabel, type CheerState } from "./rules";
@@ -38,6 +41,8 @@ export function CheerBox({ entryId, board, initial }: Props) {
   const [st, setSt] = useState(initial);
   const [busy, setBusy] = useState(false);
   const resumed = useRef(false);
+  const [askPush, setAskPush] = useState(false);
+  const [pushBusy, setPushBusy] = useState(false);
 
   const setCheer = useCallback(
     async (on: boolean) => {
@@ -56,7 +61,10 @@ export function CheerBox({ entryId, board, initial }: Props) {
         return toast(t);
       }
       setSt((cur) => ({ ...cur, mine: on, count: typeof data === "number" ? data : cur.count }));
-      toast(on ? "응원단에 들어갔어요. 데뷔 평가가 열리는 날 알림함으로 알려 드려요" : "응원단에서 나왔어요");
+      if (!on) return toast("응원단에서 나왔어요");
+      // 이 기기 알림이 꺼져 있으면 토스트 대신 켜기 안내를 띄운다(켜져 있거나 켤 수 없는 기기면 토스트만)
+      if ((await detectPush()) === "off") return setAskPush(true);
+      toast("응원단에 들어갔어요. 데뷔 평가가 열리는 날 아침 9시에 알려 드려요");
     },
     [entryId, openLogin, toast],
   );
@@ -159,12 +167,29 @@ export function CheerBox({ entryId, board, initial }: Props) {
 
   return (
     <section className={s.box} aria-label="응원단">
+      <Sheet
+        open={askPush}
+        title="응원단에 들어갔어요"
+        body={`데뷔 평가가 열리는 ${day ?? "날"} 아침 9시에 알림함으로 알려 드려요. 이 기기 알림도 켜면 화면을 열지 않아도 바로 받아요.`}
+        mainLabel={pushBusy ? "켜는 중…" : "이 기기 알림 켜기"}
+        subLabel="알림함으로만 받을게요"
+        onMain={async () => {
+          if (pushBusy) return;
+          setPushBusy(true);
+          const r = await enablePush();
+          setPushBusy(false);
+          setAskPush(false);
+          if (r.message) toast(r.message);
+          else if (r.state === "denied") toast("이 사이트 알림이 막혀 있어요. 주소창 왼쪽 사이트 정보에서 허용으로 바꿔 주세요");
+        }}
+        onClose={() => setAskPush(false)}
+      />
       <p className={s.text}>
         <b>결선 진출! {day}부터 데뷔 평가예요</b>
         <span>
           {st.mine ? (
             <>
-              응원단 <em className={s.num}>{n}</em>명과 함께하고 있어요. 데뷔 평가 날 알림함으로 알려 드려요(내 정보에서 이 기기 알림을 켜면 바로 받아요).
+              응원단 <em className={s.num}>{n}</em>명과 함께하고 있어요. 데뷔 평가 날 아침 9시에 알림함으로 알려 드려요(내 정보에서 이 기기 알림을 켜면 바로 받아요).
             </>
           ) : st.count ? (
             <>

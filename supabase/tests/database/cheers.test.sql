@@ -3,7 +3,7 @@
 -- 시험용 라운드는 2031·2032년 달에 '지금' 기준 시각으로 만든다(실제 라운드와 겹치지 않음).
 begin;
 create extension if not exists pgtap with schema extensions;
-select plan(61);
+select plan(67);
 
 -- ── 준비 ────────────────────────────────────────────────────
 -- A: 진출자 주인 · B: 응원하는 회원 · C: 익명
@@ -82,8 +82,20 @@ select is((select emailed_at is not null from public.notifications where user_id
           '결선 시작 알림은 메일을 보내지 않는다(넣을 때 emailed_at 을 채움)');
 select public.notify_final_open();
 select is((select count(*)::int from public.notifications where user_id = '00000000-0000-0000-0000-0000000039b1' and kind = 'final_open'), 1, '다시 불러도 한 번');
+-- #42 아침 9시 푸시: 자정에 생긴 알림은 그날 KST 9시 전에는 푸시 거리에 없다
+select is(public.push_ready_at('final_open', '2031-01-22 00:00:05+09'), '2031-01-22 09:00:00+09'::timestamptz, '데뷔 평가 알림 푸시는 만든 날 아침 9시부터');
+select is(public.push_ready_at('center_report', '2031-01-22 00:00:05+09'), '2031-01-22 09:00:00+09'::timestamptz, '센터 성과 알림 푸시도 아침 9시부터');
+select is(public.push_ready_at('final_open', '2031-01-22 13:00:00+09'), '2031-01-22 09:00:00+09'::timestamptz, '9시 뒤에 생기면 바로 보낼 수 있다');
+select is(public.push_ready_at('center', '2031-01-22 00:00:05+09'), '2031-01-22 00:00:05+09'::timestamptz, '결과 알림(center)은 미루지 않는다');
+-- 아직 9시가 안 된 것처럼: 만든 시각을 내일로 옮기면 기준(내일 9시)이 미래라 빠진다
+update public.notifications set created_at = now() + interval '1 day' where user_id = '00000000-0000-0000-0000-0000000039b1' and kind = 'final_open';
+select is((select count(*)::int from public.dispatch_queue(500) q where q.kind = 'final_open' and q.user_id = '00000000-0000-0000-0000-0000000039b1'), 0,
+          '아침 9시 전에는 데뷔 평가 알림이 푸시 거리에 없다');
+-- 9시가 지난 것처럼: 어제 만든 것으로 옮긴다
+update public.notifications set created_at = now() - interval '1 day' where user_id = '00000000-0000-0000-0000-0000000039b1' and kind = 'final_open';
 select is((select count(*)::int from public.dispatch_queue(500) q where q.kind = 'final_open' and q.user_id = '00000000-0000-0000-0000-0000000039b1' and q.need_push and not q.need_email), 1,
-          '발송 거리에 푸시만 필요한 줄로 들어간다');
+          '9시가 지나면 발송 거리에 푸시만 필요한 줄로 들어간다');
+select is((select count(*)::int from cron.job where jobname = 'pd-morning-push' and schedule = '0 0 * * *'), 1, '매일 KST 9시(UTC 0시)에 발송을 한 번 더 깨운다');
 select is((select count(*)::int from public.dispatch_queue(500, (select max(id) from public.notifications)) q), 0, '이어 받기(p_after)는 지난 쪽 마지막 id 뒤만 준다');
 
 -- ── 5. 주인 답글 ────────────────────────────────────────────
