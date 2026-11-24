@@ -10,11 +10,11 @@ import { createContext, useCallback, useContext, useState } from "react";
 import { Sheet } from "@/shared/ui/Sheet";
 import { useToast } from "@/shared/ui/Toast";
 import { continueWithGoogle } from "./session";
-import { clearPendingComment, clearPendingPick, hrefWithPendingComment, inAppBrowser, openExternal } from "./handoff";
+import { clearPendingCheer, clearPendingComment, clearPendingPick, hrefWithPendingComment, inAppBrowser, openExternal } from "./handoff";
 import { trackAuth } from "./track";
 
 /** submit: 등록 폼을 다 쓰고 "등록하기"를 눌렀을 때. 로그인하고 돌아오면 쓴 내용으로 바로 등록한다(/register?submit=1) */
-export type LoginReason = "pick" | "register" | "submit" | "comment" | "report" | "login" | "ip" | "gallery";
+export type LoginReason = "pick" | "register" | "submit" | "comment" | "report" | "login" | "ip" | "gallery" | "cheer";
 
 const TEXT: Record<LoginReason, [string, string]> = {
   // 로그인 없이 하는 첫 1픽을 쓴 뒤(두 번째 픽)에 뜬다
@@ -24,6 +24,8 @@ const TEXT: Record<LoginReason, [string, string]> = {
   register: ["연습생 등록은 로그인 후에 할 수 있어요", "구글 계정으로 3초면 끝나요. 등록한 아이가 1위를 하면 알림과 메일로 알려 드려요."],
   submit: ["로그인하면 바로 등록돼요", "쓴 내용과 사진은 이 기기에 그대로 있어요. 구글 계정으로 로그인하고 돌아오면 다시 누르지 않아도 등록돼요."],
   login: ["구글 계정으로 로그인해요", "로그인하면 댕댕이·냥이 게시판마다 하루 3픽, 연습생 등록과 응원 댓글을 할 수 있어요."],
+  // 응원단(#39): 결선 날 알림을 받으려면 계정이 있어야 한다
+  cheer: ["로그인하면 응원단에 들어가요", "데뷔 평가가 열리는 날 이 아이에게 픽하러 오라고 알려 드려요."],
   comment: ["댓글은 로그인 후에 남길 수 있어요", "쓰던 댓글은 그대로 남아 있어요. 로그인하면 바로 올라가요. 픽을 안 해도 댓글은 달 수 있어요."],
   // 데뷔 화보 사진을 저장하려는데 로그인이 풀렸을 때(#17). 보던 화보 사진 올리기 화면으로 돌아온다
   gallery: ["로그인하고 다시 저장해 주세요", "로그인이 풀렸어요. 구글 계정으로 로그인하고 돌아오면 사진을 다시 골라 저장해 주세요."],
@@ -40,13 +42,15 @@ export function LoginSheetProvider({ children }: { children: React.ReactNode }) 
   const close = useCallback(() => {
     clearPendingComment();
     clearPendingPick();
+    clearPendingCheer();
     setReason(null);
   }, []);
   // 픽이 아닌 이유로 열면 예전에 적어 둔 "하려던 픽"을, 댓글이 아닌 이유로 열면 "쓰던 댓글"을 지운다(엉뚱한 것이 나중에 나가지 않게)
   const open = useCallback((r: LoginReason) => {
     if (r !== "pick" && r !== "ip") clearPendingPick();
     if (r !== "comment") clearPendingComment();
-    trackAuth("sheet", r === "submit" ? "register" : r === "report" || r === "gallery" ? "login" : r); // DB 허용 목록은 그대로(등록·로그인으로 센다)
+    if (r !== "cheer") clearPendingCheer();
+    trackAuth("sheet", r === "submit" ? "register" : r === "report" || r === "gallery" || r === "cheer" ? "login" : r); // DB 허용 목록은 그대로(등록·로그인으로 센다)
     setReason(r);
   }, []);
   const [title, body] = TEXT[reason ?? "pick"];
@@ -67,7 +71,7 @@ export function LoginSheetProvider({ children }: { children: React.ReactNode }) 
           if (app) trackAuth("google", app === "kakao" ? "inapp_kakao" : "inapp_other");
           if (app) {
             // 카톡·안드로이드는 기본 브라우저를 바로 연다. 아이폰의 다른 앱은 메뉴로 안내한다
-            // 쓰던 댓글은 주소에 붙여 넘긴다(새 브라우저에는 이 탭의 저장 공간이 없다).
+            // 쓰던 댓글·들어가려던 응원단은 주소에 붙여 넘긴다(새 브라우저에는 이 탭의 저장 공간이 없다).
             // 아이폰은 사용자가 메뉴로 "Safari로 열기"를 누르므로 지금 주소에도 붙여 둔다.
             const carry = hrefWithPendingComment();
             if (carry !== location.href) history.replaceState(history.state, "", carry);

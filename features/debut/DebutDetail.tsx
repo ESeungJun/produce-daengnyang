@@ -115,7 +115,7 @@ export function DebutDetail({ e, board, comments }: Props) {
 
       {/* 화보 맺음의 "응원 댓글 쓰기" 길이 오는 자리 */}
       <div className={s.comments} id="debut-cheer">
-        {comments ? <Comments entryId={e.id} petName={e.pet_name} initial={comments.items} total={comments.total} loadFailed={comments.failed} /> : null}
+        {comments ? <Comments entryId={e.id} petName={e.pet_name} isOwner={e.is_mine} initial={comments.items} total={comments.total} loadFailed={comments.failed} /> : null}
       </div>
     </div>
   );

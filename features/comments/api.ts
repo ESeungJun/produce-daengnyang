@@ -5,7 +5,9 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Database } from "@/shared/lib/supabase/database.types";
 
-export type CommentRow = Database["public"]["Functions"]["entry_comments"]["Returns"][number];
+type RpcRow = Database["public"]["Functions"]["entry_comments"]["Returns"][number];
+/** 함수 결과 타입 생성기는 null 을 모른다. 주인 답글(#39)은 없을 수 있으니 null 을 허용한다 */
+export type CommentRow = Omit<RpcRow, "reply_body" | "replied_at"> & { reply_body: string | null; replied_at: string | null };
 
 export type CommentPage = { items: CommentRow[]; total: number; failed: boolean };
 

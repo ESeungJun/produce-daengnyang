@@ -7,6 +7,7 @@
  *   앱 안 브라우저에서 기본 브라우저로 옮겨 왔으면 주소의 cm 값으로 입력칸을 다시 채운다(handoff.hrefWithPendingComment).
  * - 금지어·100자는 DB(add_comment)가 거르고, 걸리면 입력칸 아래에 안내하고 글을 남긴다(토스트는 입력줄을 가려서 쓰지 않는다).
  * - 내 댓글은 확인 시트를 거쳐 지우고, 남의 댓글은 신고(ReportButton). 입력줄은 화면 아래에 붙는다.
+ * - 주인 한마디(#39): 글 주인은 남의 댓글에 한 번 답할 수 있다(reply_comment, 댓글 쓴 사람에게 알림). 답글은 모두에게 보인다.
  */
 import { useCallback, useEffect, useRef, useState } from "react";
 import { CARRY_PARAM, savePendingComment, takePendingComment } from "@/features/auth/handoff";
@@ -17,6 +18,7 @@ import { browserClient } from "@/shared/lib/supabase/client";
 import { Sheet } from "@/shared/ui/Sheet";
 import { useToast } from "@/shared/ui/Toast";
 import type { CommentRow } from "./api";
+import { replyErrorText } from "@/features/cheer/rules";
 import { commentErrorOutcome } from "./messages";
 import { ReportButton } from "./ReportButton";
 import s from "./comments.module.css";
@@ -25,9 +27,9 @@ const PAGE = 30;
 const MAX = 100;
 const COUNT_FROM = 80; // 이 글자 수부터 "n/100"을 보여 준다
 
-type Props = { entryId: string; petName: string; initial: CommentRow[]; total: number; loadFailed?: boolean };
+type Props = { entryId: string; petName: string; isOwner?: boolean; initial: CommentRow[]; total: number; loadFailed?: boolean };
 
-export function Comments({ entryId, petName, initial, total: total0, loadFailed = false }: Props) {
+export function Comments({ entryId, petName, isOwner = false, initial, total: total0, loadFailed = false }: Props) {
   const { viewer } = usePicks();
   const openLogin = useLoginSheet();
   const toast = useToast();
@@ -40,6 +42,11 @@ export function Comments({ entryId, petName, initial, total: total0, loadFailed 
   const [askDelete, setAskDelete] = useState<string | null>(null);
   const [deleting, setDeleting] = useState(false);
   const resumed = useRef(false);
+  // 주인 답글: 지금 답하는 댓글 id 와 글
+  const [replyTo, setReplyTo] = useState<string | null>(null);
+  const [replyText, setReplyText] = useState("");
+  const [replyErr, setReplyErr] = useState<string | null>(null);
+  const [replying, setReplying] = useState(false);
 
   const send = useCallback(
     async (body: string) => {
@@ -70,7 +77,7 @@ export function Comments({ entryId, petName, initial, total: total0, loadFailed 
         });
         setTotal(head[0]?.total ?? 0);
       } else {
-        setItems((cur) => [{ id: data, body: t, nickname: "나", is_entry_owner: false, is_mine: true, created_at: new Date().toISOString(), total: 0 }, ...cur]);
+        setItems((cur) => [{ id: data, body: t, nickname: "나", is_entry_owner: false, is_mine: true, created_at: new Date().toISOString(), total: 0, reply_body: null, replied_at: null }, ...cur]);
         setTotal((n) => n + 1);
       }
       setText("");
@@ -136,6 +143,37 @@ export function Comments({ entryId, petName, initial, total: total0, loadFailed 
     toast("댓글을 지웠어요");
   }
 
+  async function sendReply(e: React.FormEvent) {
+    e.preventDefault();
+    const id = replyTo;
+    const t = replyText.trim();
+    if (!id || replying) return;
+    if (!t) return setReplyErr("답글을 적어 주세요");
+    setReplying(true);
+    setReplyErr(null);
+    const sb = await browserClient();
+    const { error } = await sb.rpc("reply_comment", { p_comment_id: id, p_body: t });
+    setReplying(false);
+    if (error) {
+      // 다른 탭·기기에서 먼저 답했으면 폼을 닫고 안내만(다시 눌러도 같은 결과라서)
+      if (error.message === "already_replied") {
+        setReplyTo((cur) => (cur === id ? null : cur));
+        return toast(replyErrorText(error.message));
+      }
+      return setReplyErr(replyErrorText(error.message));
+    }
+    const at = new Date().toISOString();
+    setItems((cur) => cur.map((c) => (c.id === id ? { ...c, reply_body: t, replied_at: at } : c)));
+    // 보내는 사이 다른 댓글의 답글 폼을 열었으면 그 폼은 두고, 이 댓글의 폼만 닫는다
+    setReplyTo((cur) => {
+      if (cur === id) setReplyText("");
+      return cur === id ? null : cur;
+    });
+    toast("답글을 남겼어요. 댓글 쓴 집사님에게 알림이 가요");
+    // 폼이 사라져도 초점이 길을 잃지 않게 새 답글 칸으로 옮긴다
+    setTimeout(() => document.getElementById(`rp-done-${id}`)?.focus(), 0);
+  }
+
   async function more() {
     setLoadingMore(true);
     const sb = await browserClient();
@@ -178,6 +216,65 @@ export function Comments({ entryId, petName, initial, total: total0, loadFailed 
                   )}
                 </div>
                 <p>{c.body}</p>
+                {c.reply_body ? (
+                  <div className={s.reply} id={`rp-done-${c.id}`} tabIndex={-1}>
+                    <span className={s.tag}>주인 답글</span>
+                    <p>{c.reply_body}</p>
+                  </div>
+                ) : isOwner && !c.is_mine ? (
+                  replyTo === c.id ? (
+                    <form className={s.replyForm} onSubmit={sendReply}>
+                      <label htmlFor={`rp-${c.id}`} className={s.srOnly}>
+                        {c.nickname}님 댓글에 답글
+                      </label>
+                      <input
+                        id={`rp-${c.id}`}
+                        value={replyText}
+                        maxLength={MAX}
+                        onChange={(ev) => {
+                          setReplyText(ev.target.value);
+                          if (replyErr) setReplyErr(null);
+                        }}
+                        placeholder="고마운 한마디 (보내면 고칠 수 없어요)"
+                        autoComplete="off"
+                        autoFocus
+                        aria-invalid={replyErr ? true : undefined}
+                        aria-describedby={replyErr ? `rp-err-${c.id}` : undefined}
+                      />
+                      <button type="submit" disabled={replying}>
+                        {replying ? "보내는 중" : "답글"}
+                      </button>
+                      <button
+                        type="button"
+                        className={s.whoBtn}
+                        onClick={() => {
+                          setReplyTo(null);
+                          setTimeout(() => document.getElementById(`rp-btn-${c.id}`)?.focus(), 0);
+                        }}
+                      >
+                        취소
+                      </button>
+                      {replyErr ? (
+                        <p className={s.err} role="alert" id={`rp-err-${c.id}`}>
+                          {replyErr}
+                        </p>
+                      ) : null}
+                    </form>
+                  ) : (
+                    <button
+                      type="button"
+                      id={`rp-btn-${c.id}`}
+                      className={s.replyBtn}
+                      onClick={() => {
+                        setReplyTo(c.id);
+                        setReplyText("");
+                        setReplyErr(null);
+                      }}
+                    >
+                      답글 달기
+                    </button>
+                  )
+                ) : null}
               </li>
             ))}
           </ul>

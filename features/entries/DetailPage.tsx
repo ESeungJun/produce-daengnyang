@@ -31,6 +31,8 @@ import { PhotoPager } from "./PhotoPager";
 import { SiteNav } from "./SiteNav";
 import { countView } from "./views";
 import { DebutDetail } from "@/features/debut/DebutDetail";
+import { CheerBox } from "@/features/cheer/CheerBox";
+import { parseCheer } from "@/features/cheer/rules";
 import s from "./entries.module.css";
 
 export const getEntry = cache(async (id: string) => loadEntry(await createClient(), id));
@@ -41,6 +43,11 @@ export async function DetailPage({ board, id, fresh = false }: { board: Board; i
   const supabase = await createClient();
   // 댓글도 글과 같이 읽기 시작한다(entry_comments 가 숨김·삭제 글을 스스로 거르므로 글 결과를 기다릴 필요가 없다)
   const commentsP = loadComments(supabase, id);
+  // 응원단(#39): 결선 진출 글이 아니면 null. 못 읽으면 상자만 빼고 글은 보여 준다
+  const cheerP = Promise.resolve(supabase.rpc("cheer_state", { p_entry_id: id })).then(
+    (r) => (r.error ? null : parseCheer(r.data)),
+    () => null,
+  );
   const e = await getEntry(id);
   if (e === "deleted") {
     return (
@@ -61,12 +68,13 @@ export async function DetailPage({ board, id, fresh = false }: { board: Board; i
     await countView(e.id, data?.claims?.sub ?? null);
   }
   // 숨긴 글은 주인에게만 보이고 댓글도 받지 않는다(add_comment 가 막는다)
-  const comments = e.hidden ? null : await commentsP;
+  const [comments, cheer] = e.hidden ? [null, null] : await Promise.all([commentsP, cheerP]);
 
   // 데뷔한 글은 화보 상세(#17). 숨긴 글(주인만 봄)은 숨김 안내가 있는 일반 상세로 둔다
   if (e.debut && !e.hidden) return <DebutDetail e={e} board={board} comments={comments} />;
 
   const closed = e.is_mine ? "mine" : !e.round.open ? "ended" : undefined;
+  const cheerLeads = !!cheer && (cheer.open || (!cheer.final_ended && !!cheer.final_entry_id));
   // SNS 는 데뷔 후보부터(#21). 주인 화면에도 같은 규칙으로 보여 줘서 남이 보는 모습과 같게 한다
   const sns = e.sns_open ? snsLinks(e) : [];
   // 등록 직후면 첫 화면에서 보이게 맨 위(센터 띠 자리)에 공유 띠를 둔다
@@ -113,7 +121,8 @@ export async function DetailPage({ board, id, fresh = false }: { board: Board; i
               ) : null}
             </p>
           ) : null}
-          {closed === "ended" ? <p className={s.notice}>마감된 주차라 픽할 수 없어요. 지금 주차는 {BOARD_NAME[board]} 게시판에서 볼 수 있어요.</p> : null}
+          {/* 응원단 상자가 데뷔 평가로 가는 길을 알려 주면 게시판 안내는 겹치므로 뺀다(#39 디자인 리뷰) */}
+          {closed === "ended" && !cheerLeads ? <p className={s.notice}>마감된 주차라 픽할 수 없어요. 지금 주차는 {BOARD_NAME[board]} 게시판에서 볼 수 있어요.</p> : null}
           {e.hidden ? <p className={s.notice}>관리자가 숨긴 글이에요. 나에게만 보이고, 숨긴 동안은 댓글도 보이지 않아요.</p> : null}
           {e.round.blind ? <p className={s.notice}>마감 전 24시간부터 결과가 나올 때까지 표 수를 가려요.</p> : null}
           {/* 주인이 SNS 를 적어 뒀는데 아직 데뷔조 후보가 아니면, 저장이 안 된 줄 알지 않게 이유를 알려 준다(#21 사용자 리뷰). 남에게는 안 보인다 */}
@@ -127,7 +136,8 @@ export async function DetailPage({ board, id, fresh = false }: { board: Board; i
             {/* 신고는 주요 행동(인스타·공유)과 같은 무게로 두지 않고 줄 끝의 작은 밑줄 글자로 둔다(#6 디자인 리뷰) */}
             {e.is_mine ? null : <ReportButton target="entry" targetId={e.id} className={s.reportLink} />}
           </Impression>
-          {comments ? <Comments entryId={e.id} petName={e.pet_name} initial={comments.items} total={comments.total} loadFailed={comments.failed} /> : null}
+          {cheer ? <CheerBox entryId={e.id} board={board} initial={cheer} /> : null}
+          {comments ? <Comments entryId={e.id} petName={e.pet_name} isOwner={e.is_mine} initial={comments.items} total={comments.total} loadFailed={comments.failed} /> : null}
         </div>
       </div>
     </div>

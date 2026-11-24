@@ -12,6 +12,7 @@ import { Inbox } from "@/features/notifications/Inbox";
 import { PushToggle } from "@/features/notifications/PushToggle";
 import type { NotificationRow } from "@/features/notifications/text";
 import { AccountActions } from "./AccountActions";
+import { FinalistStats } from "./FinalistStats";
 import { MyEntries } from "./MyEntries";
 import { NicknameForm } from "./NicknameForm";
 import { SignInPrompt } from "./SignInPrompt";
@@ -36,12 +37,13 @@ export async function MePage({ resumeLeave = false }: { resumeLeave?: boolean })
       </div>
     );
   }
-  const [{ data: profile }, { data: mine }, { data: notes, error: notesError }, { count: unreadCount }] = await Promise.all([
+  const [{ data: profile }, { data: mine }, { data: notes, error: notesError }, { count: unreadCount }, { data: finals }] = await Promise.all([
     supabase.from("profiles").select("nickname, nickname_changed_at, is_admin").eq("id", uid).maybeSingle(),
     supabase.rpc("my_entries"),
     supabase.from("notifications").select("id, kind, payload, created_at, read_at").order("created_at", { ascending: false }).limit(20),
     // 보이는 20개 밖의 안 읽은 것까지 센다(윗줄 점과 같은 숫자)
     supabase.from("notifications").select("id", { count: "exact", head: true }).is("read_at", null),
+    supabase.rpc("my_finalist_stats"),
   ]);
   const inbox = (notes ?? []) as NotificationRow[];
   const unread = unreadCount ?? inbox.filter((n) => !n.read_at).length;
@@ -73,6 +75,7 @@ export async function MePage({ resumeLeave = false }: { resumeLeave?: boolean })
               <Inbox items={inbox} unread={unread} failed={!!notesError} />
             </div>
           </section>
+          <FinalistStats rows={finals ?? []} />
           <section aria-labelledby="mine-h">
             <h2 id="mine-h" className={s.h2}>
               내가 올린 아이 <span>{entries.length}</span>
