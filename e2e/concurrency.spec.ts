@@ -6,10 +6,16 @@
  */
 import path from "node:path";
 import { expect, test } from "@playwright/test";
-import { lit, memberToken, needWeeklyRound, openEntries, openRound, putPhoto, rpcAs, sql } from "./support";
+import { lit, memberToken, needWeeklyRound, openWeeklyForTest, openEntries, openRound, putPhoto, rpcAs, sql } from "./support";
 
 const SEED = path.join(__dirname, "..", "supabase", "seed-photos");
 
+// 결선 기간에도 돌도록 시험용 주간 라운드를 잠시 연다(#48). 다른 시험 파일(응원단 등)은 결선 상태를 그대로 본다
+let weekly: ReturnType<typeof openWeeklyForTest> | null = null;
+test.beforeAll(() => {
+  weekly = openWeeklyForTest();
+});
+test.afterAll(() => weekly?.close());
 test.beforeEach(() => needWeeklyRound((cond, why) => test.skip(cond, why)));
 
 test("동시에 6번 픽해도 하루 3픽만 들어간다", async () => {

@@ -40,7 +40,7 @@ export function sql<T = Record<string, unknown>>(q: string): T[] {
   const [cmd, pre] = supabaseCmd();
   const out = execFileSync(cmd, [...pre, "db", "query", "-o", "json", q], { encoding: "utf8", stdio: ["ignore", "pipe", "pipe"] });
   // insert·update·delete(returning 없음)는 JSON 대신 "DELETE 0" 같은 명령 결과만 낸다
-  if (/^\s*(INSERT|UPDATE|DELETE|CREATE|ALTER|DROP|TRUNCATE)\b[^[{]*$/.test(out)) return [];
+  if (/^\s*(INSERT|UPDATE|DELETE|CREATE|ALTER|DROP|TRUNCATE|DO)\b[^[{]*$/.test(out)) return [];
   // 출력 모양이 환경마다 다르다: CI 는 결과 배열 그대로([...]), AI 도구 안에서 돌면 { rows: [...], warning } 로 감싼다
   const start = out.search(/[[{]/);
   try {
@@ -162,9 +162,46 @@ function cookieClient(initial: { name: string; value: string }[]) {
   return { sb, jar };
 }
 
-/** 지금 열린 라운드(주간 또는 결선). 없으면 null */
+/** 지금 열린 라운드(주간 또는 결선). 없으면 null. 앱(loadOpenRound·current_round)과 같이 가장 늦게 시작한 것 */
 export function openRound(): { id: number; kind: "weekly" | "final"; ends_at: string } | null {
-  return sql<{ id: number; kind: "weekly" | "final"; ends_at: string }>("select id, kind, ends_at from public.rounds where now() >= starts_at and now() < ends_at order by id limit 1")[0] ?? null;
+  return sql<{ id: number; kind: "weekly" | "final"; ends_at: string }>("select id, kind, ends_at from public.rounds where now() >= starts_at and now() < ends_at order by starts_at desc, id desc limit 1")[0] ?? null;
+}
+
+/**
+ * 시험용 주간 라운드(#48). 결선 기간(21일~말일)에는 열린 주간 라운드가 없어 주간 흐름 시험이 건너뛰어졌다.
+ * 열린 주간 라운드가 없으면 로컬 DB 에 2099년 12월 1주차를 "지금 시작"으로 열고, 게시판마다 글 6개(시드 사진)를 처음 한 번 넣는다.
+ * 앱은 가장 늦게 시작한 열린 라운드를 고르므로(current_round) 결선을 건드리지 않아도 이 라운드가 보인다.
+ * 끝나면(close) 원래 날짜(2099-12-01~08)로 돌려 열리지도 끝나지도 않은 라운드로 둔다(자정 작업이 확정하지 않게).
+ * 글은 다음 실행에 다시 쓰려고 남긴다(픽이 달린 글은 지울 수 없다). 주간 라운드가 열려 있으면 아무것도 하지 않는다.
+ */
+export const E2E_MONTH = "2099-12-01";
+export function openWeeklyForTest(): { close: () => void } {
+  // 진짜 주간 라운드가 열려 있으면 그대로 쓴다. 열린 것이 시험 라운드(지난 실행이 닫지 못하고 멈춘 것)면 다시 맡아 끝에 닫는다
+  const now = sql<{ kind: string; month: string }>("select kind, month::text from public.current_round()")[0];
+  if (now?.kind === "weekly" && now.month !== E2E_MONTH) return { close: () => {} };
+  sql(`select public.ensure_month_rounds(${lit(E2E_MONTH)})`);
+  const id = sql<{ id: number }>(`select id from public.rounds where month = ${lit(E2E_MONTH)} and kind = 'weekly' and seq = 1`)[0].id;
+  sql(`update public.rounds set starts_at = now() - interval '1 hour', ends_at = now() + interval '2 days', finalized_at = null where id = ${Number(id)}`);
+  // 글이 없으면 시드처럼 게시판마다 6개. 주인·사진은 시드 글(사진이 있는 아무 글)에서 빌린다
+  sql(`do $$
+    declare src record; i int;
+    begin
+      if exists (select 1 from public.entries where round_id = ${Number(id)}) then return; end if;
+      for src in select e.board, e.owner_id, p.path, p.thumb_path, row_number() over (partition by e.board order by e.created_at) as n
+                   from public.entries e join public.entry_photos p on p.entry_id = e.id and p.position = 0
+                  where e.round_id <> ${Number(id)} and e.deleted_at is null and p.path like '%/seed-%' loop
+        if src.n > 6 then continue; end if;
+        with x as (insert into public.entries (round_id, board, owner_id, pet_name, bio, created_at)
+                   values (${Number(id)}, src.board, src.owner_id, '시험' || case when src.board = 'dog' then '멍' else '냥' end || src.n, '시험 라운드 글이에요.', now() - interval '1 minute' * (10 - src.n))
+                   returning id)
+        insert into public.entry_photos (entry_id, position, path, thumb_path) select x.id, 0, src.path, src.thumb_path from x;
+      end loop;
+    end $$`);
+  return {
+    close: () =>
+      sql(`update public.rounds set starts_at = (${lit(E2E_MONTH)}::date)::timestamp at time zone 'Asia/Seoul',
+                                    ends_at = (${lit(E2E_MONTH)}::date + 7)::timestamp at time zone 'Asia/Seoul', finalized_at = null where id = ${Number(id)}`),
+  };
 }
 
 /** 그 라운드·게시판에 보이는 글(숨김·삭제 제외) */

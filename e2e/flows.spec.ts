@@ -5,11 +5,17 @@
  */
 import path from "node:path";
 import { expect, test, type Page } from "@playwright/test";
-import { linkGoogle, lit, needWeeklyRound, openEntries, openRound, refreshSession, signInMember, sql } from "./support";
+import { linkGoogle, lit, needWeeklyRound, openWeeklyForTest, openEntries, openRound, refreshSession, signInMember, sql } from "./support";
 
 const PHOTO = path.join(__dirname, "..", "supabase", "seed-photos", "dog1.webp");
 
 // 달의 마지막 주(결선 주간)에는 열린 주간 라운드가 없다. 그 주에는 실패 대신 이유를 남기고 건너뛴다.
+// 결선 기간에도 돌도록 시험용 주간 라운드를 잠시 연다(#48). 다른 시험 파일(응원단 등)은 결선 상태를 그대로 본다
+let weekly: ReturnType<typeof openWeeklyForTest> | null = null;
+test.beforeAll(() => {
+  weekly = openWeeklyForTest();
+});
+test.afterAll(() => weekly?.close());
 test.beforeEach(() => needWeeklyRound((cond, why) => test.skip(cond, why)));
 
 /** 아직 픽하지 않은 글의 픽 버튼들(오늘 픽 완료·내 글 버튼은 이름이 달라 빠진다) */
