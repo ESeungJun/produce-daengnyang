@@ -26,7 +26,10 @@ describe("notificationView", () => {
   it("메일·푸시 쪽 게시판 이름이 화면과 같다", () => expect(NOTICE_BOARD_NAME).toEqual(BOARD_NAME));
   it("결과 알림 문구", () => {
     // 3주차 결과(21일 0시)와 데뷔 평가(22일) 사이 하루 동안 응원단을 모으라고 한다(#41)
-    expect(notificationView({ kind: "finalist", payload: { pet_name: "두부", round_seq: 3 } }).text).toContain("내일부터 데뷔 평가가 열려요. 오늘 하루 글을 공유해서 응원단을 모아 보세요");
+    expect(notificationView({ kind: "finalist", payload: { pet_name: "두부", round_seq: 3, round_month: "2026-12-01" } }).text).toContain("내일부터 데뷔 평가가 열려요. 오늘 하루 글을 공유해서 응원단을 모아 보세요");
+    // 21일 응원단 날이 생기기 전(11월) 3주차 알림은 받을 때 문구 그대로(#44)
+    expect(notificationView({ kind: "finalist", payload: { pet_name: "두부", round_seq: 3, round_month: "2026-11-01" } }).text).toContain("그때까지 응원단을 모아 보세요");
+    expect(notificationView({ kind: "finalist", payload: { pet_name: "두부", round_seq: 3 } }).text).toContain("그때까지 응원단을 모아 보세요");
     expect(notificationView({ kind: "center", payload: { pet_name: "두부", board: "dog", entry_id: id } }).text).toBe("‘두부’ 이번 주 센터 선정! 다음 주간 결과가 나올 때까지 메인과 게시판 맨 위에 걸리고, 월말 데뷔 평가에도 올라가요. 그때까지 응원단을 모아 보세요");
     expect(notificationView({ kind: "finalist", payload: { pet_name: "콩이", board: "dog", entry_id: id } }).href).toBe(`/dog/${id}`);
   });

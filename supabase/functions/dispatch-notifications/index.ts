@@ -2,7 +2,8 @@
  * dispatch-notifications (#7, 설계서 4-4 5번)
  * 결과 알림(center·finalist·debut)을 메일(Gmail SMTP)과 웹 푸시로, 응원단·센터 성과 알림(final_open·center_report, #39)은 푸시로만 보낸다.
  * 알림함 줄은 DB 가 이미 넣었다(메일을 안 보낼 줄은 넣을 때 emailed_at 을 채운다).
- * 부르는 곳: DB 의 kick_dispatch()(매일 0시 자정 작업, 관리자 다시 계산) → pg_net → 이 함수. 사용자 토큰이 없으므로
+ * 부르는 곳: DB 의 kick_dispatch()(매일 0시 자정 작업, 아침 9시 0·10·20분 pd-morning-push(#42·#44), 관리자 다시 계산) → pg_net → 이 함수.
+ *   응원단·센터 성과 푸시는 dispatch_queue 가 그날 9시 전에는 빼고 준다(push_ready_at). 사용자 토큰이 없으므로
  *   게이트웨이 JWT 확인은 끄고(verify_jwt false), 헤더 x-dispatch-token 을 DB 의 dispatch_token_ok() 로 확인한다.
  * 1. 토큰 확인. 틀리면 401.
  * 2. dispatch_queue(): 최근 3일 알림 중 메일·푸시를 아직 못 보낸 것(메일 주소 포함). 100줄씩 이어 받아(p_after) 큐를 비운다.

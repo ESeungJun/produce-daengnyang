@@ -84,6 +84,8 @@ jobs:
             echo "NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=$(get PUBLISHABLE_KEY)"
             echo "NEXT_PUBLIC_TURNSTILE_SITE_KEY=1x00000000000000000000AA"
             echo "NEXT_PUBLIC_SITE_URL=http://localhost:3104"
+            # 시험 전용 VAPID 공개 키(운영 키 아님, 개인 키는 버림). 없으면 알림 켜기 안내가 숨어 응원단 E2E 가 실패한다(#44)
+            echo "NEXT_PUBLIC_VAPID_PUBLIC_KEY=BIDWZnDYAH8nLwteGjPBFIxX_39crGiyvdczpXyO2opAyjBeeDG7vqU0pwLFRbl_j0ZW3VFB7oFx6JoK3vPEFds"
           } >> "$GITHUB_ENV"
       - run: npm run cf-typegen   # 빌드 중 타입 검사가 워커 바인딩 타입을 찾는다
       - run: npx next build

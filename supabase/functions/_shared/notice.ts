@@ -13,9 +13,11 @@
  */
 export const NOTICE_BOARD_NAME = { dog: "댕댕이", cat: "냥이" } as const;
 type NoticeBoard = keyof typeof NOTICE_BOARD_NAME;
-type Payload = { entry_id?: string; pet_name?: string; board?: string; sns_moves?: number; round_seq?: number };
+type Payload = { entry_id?: string; pet_name?: string; board?: string; sns_moves?: number; round_seq?: number; round_month?: string };
 /** 주간 마지막(3주차) 결과는 21일 0시에 나오고 데뷔 평가는 하루 뒤 22일에 열린다(#41, ensure_month_rounds) */
 const LAST_WEEK = 3;
+/** 이 달 라운드부터 21일 응원단 날이 있다. 그 전(11월) 3주차 알림은 결과와 결선이 같은 날이라 예전 문구를 그대로 보여 준다(#44) */
+const CHEER_DAY_FROM = "2026-12-01";
 
 /** 알림을 눌러 들어온 경로. DB record_notice_click 허용 목록과 같아야 한다 */
 export type NoticeVia = "push" | "inbox" | "mail";
@@ -31,7 +33,8 @@ export function noticeLink(href: string, kind: string, via: NoticeVia): string {
 export function noticeView(kind: string, payload: unknown): { text: string; href: string | null } {
   const p = (payload && typeof payload === "object" ? payload : {}) as Payload;
   const name = p.pet_name ? `‘${p.pet_name}’` : "내 아이";
-  const wait = p.round_seq === LAST_WEEK ? "내일부터 데뷔 평가가 열려요. 오늘 하루 글을 공유해서 응원단을 모아 보세요" : "그때까지 응원단을 모아 보세요";
+  const cheerDay = p.round_seq === LAST_WEEK && typeof p.round_month === "string" && p.round_month >= CHEER_DAY_FROM;
+  const wait = cheerDay ? "내일부터 데뷔 평가가 열려요. 오늘 하루 글을 공유해서 응원단을 모아 보세요" : "그때까지 응원단을 모아 보세요";
   const board: NoticeBoard | null = p.board === "dog" || p.board === "cat" ? p.board : null;
   const href = board && p.entry_id && /^[0-9a-f-]{36}$/i.test(p.entry_id) ? `/${board}/${p.entry_id}` : null;
   switch (kind) {
