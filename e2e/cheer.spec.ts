@@ -20,6 +20,9 @@ test("응원단(#39): 손님이 누르면 로그인 시트, 로그인하고 돌�
   sql(
     `update public.rounds set starts_at = greatest(starts_at, now() + interval '2 days'), ends_at = greatest(ends_at, now() + interval '3 days') where id = ${t.final_id}`,
   );
+  // 실제 사용자처럼 "아직 허락 전, 구독 없음"(off)으로 맞춘다. CI 의 headless Chromium 은 알림 권한이 처음부터 denied 라
+  // 그대로 두면 켜기 안내 대신 "막혀 있어요" 길을 탄다(#44). 권한만 주고 구독은 만들지 않으므로 상태는 off 다
+  await context.grantPermissions(["notifications"]);
   try {
     await page.goto(`/${t.board}/${t.id}`);
     await page.getByRole("button", { name: "응원단 들어가기" }).click();
