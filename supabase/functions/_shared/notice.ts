@@ -2,7 +2,7 @@
  * 알림 한 줄과 갈 곳. notifications.kind 마다 문구를 정한다. 한 곳에만 둔다.
  * - 화면 알림함(features/notifications/text.ts)과 메일·푸시 발송(dispatch-notifications)이 함께 쓴다.
  * - comment(#6): 내 글에 새 댓글. 메일·푸시 없이 알림함에만.
- * - center · finalist · debut(#7): 결과 확정 때 1·2위 주인에게(알림함 + 메일 + 푸시).
+ * - center · finalist · debut(#7): 결과 확정 때 1·2위 주인에게(알림함 + 메일 + 푸시). 주간 결과는 payload.final_starts_at(데뷔 평가 시작, #46)으로 날짜를 적는다.
  * - result_changed(#7): 관리자 다시 계산으로 1·2위에서 밀렸을 때(알림함에만).
  * - final_open(#39): 응원단에게 데뷔 평가 시작(알림함 + 푸시, 메일 없음). entry_id 는 결선 글.
  * - center_report(#39): 센터 주간이 끝난 뒤 SNS 로 넘어간 사람 수(알림함 + 푸시, 메일 없음). payload.sns_moves.
@@ -13,11 +13,16 @@
  */
 export const NOTICE_BOARD_NAME = { dog: "댕댕이", cat: "냥이" } as const;
 type NoticeBoard = keyof typeof NOTICE_BOARD_NAME;
-type Payload = { entry_id?: string; pet_name?: string; board?: string; sns_moves?: number; round_seq?: number; round_month?: string };
-/** 주간 마지막(3주차) 결과는 21일 0시에 나오고 데뷔 평가는 하루 뒤 22일에 열린다(#41, ensure_month_rounds) */
-const LAST_WEEK = 3;
-/** 이 달 라운드부터 21일 응원단 날이 있다. 그 전(11월) 3주차 알림은 결과와 결선이 같은 날이라 예전 문구를 그대로 보여 준다(#44) */
-const CHEER_DAY_FROM = "2026-12-01";
+type Payload = { entry_id?: string; pet_name?: string; board?: string; sns_moves?: number; final_starts_at?: string };
+
+/** 데뷔 평가 시작 시각(finalize_round 가 주간 결과 알림에 넣는다, #46)을 KST 'M월 D일' 로. 없거나 읽을 수 없으면 null */
+function kstDay(iso: unknown): string | null {
+  if (typeof iso !== "string") return null;
+  const t = Date.parse(iso);
+  if (Number.isNaN(t)) return null;
+  const d = new Date(t + 9 * 3600_000);
+  return `${d.getUTCMonth() + 1}월 ${d.getUTCDate()}일`;
+}
 
 /** 알림을 눌러 들어온 경로. DB record_notice_click 허용 목록과 같아야 한다 */
 export type NoticeVia = "push" | "inbox" | "mail";
@@ -33,8 +38,9 @@ export function noticeLink(href: string, kind: string, via: NoticeVia): string {
 export function noticeView(kind: string, payload: unknown): { text: string; href: string | null } {
   const p = (payload && typeof payload === "object" ? payload : {}) as Payload;
   const name = p.pet_name ? `‘${p.pet_name}’` : "내 아이";
-  const cheerDay = p.round_seq === LAST_WEEK && typeof p.round_month === "string" && p.round_month >= CHEER_DAY_FROM;
-  const wait = cheerDay ? "내일부터 데뷔 평가가 열려요. 오늘 하루 글을 공유해서 응원단을 모아 보세요" : "그때까지 응원단을 모아 보세요";
+  // 날짜가 있으면 그날을 적고, 이 값을 넣기 전에 만든 알림은 예전 문구(#46)
+  const finalDay = kstDay(p.final_starts_at);
+  const wait = finalDay ? `데뷔 평가는 ${finalDay}부터 열려요. 그때까지 글을 공유해서 응원단을 모아 보세요` : "그때까지 응원단을 모아 보세요";
   const board: NoticeBoard | null = p.board === "dog" || p.board === "cat" ? p.board : null;
   const href = board && p.entry_id && /^[0-9a-f-]{36}$/i.test(p.entry_id) ? `/${board}/${p.entry_id}` : null;
   switch (kind) {

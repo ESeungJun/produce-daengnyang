@@ -2,7 +2,7 @@
 -- 자정 작업 묶음, 알림 발송 거리, 관리자 다시 계산. 모두 되돌린다.
 begin;
 create extension if not exists pgtap with schema extensions;
-select plan(49);
+select plan(50);
 
 -- ── 1. 달마다 라운드 4개 ────────────────────────────────────
 select public.ensure_month_rounds('2027-02-01');  -- 28일
@@ -100,6 +100,8 @@ select is((select string_agg(role::text, ',' order by rank) from public.round_re
 select is((select count(*)::int from public.notifications where kind in ('center', 'finalist') and user_id::text like '00000000-0000-0000-0000-00000000a7%'), 2, '1·2위 주인에게 알림 2개');
 select is((select payload ->> 'pet_name' from public.notifications where user_id = '00000000-0000-0000-0000-00000000a702'),
           '두부', '알림에 글 이름이 실린다');
+select is((select (payload ->> 'final_starts_at')::timestamptz from public.notifications where user_id = '00000000-0000-0000-0000-00000000a702'),
+          (select starts_at from public.rounds where month = '2030-01-01' and kind = 'final'), '주간 결과 알림에 그달 데뷔 평가 시작 시각이 실린다(#46)');
 select isnt((select finalized_at from public.rounds where id = current_setting('t.w1')::bigint), null, '확정 시각을 찍는다');
 select throws_ok(format('select public.finalize_round(%s)', current_setting('t.f')), 'P0001', 'round_open', '끝나지 않은 라운드는 확정하지 않는다');
 
