@@ -21,7 +21,7 @@ const ROWS: [string, string, string][] = [
 
 export default function PrivacyPage() {
   return (
-    <LegalPage title="개인정보처리방침" effective="2026년 11월 19일">
+    <LegalPage title="개인정보처리방침" effective="2026년 11월 24일">
       <p>프로듀스 댕냥은 사진 오디션을 운영하는 데 필요한 만큼만 모으고, 광고나 판매에 쓰지 않아요.</p>
       <h2>1. 모으는 정보와 쓰는 곳</h2>
       <div className={s.tw} tabIndex={0} role="region" aria-label="모으는 정보 표">
