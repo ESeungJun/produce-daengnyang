@@ -3,6 +3,8 @@
  * 신고 한 줄의 관리 동작(#6).
  * - 숨기기/되살리기: admin_set_hidden. 신고도 처리됨으로 닫는다.
  * - 문제없음: admin_dismiss(신고만 닫음).
+ * - 답글만 지우기(#40): 댓글에 글 주인 답글이 있을 때. admin_remove_reply 로 답글만 지우고 신고는 열어 둔다
+ *   (댓글 본문은 따로 판단해 숨기기·문제없음을 누른다). 되돌릴 수 없어 확인 시트를 거친다.
  * - 계정 정리: 봇·악성 계정. 최근 10분 안에 로그인했는지 먼저 보고(아니면 구글로 다시 확인받고 /admin 으로 돌아옴),
  *   확인 시트(되돌릴 수 없음) → Edge Function admin-purge-user(계정 막기 → 확정 전 라운드의 픽 삭제 → 계정·글·사진·댓글 삭제).
  *   자기 자신·관리자는 함수가 거절하고, 최근 로그인도 함수가 다시 본다.
@@ -18,7 +20,7 @@ import { useToast } from "@/shared/ui/Toast";
 import ui from "@/shared/ui/ui.module.css";
 import s from "./admin.module.css";
 
-/** deleted: 주인이 이미 지운 대상(숨길 것이 없어 "문제없음(닫기)"만). restoreOnly: "최근 숨긴 것" 줄(되살리기만) */
+/** deleted: 주인이 이미 지운 대상(숨길 것이 없어 "문제없음(닫기)"만). restoreOnly: "최근 숨긴 것" 줄(되살리기만). hasReply: 댓글에 글 주인 답글이 있음 */
 type Props = {
   target: "entry" | "comment";
   targetId: string;
@@ -28,16 +30,18 @@ type Props = {
   authorName: string | null;
   self: boolean;
   restoreOnly?: boolean;
+  hasReply?: boolean;
 };
 
-export function AdminActions({ target, targetId, hidden, deleted, authorId, authorName, self, restoreOnly = false }: Props) {
+export function AdminActions({ target, targetId, hidden, deleted, authorId, authorName, self, restoreOnly = false, hasReply = false }: Props) {
   const router = useRouter();
   const toast = useToast();
-  const [busy, setBusy] = useState<null | "hide" | "dismiss" | "purge">(null);
+  const [busy, setBusy] = useState<null | "hide" | "dismiss" | "purge" | "reply">(null);
   const [askPurge, setAskPurge] = useState(false);
+  const [askReply, setAskReply] = useState(false);
   const [askReauth, setAskReauth] = useState(false);
 
-  async function run(kind: "hide" | "dismiss", fn: () => PromiseLike<{ error: unknown }>, done: string) {
+  async function run(kind: "hide" | "dismiss" | "reply", fn: () => PromiseLike<{ error: unknown }>, done: string) {
     if (busy) return;
     setBusy(kind);
     const { error } = await fn();
@@ -96,6 +100,11 @@ export function AdminActions({ target, targetId, hidden, deleted, authorId, auth
           {busy === "dismiss" ? "닫는 중…" : deleted ? "닫기" : "문제없음"}
         </button>
       )}
+      {hasReply && target === "comment" && !restoreOnly ? (
+        <button type="button" className={ui.ghost} disabled={!!busy} onClick={() => setAskReply(true)}>
+          {busy === "reply" ? "지우는 중…" : "답글만 지우기"}
+        </button>
+      ) : null}
       {authorId && !self && !restoreOnly ? (
         <button type="button" className={s.danger} disabled={!!busy} onClick={async () => ((await recentSignIn()) ? setAskPurge(true) : setAskReauth(true))}>
           계정 정리
@@ -110,6 +119,20 @@ export function AdminActions({ target, targetId, hidden, deleted, authorId, auth
         subLabel="취소"
         onMain={purge}
         onClose={() => setAskPurge(false)}
+      />
+      <Sheet
+        open={askReply}
+        danger
+        title="글 주인 답글만 지울까요?"
+        body="댓글은 그대로 두고 답글만 지워요. 글 주인은 이 댓글에 답글을 다시 달 수 없고, 되돌릴 수 없어요. 신고는 열려 있으니 댓글이 괜찮으면 이어서 '문제없음'을 눌러 주세요."
+        mainLabel={busy === "reply" ? "지우는 중…" : "답글 지우기"}
+        subLabel="취소"
+        onMain={async () => {
+          const sb = await browserClient();
+          await run("reply", () => sb.rpc("admin_remove_reply", { p_comment_id: targetId }), "답글을 지웠어요");
+          setAskReply(false);
+        }}
+        onClose={() => setAskReply(false)}
       />
       <Sheet
         open={askReauth}

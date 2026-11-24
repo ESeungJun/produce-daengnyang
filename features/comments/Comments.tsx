@@ -8,6 +8,7 @@
  * - 금지어·100자는 DB(add_comment)가 거르고, 걸리면 입력칸 아래에 안내하고 글을 남긴다(토스트는 입력줄을 가려서 쓰지 않는다).
  * - 내 댓글은 확인 시트를 거쳐 지우고, 남의 댓글은 신고(ReportButton). 입력줄은 화면 아래에 붙는다.
  * - 주인 한마디(#39): 글 주인은 남의 댓글에 한 번 답할 수 있다(reply_comment, 댓글 쓴 사람에게 알림). 답글은 모두에게 보인다.
+ *   관리자가 답글만 지우면(#40) reply_body 는 비고 replied_at 은 남아, 답글도 "답글 달기"도 보이지 않는다.
  */
 import { useCallback, useEffect, useRef, useState } from "react";
 import { CARRY_PARAM, savePendingComment, takePendingComment } from "@/features/auth/handoff";
@@ -221,7 +222,7 @@ export function Comments({ entryId, petName, isOwner = false, initial, total: to
                     <span className={s.tag}>주인 답글</span>
                     <p>{c.reply_body}</p>
                   </div>
-                ) : isOwner && !c.is_mine ? (
+                ) : isOwner && !c.is_mine && !c.replied_at ? (
                   replyTo === c.id ? (
                     <form className={s.replyForm} onSubmit={sendReply}>
                       <label htmlFor={`rp-${c.id}`} className={s.srOnly}>

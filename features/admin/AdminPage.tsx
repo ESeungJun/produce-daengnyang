@@ -3,6 +3,7 @@
  * - profiles.is_admin 인 회원만 본다. 아니면 404(관리자 화면이 있다는 것도 알리지 않는다).
  * - 진짜 권한은 DB 함수(require_admin)와 Edge Function(admin-purge-user)이 다시 확인한다. 여기는 화면을 고르는 데만.
  * - 처리 안 된 신고를 대상별로 묶어 신고 많은 순으로 보여 준다. 동작은 AdminActions(숨기기·되살리기·문제없음·계정 정리).
+ * - 댓글 신고 줄에는 그 댓글에 글 주인이 단 답글도 보인다. 답글만 문제면 "답글만 지우기"(#40, 답글은 따로 신고하지 않는다).
  * - 숨기면 신고가 닫혀 목록에서 빠지므로, 아래 "최근 숨긴 것"(14일)에서 잘못 숨긴 것을 되살린다.
  * - 맨 아래 "라운드 결과": 최근 끝난 라운드와 확정 여부. 신고로 글을 숨긴 뒤 RecalcButton 으로 다시 센다(#7).
  */
@@ -62,8 +63,13 @@ export async function AdminPage() {
                     </>
                   ) : null}
                 </p>
+                {r.reply_body ? (
+                  <p className={s.reply}>
+                    <b>글 주인 답글</b> “{r.reply_body}”
+                  </p>
+                ) : null}
                 <p className={s.meta}>작성자 {r.author_name ?? "(탈퇴 또는 프로필 없음)"}{r.reasons?.length ? ` · 사유: ${r.reasons.join(" / ")}` : ""}</p>
-                <AdminActions target={r.target} targetId={r.target_id} hidden={r.hidden} deleted={r.deleted} authorId={r.author_id} authorName={r.author_name} self={r.author_id === uid} />
+                <AdminActions target={r.target} targetId={r.target_id} hidden={r.hidden} deleted={r.deleted} authorId={r.author_id} authorName={r.author_name} self={r.author_id === uid} hasReply={!!r.reply_body} />
               </div>
             </li>
           );
