@@ -2,7 +2,7 @@
 -- 자정 작업 묶음, 알림 발송 거리, 관리자 다시 계산. 모두 되돌린다.
 begin;
 create extension if not exists pgtap with schema extensions;
-select plan(51);
+select plan(52);
 
 -- ── 1. 달마다 라운드 4개 ────────────────────────────────────
 select public.ensure_month_rounds('2027-02-01');  -- 28일
@@ -190,9 +190,13 @@ select ok((select count(*) from public.notifications where kind = 'result_change
           '1·2위에서 밀린 글 주인에게 정정 알림');
 select is((select count(*)::int from public.dispatch_queue() where kind = 'result_changed'), 0, '정정 알림은 메일·푸시로 보내지 않는다');
 
--- 노출이 끝난 라운드(뒤 라운드가 이미 끝남)는 다시 계산해도 새 1·2위 알림을 넣지 않는다
+-- 노출이 끝난 라운드(다음 주간 라운드가 이미 끝남)는 다시 계산해도 새 1·2위 알림을 넣지 않는다
+-- #49 결선이 끝나도 다음 주간 라운드가 안 끝났으면 아직 노출 중이다(3주차 센터는 다음 달 1주차 결과까지 걸린다)
 update public.rounds set ends_at = now() - interval '30 seconds' where id = current_setting('t.f')::bigint;
-select ok(public.result_exposure_over((select r from public.rounds r where id = current_setting('t.w1')::bigint)), '뒤 라운드가 끝났으면 노출 끝남');
+select ok(not public.result_exposure_over((select r from public.rounds r where id = current_setting('t.w1')::bigint)), '결선이 끝나도 다음 주간이 안 끝났으면 노출 중(#49)');
+-- 1주차 끝 바로 뒤에 시작해 이미 끝난 주간 라운드(2주차)를 두면 노출이 끝난다
+update public.rounds set starts_at = now() - interval '1 minute', ends_at = now() - interval '20 seconds' where id = current_setting('t.w2')::bigint;
+select ok(public.result_exposure_over((select r from public.rounds r where id = current_setting('t.w1')::bigint)), '다음 주간 라운드가 끝났으면 노출 끝남');
 select set_config('t.before', (select count(*)::text from public.notifications where kind in ('center', 'finalist')), true);
 update public.entries set hidden_at = now() where id = '00000000-0000-0000-0000-00000000e703';
 select public.finalize_round(current_setting('t.w1')::bigint);
