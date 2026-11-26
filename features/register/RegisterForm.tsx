@@ -22,6 +22,7 @@ import { BIO_MAX, NAME_MAX, PHOTO_MAX, charLen, normalizeSns } from "./fields";
 import { PHOTO_ERROR_TEXT, entryErrorText } from "./messages";
 import { PhotoError, photoExt, processPhoto, type ProcessedPhoto } from "./photo";
 import s from "./register.module.css";
+import { trackPulse } from "@/shared/lib/pulse";
 
 /** 사진 칸 하나: 새로 고른 것(아직 안 올림) 또는 이미 글에 붙은 것 */
 type Slot = { key: string; url: string } & ({ kind: "new"; photo: ProcessedPhoto } | { kind: "saved"; path: string; thumb_path: string });
@@ -206,6 +207,7 @@ export function RegisterForm(props: Props) {
         const r = await sb.rpc("create_entry", { p_board: board, ...fields, p_photos: photos });
         if (r.error) throw new Error(r.error.message);
         await clearDraft();
+        trackPulse("register_done", { board }); // 등록이 실제로 된 뒤에만 센다(깔때기 마지막 단계, #50)
         // 상세의 공유 띠(NewEntryBanner)가 안내하므로 토스트는 띄우지 않는다
         router.push(`/${board}/${r.data}?new=1`);
       } else {
