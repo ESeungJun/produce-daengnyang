@@ -303,7 +303,7 @@ export function Comments({ entryId, petName, isOwner = false, initial, total: to
             aria-invalid={err ? true : undefined}
             aria-describedby="cm-note"
           />
-          <button type="submit" disabled={busy}>
+          <button type="submit" disabled={busy} data-track="comment_submit">
             {busy ? "보내는 중" : "남기기"}
           </button>
         </div>

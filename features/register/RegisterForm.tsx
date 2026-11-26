@@ -443,7 +443,7 @@ export function RegisterForm(props: Props) {
             <PickButton entryId="preview" board={board} size="sm" closed="mine" />
           </div>
         </div>
-        <button type="submit" className={`${ui.pill} ${s.submit}`} disabled={busy !== null}>
+        <button type="submit" className={`${ui.pill} ${s.submit}`} disabled={busy !== null} data-track={edit ? "entry_edit_submit" : "register_submit"}>
           {busy === "send" ? "올리는 중…" : edit ? "고친 내용 저장" : "연습생 등록하기"}
         </button>
         {!edit ? (

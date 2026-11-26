@@ -36,6 +36,8 @@ export function PickButton({ entryId, board, pickedToday = false, size = "md", c
       aria-busy={busy}
       disabled={done || !!closed || busy}
       onClick={() => pick(entryId, board)}
+      data-track="pick"
+      data-track-board={board}
     >
       <Paw />
       <span>{done ? "완료" : shut ? shut.text : "픽"}</span>

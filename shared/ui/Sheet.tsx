@@ -21,6 +21,8 @@ type Props = {
   onMain: () => void;
   onClose: () => void;
   danger?: boolean;
+  /** 기본 버튼에 붙일 data- 속성(pulse data-track 등, #50) */
+  mainData?: Record<`data-${string}`, string>;
 };
 
 export function Sheet({
@@ -32,6 +34,7 @@ export function Sheet({
   onMain,
   onClose,
   danger = false,
+  mainData,
 }: Props) {
   const [mounted, setMounted] = useState(open);
   const [up, setUp] = useState(false);
@@ -98,6 +101,7 @@ export function Sheet({
           className={danger ? s.sheetDanger : s.sheetMain}
           type="button"
           onClick={onMain}
+          {...mainData}
         >
           {mainLabel}
         </button>

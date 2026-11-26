@@ -21,6 +21,7 @@
 | Hosting | Cloudflare Workers via [OpenNext](https://opennext.js.org/cloudflare) |
 | Data & auth | Supabase (Postgres rule functions with RLS, anonymous sign-in linked to Google, Storage, pg_cron) |
 | Mail & push | Gmail SMTP, Web Push |
+| Usage & errors | pulse, a self-built monitoring tool (page views, button clicks, client errors; what is collected is listed in the [privacy policy](app/privacy/page.tsx)) |
 
 Design notes are in [docs/](docs/) (Korean).
 

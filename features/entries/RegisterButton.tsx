@@ -20,13 +20,13 @@ export function RegisterButton({
   const openLogin = useLoginSheet();
   if (viewer === "member") {
     return (
-      <Link className={className} href="/register" aria-current={current ? "page" : undefined}>
+      <Link className={className} href="/register" aria-current={current ? "page" : undefined} data-track="register_open">
         {children}
       </Link>
     );
   }
   return (
-    <button type="button" className={className} onClick={() => openLogin("register")}>
+    <button type="button" className={className} onClick={() => openLogin("register")} data-track="register_open">
       {children}
     </button>
   );

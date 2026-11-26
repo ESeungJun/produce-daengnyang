@@ -62,6 +62,7 @@ export function LoginSheetProvider({ children }: { children: React.ReactNode }) 
         title={title}
         body={body}
         mainLabel="구글로 계속하기"
+        mainData={{ "data-track": "login_google", "data-track-why": reason ?? "pick" }}
         subLabel="그냥 구경할게요"
         onMain={() => {
           // 등록하려다 연 시트면 로그인 뒤 등록 화면으로(폼을 다 쓰고 눌렀으면 바로 등록), 그 밖에는 보던 곳으로 돌아온다

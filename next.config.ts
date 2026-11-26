@@ -1,4 +1,5 @@
 import type { NextConfig } from "next";
+import { PULSE_INGEST } from "./shared/lib/pulse";
 
 // create-next-app 16.4 기본값인 cacheComponents·partialPrefetching 은 끈다.
 // Cloudflare Workers(OpenNext 1.20)에서 켜 두면 Next 가 "Workers 의 setTimeout 구현에서는
@@ -17,17 +18,20 @@ const supabaseWs = supabase.replace(/^http/, "ws");
  * - Turnstile(#3 익명 로그인 봇 확인)은 script-src·frame-src 에 https://challenges.cloudflare.com 이 필요하다.
  * - media-src(#31): 화보 동영상은 Supabase 공개 주소, 올리기 전 첫 장면은 blob: 으로 읽는다.
  * - #3 구글 로그인은 브라우저 signInWithOAuth(주소 이동)로 한다. 폼 제출 뒤 리다이렉트로 하면 form-action 'self' 에 막힌다.
+ * - #50 pulse(shared/lib/pulse.ts): p.js 를 불러오고 이벤트를 보내는 수집 주소 하나만 더한다.
  */
 const turnstile = "https://challenges.cloudflare.com";
+// #50 pulse 이용 통계·오류 관제: p.js 불러오기(script-src)와 이벤트 보내기(connect-src)
+const pulse = PULSE_INGEST;
 const csp = [
   "default-src 'self'",
-  `script-src 'self' 'unsafe-inline'${dev ? " 'unsafe-eval'" : ""} ${turnstile}`,
+  `script-src 'self' 'unsafe-inline'${dev ? " 'unsafe-eval'" : ""} ${turnstile} ${pulse}`,
   "style-src 'self' 'unsafe-inline'",
   `img-src 'self' data: blob: ${supabase}`,
   // #31 데뷔 화보 동영상: 벽·크게 보기는 Supabase 주소, 올리기 전 첫 장면 만들기는 blob: 주소
   `media-src 'self' blob: ${supabase}`,
   "font-src 'self'",
-  `connect-src 'self' ${supabase} ${supabaseWs} ${turnstile}`,
+  `connect-src 'self' ${supabase} ${supabaseWs} ${turnstile} ${pulse}`,
   `frame-src ${turnstile}`,
   "object-src 'none'",
   "base-uri 'self'",
