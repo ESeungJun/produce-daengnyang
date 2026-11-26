@@ -21,6 +21,7 @@
 | 배포 | Cloudflare Workers([OpenNext](https://opennext.js.org/cloudflare)) |
 | 데이터·로그인 | Supabase(Postgres 규칙 함수·RLS, 익명 로그인 → 구글 연결, Storage, pg_cron) |
 | 메일·푸시 | Gmail SMTP, Web Push |
+| 이용 통계·오류 | 직접 만든 관제 도구 pulse(페이지 조회·버튼 클릭·화면 오류, 모으는 항목은 [처리방침](app/privacy/page.tsx)) |
 
 왜 이렇게 골랐는지는 [설계서](docs/설계서.md)에, 구성도와 흐름도는 [구현도](docs/구현도.md)에 있어요.
 

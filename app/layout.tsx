@@ -4,6 +4,7 @@
  *   한글은 글자 묶음이 많아 미리 불러오기(preload)를 끄고, 쓰는 글자 묶음만 그때 받게 한다.
  * - 색은 shared/styles/tokens.css 의 변수만 쓴다. 라이트·다크는 기기 설정을 따른다.
  * - 오늘 남은 픽(로그인 상태)을 서버에서 한 번 읽어 Providers 로 넘긴다. 읽기에 실패해도 화면은 손님 상태로 뜬다.
+ * - pulse 이용 통계·오류 관제 p.js 를 <head> 에 넣는다(#50, shared/lib/pulse.ts). 구글 회원이면 회원 번호를 함께 싣는다.
  */
 import type { Metadata, Viewport } from "next";
 import { Black_Han_Sans, Gowun_Dodum } from "next/font/google";
@@ -12,6 +13,7 @@ import { createClient } from "@/shared/lib/supabase/server";
 import { GUEST, loadPicks } from "@/features/picks/api";
 import { SHARE_OG } from "@/features/share/meta";
 import { SiteFooter } from "@/shared/ui/SiteFooter";
+import { pulseScript, pulseUserId } from "@/shared/lib/pulse";
 import { Providers } from "./Providers";
 
 const display = Black_Han_Sans({ weight: "400", subsets: ["latin"], preload: false, variable: "--font-display" });
@@ -39,9 +41,15 @@ export const viewport: Viewport = {
 };
 
 export default async function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
-  const picks = await createClient().then(loadPicks).catch(() => GUEST);
+  const supabase = await createClient().catch(() => null);
+  // 남은 픽과 회원 번호(pulse)를 함께 읽는다. getClaims 는 토큰 서명만 확인해 빠르다. 못 읽으면 손님으로 둔다
+  const [picks, claims] = supabase
+    ? await Promise.all([loadPicks(supabase).catch(() => GUEST), supabase.auth.getClaims().then((r) => r.data?.claims).catch(() => null)])
+    : [GUEST, null];
+  const pulse = pulseScript(pulseUserId(claims));
   return (
     <html lang="ko" className={`${display.variable} ${body.variable}`}>
+      <head>{pulse && <script {...pulse} defer />}</head>
       <body>
         <Providers picks={picks}>
           {children}

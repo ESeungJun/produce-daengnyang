@@ -7,6 +7,7 @@
  *      휴대폰을 남이 잠깐 쓰는 사이 탈퇴되지 않게 한다(리뷰 후속 #5). 진짜 검사는 delete-account 함수가 한다.
  *   2. 확인 시트 → Edge Function delete-account(계정·글·사진·댓글·오늘 픽 삭제, 지난 픽은 남김) → 세션 정리 → 첫 화면.
  */
+import { resetPulse } from "@/shared/lib/pulse";
 import { releaseThisDevice } from "@/features/notifications/pushDevice";
 import { useEffect, useState } from "react";
 import { browserClient } from "@/shared/lib/supabase/client";
@@ -36,6 +37,7 @@ export function AccountActions({ resume = false }: { resume?: boolean }) {
     const sb = await browserClient();
     await releaseThisDevice(sb); // 같은 기기의 다음 계정에게 내 결과 알림이 가지 않게(#7)
     await sb.auth.signOut({ scope: "local" }).catch(() => null);
+    resetPulse(); // pulse 사용자 연결도 끊는다(#50)
     await clearDraft();
     // 서버가 그린 화면(남은 픽·윗줄)을 새 상태로 받으려고 전체를 다시 연다.
     // 전체를 다시 열면 토스트가 사라지므로, 다음 화면이 띄울 안내 코드를 주소에 실어 보낸다

@@ -36,6 +36,9 @@ export function SnsLink({
       target="_blank"
       rel="noopener noreferrer"
       onClick={() => trackSns([entryId], sns.kind, place)}
+      data-track="sns_click"
+      data-track-kind={sns.kind}
+      data-track-place={place}
       aria-label={iconOnly ? (label ?? `${sns.handle} ${SNS_NAME[sns.kind]}`) : undefined}
     >
       <SnsIcon kind={sns.kind} size={iconSize} />

@@ -206,7 +206,7 @@ export function CheerBox({ entryId, board, initial }: Props) {
             한마디 남기기
           </button>
         ) : null}
-        <button type="button" className={st.mine ? s.out : ui.pill} onClick={press} disabled={busy}>
+        <button type="button" className={st.mine ? s.out : ui.pill} onClick={press} disabled={busy} data-track={st.mine ? "cheer_leave" : "cheer_join"}>
           {busy ? "잠시만요…" : st.mine ? "응원단 나가기" : "응원단 들어가기"}
         </button>
       </div>

@@ -61,7 +61,7 @@ export function CopyLink({
 
   return (
     <>
-      <button type="button" className={className ?? (primary ? ui.pill : ui.ghost)} onClick={share}>
+      <button type="button" className={className ?? (primary ? ui.pill : ui.ghost)} onClick={share} data-track="share">
         {label}
       </button>
       {manual ? (
